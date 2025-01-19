@@ -1,0 +1,33 @@
+# Virtual environment
+cm3070venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Django-specific
+*.log
+db.sqlite3
+media/
+staticfiles/
+local_settings.py
+
+# Node.js
+node_modules/
+build/
+dist/
+
+# Environment files
+.env
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+#desktop.ini files
+desktop.ini
+
+#Api keys
+keys_secrets/

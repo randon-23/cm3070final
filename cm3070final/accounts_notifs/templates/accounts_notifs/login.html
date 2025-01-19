@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login</title>
+    </head>
+    <body>
+        <form method="post" action="{% url 'accounts_notifs:login' %}">
+            {% csrf_token %}
+            <div>
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="btn btn-primary">Log In</button>
+        </form>
+        <div>
+            <p>Don't have an account? <a href="{% url 'accounts_notifs:account_signup' %}">Sign up here</a></p>
+        </div>
+    </body>
+</html>

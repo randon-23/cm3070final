@@ -1,0 +1,7 @@
+<form method="post" action="{% url 'accounts_notifs:account_signup' %}">
+    {% csrf_token %}
+    <div>
+        {{form.as_p}}
+    </div>
+    <button type="submit" class="btn btn-primary">Continue</button>
+</form>

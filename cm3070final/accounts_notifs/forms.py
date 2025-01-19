@@ -1,0 +1,63 @@
+from django import forms
+from .models import Account
+from django.contrib.auth.forms import AuthenticationForm
+
+LIMITED_USER_TYPE_CHOICES = [
+    choice for choice in Account.USER_TYPE_CHOICES if choice[0] != 'admin'
+]
+
+class AccountSignupForm(forms.ModelForm):
+    email_address = forms.EmailField(required=True, label='Your Email')
+    password_1 = forms.CharField(widget=forms.PasswordInput, required=True, label='Password')
+    password_2 = forms.CharField(widget=forms.PasswordInput, required=True, label='Confirm Password')
+    user_type = forms.ChoiceField(choices=LIMITED_USER_TYPE_CHOICES, required=True, label='User Type')
+    contact_number = forms.CharField(max_length=15, required=False, label='Contact Number')
+
+    class Meta:
+        model = Account
+        fields = ['email_address', 'user_type', 'contact_number']
+
+    def clean_password_2(self):
+        password_1 = self.cleaned_data.get('password_1')
+        password_2 = self.cleaned_data.get('password_2')
+        if password_1 and password_2 and password_1 != password_2:
+            raise forms.ValidationError("Passwords do not match")
+        return password_2
+
+    def __init__(self, *args, **kwargs):
+        super(AccountSignupForm, self).__init__(*args, **kwargs)
+        for fieldname, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': 'w-full text-2xl p-3 border border-gray-700 rounded bg-primary text-white',
+                'placeholder': field.label + ' (Required)' if field.required else field.label
+            })
+            field.label = ''
+
+    def save(self, commit=False):
+        account = super().save(commit=False)
+        account.set_password(self.cleaned_data['password_1'])
+        # if commit:
+        #     account.save() # Not committing to the database yet as we need to navigate to volunteer/organization details and collect those so to not create an Account object which is not linked to a Volunteer or Organization object
+        return account
+
+class LoginForm(AuthenticationForm):
+    username = forms.EmailField(
+        label="Email Address",
+        required=True
+    ) # Overriding the default username field to be an email field
+
+    def clean_username(self):
+        email=self.cleaned_data.get('username')
+        if email and '@' not in email:
+            raise forms.ValidationError("Invalid email address")
+        return email
+
+    # Password field automatically included and validated
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for fieldname, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': 'form-control',
+                'placeholder': field.label,
+            })
