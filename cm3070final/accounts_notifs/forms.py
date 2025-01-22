@@ -42,9 +42,11 @@ class AccountSignupForm(forms.ModelForm):
 
 class LoginForm(AuthenticationForm):
     username = forms.EmailField(
-        label="Email Address",
+        label="Enter email address",
         required=True
     ) # Overriding the default username field to be an email field
+
+    password = forms.CharField(widget=forms.PasswordInput, required=True, label='Enter password')
 
     def clean_username(self):
         email=self.cleaned_data.get('username')
@@ -58,6 +60,6 @@ class LoginForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         for fieldname, field in self.fields.items():
             field.widget.attrs.update({
-                'class': 'form-control',
+                'class': 'w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600',
                 'placeholder': field.label,
             })
