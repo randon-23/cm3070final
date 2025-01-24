@@ -7,7 +7,15 @@ LIMITED_USER_TYPE_CHOICES = [
 ]
 
 class AccountSignupForm(forms.ModelForm):
-    email_address = forms.EmailField(required=True, label='Your Email')
+    def __init__(self, *args, **kwargs):
+        super(AccountSignupForm, self).__init__(*args, **kwargs)
+        for fieldname, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': 'w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600',
+                'placeholder': field.label + ' (Required)' if field.required else field.label
+            })
+            field.label = ''
+    email_address = forms.EmailField(required=True,label='Your Email')
     password_1 = forms.CharField(widget=forms.PasswordInput, required=True, label='Password')
     password_2 = forms.CharField(widget=forms.PasswordInput, required=True, label='Confirm Password')
     user_type = forms.ChoiceField(choices=LIMITED_USER_TYPE_CHOICES, required=True, label='User Type')
@@ -23,15 +31,6 @@ class AccountSignupForm(forms.ModelForm):
         if password_1 and password_2 and password_1 != password_2:
             raise forms.ValidationError("Passwords do not match")
         return password_2
-
-    def __init__(self, *args, **kwargs):
-        super(AccountSignupForm, self).__init__(*args, **kwargs)
-        for fieldname, field in self.fields.items():
-            field.widget.attrs.update({
-                'class': 'w-full text-2xl p-3 border border-gray-700 rounded bg-primary text-white',
-                'placeholder': field.label + ' (Required)' if field.required else field.label
-            })
-            field.label = ''
 
     def save(self, commit=False):
         account = super().save(commit=False)
@@ -55,7 +54,6 @@ class LoginForm(AuthenticationForm):
         return email
 
     # Password field automatically included and validated
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for fieldname, field in self.fields.items():
