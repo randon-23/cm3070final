@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'daphne',
     'drf_yasg',
     'address',
+    'phonenumber_field',
     # Default apps
     'django.contrib.admin',
     'django.contrib.auth',
@@ -115,6 +116,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -122,6 +126,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'accounts_notifs.validators.UserPasswordValidator'
+    }
 ]
 
 # Overrod built-in user model and implemented Custom user model
@@ -158,15 +165,7 @@ SOCIALACCOUNT_PROVIDERS = {
         'AUTH_PARAMS': {
             'access_type': 'online',
         }
-    },
-    # 'facebook': {
-    #     'APP': {
-    #         'client_id': '<your-facebook-app-id>',
-    #         'secret': '<your-facebook-app-secret>',
-    #     },
-    #     'METHOD': 'oauth2',
-    #     'SCOPE': ['email', 'public_profile'],
-    # }
+    }
 }
 
 # Internationalization

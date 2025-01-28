@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.exceptions import ValidationError
+from phonenumber_field.modelfields import PhoneNumberField
 import uuid
 
 class AccountManager(BaseUserManager):
@@ -43,7 +44,7 @@ class Account(AbstractUser):
     account_uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email_address = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
-    contact_number = models.CharField(max_length=15, unique=True, null=True, blank=True)
+    contact_number = models.CharField(max_length=15, unique=True)
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
 

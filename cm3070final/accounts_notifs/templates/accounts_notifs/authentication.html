@@ -2,7 +2,9 @@
 {% load static %}
 {% block title %}Log In{% endblock %}
 {% block content %}
-<script src="{% static 'js_frontend-scripts/login.js' %}"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@17/build/css/intlTelInput.css">
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@17/build/js/intlTelInput.min.js"></script>
+<script src="{% static 'js_frontend-scripts/authentication.js' %}"></script>
 <div class="font-[sans-serif]">
     <div class="grid lg:grid-cols-3 md:grid-cols-2 items-center gap-4 h-full">
         {% if form_type == "login" %}
@@ -10,11 +12,55 @@
                 <img src="https://readymadeui.com/signin-image.webp" class="lg:w-[70%] w-full h-full object-contain block mx-auto" alt="login-image" />
             </div>
         {% elif form_type == "signup" %}
-            <div class="max-md:order-1 lg:col-span-1 md:h-screen w-full bg-[#000842] md:rounded-tr-xl md:rounded-br-xl lg:p-12 p-8">
-                <h2 class="text-2xl font-bold mb-4">How to Sign Up</h2>
-                <p class="text-sm leading-6">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut convallis elit et lectus molestie, sit amet auctor sapien lacinia. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
-                </p>
+            <div class="max-md:order-1 lg:col-span-1 md:h-screen w-full bg-[#000842] md:rounded-tr-xl md:rounded-br-xl lg:p-12 p-8 flex flex-col justify-center">
+                <div class="mb-6">
+                    <h3 class="text-white text-3xl mt-3">Create Your Account</h4>
+                    <p class="text-lg text-gray-300 mt-3 leading-relaxed">
+                        Welcome to our registration page! Get started by creating your account.
+                    </p>
+                </div>
+                <div class="mb-6">
+                    <h3 class="text-white text-3xl mt-3">Simple & Secure Registration</h4>
+                    <p class="text-lg text-gray-300 mt-3 leading-relaxed">
+                        Our registration process is designed to be straightforward and secure. Prospective users will fill in a 2-step registration process.
+                    </p>
+                </div>
+            
+                <div class="mt-6">
+                    <h3 class="text-white text-3xl mt-3">How It Works</h4>
+                    <div class="mt-8">
+                        <div class="flex items-start">
+                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold">1</span>
+                            <p class="text-lg text-gray-300 ml-4 leading-relaxed">
+                                <strong>Step 1:</strong> Fill in your principal account details, including your email address, password, user type (volunteer or organization), and contact number.
+                            </p>
+                        </div>
+                        <div class="flex items-start mt-8">
+                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold">2</span>
+                            <p class="text-lg text-gray-300 ml-4 leading-relaxed">
+                                <strong>Step 2:</strong> Depending on your user type, complete the secondary form:
+                            </p>
+                        </div>
+                        <div class="flex items-start mt-8">
+                            <ul class="list-disc ml-8 mt-1 text-gray-300">
+                                <li><strong>Volunteer:</strong> Provide personal information such as your name, date of birth, bio, and optionally upload a profile picture.</li>
+                                <li><strong>Organization:</strong> Enter your organization’s name, description, address, and other relevant details.</li>
+                            </ul>
+                        </div>
+                        <div class="flex items-start mt-8">
+                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold">3</span>
+                            <p class="text-lg text-gray-300 ml-4 leading-relaxed">
+                                <strong>Completion:</strong> Once all details are filled in, submit your registration to complete the process.
+                            </p>
+                        </div>
+                        <div class="flex items-start mt-8">
+                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold">4</span>
+                            <p class="text-lg text-gray-300 ml-4 leading-relaxed">
+                                <strong>Note:</strong> If you exit the process before completing the second step, your account will not be created, and you will need to start over.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         {% endif %}
 
@@ -30,8 +76,14 @@
                                 <a href="?type=signup" id="toggle-to-signup" class="text-blue-600 font-semibold hover:underline ml-1 whitespace-nowrap">Register here</a>
                             </p>
                         </div>
-                
-                        <div>
+                        
+                        {% if form.non_field_errors %}
+                            <div style="color: #fc0404; font-weight: bold; font-size: 0.875rem;">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="mt-4">
                             <label for="id_username" class="text-gray-800 text-[15px] mb-2 block">Email</label>
                             <div class="relative flex items-center">
                                 {{ form.username }}
@@ -118,12 +170,25 @@
                                 <a href="?type=login" id="toggle-to-login" class="text-blue-600 font-semibold hover:underline ml-1 whitespace-nowrap">Log in here</a>
                             </p>
                         </div>
-                
+                        
+                        {% if form.non_field_errors %}
+                            <div style="color: #fc0404; font-weight: bold; font-size: 0.875rem;">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
                         <div>
                             <label for="id_email_address" class="text-gray-800 text-[15px] mb-2 block">Your Email</label>
                             <div class="relative flex items-center">
                                 {{ form.email_address }}
                             </div>
+                            {% if form.email_address.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.email_address.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                 
                         <div class="mt-4">
@@ -131,6 +196,13 @@
                             <div class="relative flex items-center">
                                 {{ form.password_1 }}
                             </div>
+                            {% if form.password_1.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.password_1.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                 
                         <div class="mt-4">
@@ -138,6 +210,13 @@
                             <div class="relative flex items-center">
                                 {{ form.password_2 }}
                             </div>
+                            {% if form.password_2.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.password_2.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                 
                         <div class="mt-4">
@@ -145,13 +224,33 @@
                             <div class="relative flex items-center">
                                 {{ form.user_type }}
                             </div>
+                            {% if form.user_type.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.user_type.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                 
                         <div class="mt-4">
                             <label for="id_contact_number" class="text-gray-800 text-[15px] mb-2 block">Contact Number</label>
                             <div class="relative flex items-center">
+                                <!-- Prefix Dropdown -->
+                                <select name="contact_prefix" id="contact_prefix" class="w-36 text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
+                                    {% for code, display in country_prefixes %}
+                                        <option value="{{ code }}">{{ display }}</option>
+                                    {% endfor %}
+                                </select>
                                 {{ form.contact_number }}
                             </div>
+                            {% if form.contact_number.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.contact_number.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                 
                         <div class="mt-8">

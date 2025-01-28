@@ -1,9 +1,7 @@
 from django.db import models
 from accounts_notifs.models import Account
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
-from address.models import AddressField
 
 class Volunteer(models.Model):
     account = models.OneToOneField(Account, on_delete=models.CASCADE, primary_key=True)
@@ -14,10 +12,6 @@ class Volunteer(models.Model):
     profile_img = models.ImageField(blank=True, null=True)
     volontera_points = models.IntegerField(default=0)
     followers = models.IntegerField(default=0)
-
-    def clean(self):
-        if self.dob > (datetime.now().date() - relativedelta(years=5)):
-            raise ValidationError("Date of birth too recent.")
     
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -157,7 +151,7 @@ class Organization(models.Model):
     account = models.OneToOneField(Account, on_delete=models.CASCADE, primary_key=True)
     organization_name = models.CharField(max_length=100, unique=True)
     organization_description = models.CharField(max_length=500)
-    organization_address = AddressField(on_delete=models.CASCADE)
+    organization_address = models.JSONField(default=dict)
     organization_website=models.URLField(blank=True, null=True)
     organization_profile_img = models.ImageField(blank=True, null=True)
     followers = models.IntegerField(default=0)

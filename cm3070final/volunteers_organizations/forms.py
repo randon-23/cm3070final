@@ -47,14 +47,13 @@ class OrganizationForm(forms.ModelForm):
     locality = forms.CharField(max_length=100, required=False, label='City/Town')
     postal_code = forms.CharField(max_length=10, required=False, label='Postal Code')
     state = forms.CharField(max_length=100, required=False, label='State')
-    state_code = forms.CharField(max_length=10, required=False, label='State Code')
     country = forms.CharField(max_length=100, required=False, label='Country')
     organization_website = forms.URLField(max_length=255, required=False, label='Organization Website')
     organization_profile_img = forms.ImageField(required=False, label='Profile Image')
 
     class Meta:
         model=Organization
-        fields = ['organization_name', 'organization_description', 'organization_address', 'organization_website', 'organization_profile_img']
+        fields = ['organization_name', 'organization_description', 'organization_website', 'organization_profile_img']
 
     def __init__(self, *args, **kwargs):
         super(OrganizationForm, self).__init__(*args, **kwargs)
@@ -64,38 +63,44 @@ class OrganizationForm(forms.ModelForm):
                 'placeholder': field.label + ' (Required)' if field.required else field.label
             })
             field.label = ''
-
-    def save(self, account=None, commit=True):
-        organization = super().save(commit=False)
-
+    
+    def clean(self):
+        super().clean()
         # Merge all fields to create the 'raw' address
         address_components = [
             self.cleaned_data.get('street_number', ''),
             self.cleaned_data.get('route', ''),
             self.cleaned_data.get('locality', ''),
-            self.cleaned_data.get('state_code', ''),
+            self.cleaned_data.get('state', ''),
             self.cleaned_data.get('postal_code', ''),
             self.cleaned_data.get('country', '')
         ]
         raw_address = ", ".join(filter(None, address_components))
-
         # Create the structured address dictionary
         organization_address = {
             'raw': raw_address,
-            'street_number': self.cleaned_data.get('street_number', ''), # ('') if None,
+            'street_number': self.cleaned_data.get('street_number', ''),
             'route': self.cleaned_data.get('route', ''),
             'locality': self.cleaned_data.get('locality', ''),
             'postal_code': self.cleaned_data.get('postal_code', ''),
             'state': self.cleaned_data.get('state', ''),
-            'state_code': self.cleaned_data.get('state_code', ''),
             'country': self.cleaned_data.get('country', ''),
-            'country_code': self.cleaned_data.get('country_code', ''),
         }
+        self.cleaned_data['organization_address'] = organization_address
+        self.cleaned_data.pop('street_number', None)
+        self.cleaned_data.pop('route', None)
+        self.cleaned_data.pop('locality', None)
+        self.cleaned_data.pop('postal_code', None)
+        self.cleaned_data.pop('state', None)
+        self.cleaned_data.pop('country', None)
 
-        organization.organization_address = organization_address
+        return self.cleaned_data
 
+    def save(self, account=None, commit=True):
+        organization = super().save(commit=False)
         if account:
             organization.account = account
+        organization.organization_address = self.cleaned_data['organization_address']
         if commit:
             organization.save()
         return organization

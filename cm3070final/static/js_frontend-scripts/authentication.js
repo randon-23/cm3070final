@@ -1,13 +1,23 @@
-const loginForm = document.getElementById('login-form');
-const signupForm = document.getElementById('signup-form');
-const toggleToSignup = document.getElementById('toggle-to-signup');
-const toggleToLogin = document.getElementById('toggle-to-login');
+function togglePasswordVisibility() {
+    const passwordField = document.getElementById("id_password");
+    const type = passwordField.getAttribute("type") === "password" ? "text" : "password";
+    passwordField.setAttribute("type", type);
+}
 
-toggleToSignup.addEventListener('click', () => {
-    loginForm.style.display = 'none';
-    signupForm.style.display = 'block';
-});
-toggleToLogin.addEventListener('click', () => {
-    loginForm.style.display = 'block';
-    signupForm.style.display = 'none';
-});
+// Initialize intl-tel-input for Phone Input
+const phoneInputField = document.querySelector("#contact_number");
+if (phoneInputField) {
+    const iti = intlTelInput(phoneInputField, {
+        initialCountry: "mt",  // Default country (Malta)
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@17/build/js/utils.js",  // For advanced formatting
+    });
+
+    // Update the input value before form submission
+    const form = document.querySelector("form");
+    if (form) {
+        form.addEventListener("submit", function (e) {
+            console.log(iti.getNumber());
+            phoneInputField.value = iti.getNumber();  // Set full international number
+        });
+    }
+}
