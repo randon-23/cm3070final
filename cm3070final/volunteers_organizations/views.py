@@ -8,7 +8,7 @@ def signup_final(request):
     account_data=request.session.get('account_data')
 
     if not account_data:
-        return redirect(reverse('authentication')+'?type=signup')
+        return redirect('accounts_notifs:authentication', type='signup')
     
     user_type=account_data.get('user_type')
     form=None
@@ -27,7 +27,8 @@ def signup_final(request):
         user.account=account
         user.save()
         request.session.pop('account_data', None)
-        return HttpResponseRedirect(reverse('authentication')+f'?type=login')
+
+        return render(request, 'volunteers_organizations/partials/signup_success_modal.html', status=200)
     
     return render(request, 'volunteers_organizations/signup_final.html', {
         'form': form,

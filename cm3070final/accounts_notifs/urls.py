@@ -6,5 +6,5 @@ app_name = 'accounts_notifs'
 
 urlpatterns = [
     path('auth/', authentication_view, name='authentication'),
-    path('api/login/', login_api, name='login_api')
+    path('api/login/', login_api, name='login_api'),
 ]

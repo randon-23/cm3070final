@@ -26,7 +26,7 @@ class VolunteerForm(forms.ModelForm):
         super(VolunteerForm, self).__init__(*args, **kwargs)
         for fieldname, field in self.fields.items():
             field.widget.attrs.update({
-                'class': 'w-full text-2xl p-3 border border-gray-700 rounded bg-primary text-white',
+                'class': 'w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600',
                 'placeholder': field.label + ' (Required)' if field.required else field.label
             })
             field.label = ''
@@ -59,7 +59,7 @@ class OrganizationForm(forms.ModelForm):
         super(OrganizationForm, self).__init__(*args, **kwargs)
         for fieldname, field in self.fields.items():
             field.widget.attrs.update({
-                'class': 'w-full text-2xl p-3 border border-gray-700 rounded bg-primary text-white',
+                'class': 'w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600',
                 'placeholder': field.label + ' (Required)' if field.required else field.label
             })
             field.label = ''

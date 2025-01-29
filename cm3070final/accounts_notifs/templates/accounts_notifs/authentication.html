@@ -29,32 +29,34 @@
                 <div class="mt-6">
                     <h3 class="text-white text-3xl mt-3">How It Works</h4>
                     <div class="mt-8">
+                        <!-- Step 1 -->
                         <div class="flex items-start">
-                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold">1</span>
+                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold shrink-0">1</span>
                             <p class="text-lg text-gray-300 ml-4 leading-relaxed">
                                 <strong>Step 1:</strong> Fill in your principal account details, including your email address, password, user type (volunteer or organization), and contact number.
                             </p>
                         </div>
+                        <!-- Step 2 -->
                         <div class="flex items-start mt-8">
-                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold">2</span>
+                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold shrink-0">2</span>
                             <p class="text-lg text-gray-300 ml-4 leading-relaxed">
                                 <strong>Step 2:</strong> Depending on your user type, complete the secondary form:
                             </p>
                         </div>
+                        <ul class="list-disc ml-12 mt-1 text-gray-300 space-y-1">
+                            <li><strong>Volunteer:</strong> Provide personal information such as your name, date of birth, bio, and optionally upload a profile picture.</li>
+                            <li><strong>Organization:</strong> Enter your organization’s name, description, address, and other relevant details.</li>
+                        </ul>
+                        <!-- Step 3 -->
                         <div class="flex items-start mt-8">
-                            <ul class="list-disc ml-8 mt-1 text-gray-300">
-                                <li><strong>Volunteer:</strong> Provide personal information such as your name, date of birth, bio, and optionally upload a profile picture.</li>
-                                <li><strong>Organization:</strong> Enter your organization’s name, description, address, and other relevant details.</li>
-                            </ul>
-                        </div>
-                        <div class="flex items-start mt-8">
-                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold">3</span>
+                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold shrink-0">3</span>
                             <p class="text-lg text-gray-300 ml-4 leading-relaxed">
                                 <strong>Completion:</strong> Once all details are filled in, submit your registration to complete the process.
                             </p>
                         </div>
+                        <!-- Step 4 -->
                         <div class="flex items-start mt-8">
-                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold">4</span>
+                            <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold shrink-0">4</span>
                             <p class="text-lg text-gray-300 ml-4 leading-relaxed">
                                 <strong>Note:</strong> If you exit the process before completing the second step, your account will not be created, and you will need to start over.
                             </p>
@@ -185,7 +187,7 @@
                             {% if form.email_address.errors %}
                                 <div class="text-red-600 text-sm mt-1">
                                     {% for error in form.email_address.errors %}
-                                        <p>{{ error }}</p>
+                                        <strong>{{ error }}</strong>
                                     {% endfor %}
                                 </div>
                             {% endif %}
@@ -199,7 +201,7 @@
                             {% if form.password_1.errors %}
                                 <div class="text-red-600 text-sm mt-1">
                                     {% for error in form.password_1.errors %}
-                                        <p>{{ error }}</p>
+                                        <strong>{{ error }}</strong>
                                     {% endfor %}
                                 </div>
                             {% endif %}
@@ -213,21 +215,21 @@
                             {% if form.password_2.errors %}
                                 <div class="text-red-600 text-sm mt-1">
                                     {% for error in form.password_2.errors %}
-                                        <p>{{ error }}</p>
+                                        <strong>{{ error }}</strong>
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
                 
                         <div class="mt-4">
-                            <label for="id_user_type" class="text-gray-800 text-[15px] mb-2 block">User Type</label>
+                            <label for="id_user_type" class="text-gray-800 text-[15px] mb-2 block">Account User Type</label>
                             <div class="relative flex items-center">
                                 {{ form.user_type }}
                             </div>
                             {% if form.user_type.errors %}
                                 <div class="text-red-600 text-sm mt-1">
                                     {% for error in form.user_type.errors %}
-                                        <p>{{ error }}</p>
+                                        <strong>{{ error }}</strong>
                                     {% endfor %}
                                 </div>
                             {% endif %}
@@ -237,7 +239,7 @@
                             <label for="id_contact_number" class="text-gray-800 text-[15px] mb-2 block">Contact Number</label>
                             <div class="relative flex items-center">
                                 <!-- Prefix Dropdown -->
-                                <select name="contact_prefix" id="contact_prefix" class="w-36 text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
+                                <select name="contact_prefix" id="contact_prefix" class="w-36 text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600 mr-2">
                                     {% for code, display in country_prefixes %}
                                         <option value="{{ code }}">{{ display }}</option>
                                     {% endfor %}
@@ -247,7 +249,7 @@
                             {% if form.contact_number.errors %}
                                 <div class="text-red-600 text-sm mt-1">
                                     {% for error in form.contact_number.errors %}
-                                        <p>{{ error }}</p>
+                                        <strong>{{ error }}</strong>
                                     {% endfor %}
                                 </div>
                             {% endif %}

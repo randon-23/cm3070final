@@ -2,8 +2,6 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from .forms import AccountSignupForm, LoginForm
 from phonenumbers.data import _COUNTRY_CODE_TO_REGION_CODE
-import logging
-logger=logging.getLogger(__name__)
 
 def authentication_view(request):
     country_prefixes = [
@@ -18,16 +16,22 @@ def authentication_view(request):
             form = AccountSignupForm(request.POST)
             if form.is_valid():
                 # account = form.save(commit=False) dont need to differentiate between volunteer and organization at this stage due to change in template (from 2 into 1) all we need is the account data
-                logger.info("Account data being saved to session: %s", form.cleaned_data)
+                cleaned_data = form.cleaned_data
+
+                password = cleaned_data.pop('password_1')
+                cleaned_data.pop('password_2')
+                cleaned_data['password'] = password
                 request.session['account_data'] = form.cleaned_data
+                print(request.session['account_data'])
 
                 return redirect('signup_final')
             else:
                 return render(request, 'accounts_notifs/authentication.html', {
                     'form': form,
                     'form_type': form_type,
+                    "country_prefixes": country_prefixes,
                 })
-        elif form_type == 'login':
+        elif form_type == 'login': 
             form = LoginForm(request, data=request.POST)
             if form.is_valid():
                 username = form.cleaned_data['username']

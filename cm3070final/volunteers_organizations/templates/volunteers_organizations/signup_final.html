@@ -1,31 +1,30 @@
 {% extends 'base/base.html' %}
 {% load static %}
-{% block title %}Sign Up - Next Step{% endblock %}
+{% block title %}Sign Up{% endblock %}
 {% block content %}
+<script src="{% static 'js_frontend-scripts/signup-processes.js' %}"></script>
 <div class="font-[sans-serif]">
     <div class="grid lg:grid-cols-3 md:grid-cols-2 items-center gap-4 h-full">
-        <div class="max-md:order-1 lg:col-span-2 md:h-screen w-full bg-[#000842] md:rounded-tr-xl md:rounded-br-xl lg:p-12 p-8">
-            <h2 class="text-2xl font-bold mb-4 text-white">
-                {% if user_type == "volunteer" %}
-                    Complete Your Volunteer Profile
-                {% elif user_type == "organization" %}
-                    Complete Your Organization Profile
-                {% endif %}
-            </h2>
-            <p class="text-sm leading-6 text-white">
-                {% if user_type == "volunteer" %}
-                    Please provide your personal details to complete your volunteer profile.
-                {% elif user_type == "organization" %}
-                    Fill in your organization's details to finish setting up your account.
-                {% endif %}
-            </p>
+        <div class="max-md:order-1 lg:col-span-1 md:h-screen w-full bg-[#000842] md:rounded-tr-xl md:rounded-br-xl lg:p-12 p-8 items-center justify-center flex">
+            {% if user_type == "volunteer" %}
+                <img src="{% static 'images/volunteer.svg' %}" alt="Volunteer Illustration" class="w-full h-auto object-contain"> <!--Image obtained from undraw.co-->
+            {% elif user_type == "organization" %}
+                <img src="{% static 'images/organization.svg' %}" alt="Organization Illustration" class="w-full h-auto object-contain"> <!--Image obtained from undraw.co-->
+            {% endif %}
         </div>
 
         <div class="w-full p-6 max-md:max-w-lg mx-auto flex items-center justify-center min-h-screen lg:col-span-2">
             <div class="w-full max-w-xl">
                 {% if user_type == "volunteer" %}
-                    <form id="volunteer-form" method="post" action="{% url 'signup_final' %}" enctype="multipart/form-data">
+                    <form id="volunteer-form" method="post" action="{% url 'signup_final' %}" hx-post="{% url 'signup_final' %}" hx-target="#modal-container" hx-swap="innerHTML" enctype="multipart/form-data">
                         {% csrf_token %}
+                        <div class="mb-8">
+                            <h3 class="text-gray-800 text-3xl font-bold">Volunteer details</h3>
+                            <p class="text-sm mt-4 text-gray-800">
+                                Want to register as an organization instead?
+                                <a href="{% url 'accounts_notifs:authentication' %}?type=signup" id="return-to-signup-1" class="text-blue-600 font-semibold hover:underline ml-1 whitespace-nowrap">Return to signup</a>
+                            </p>
+                        </div>
                         <div>
                             <label for="id_first_name" class="text-gray-800 text-[15px] mb-2 block">First Name</label>
                             <div class="relative flex items-center">
@@ -68,94 +67,95 @@
                         </div>
                     </form>
                 {% elif user_type == "organization" %}
+                    <form id="organization-form" method="post" action="{% url 'signup_final' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-8">
+                            <h3 class="text-gray-800 text-3xl font-bold">Organization details</h3>
+                            <p class="text-sm mt-4 text-gray-800">
+                                Want to register as a volunteer instead?
+                                <a href="/accounts/auth?type=signup" id="return-to-signup-2" class="text-blue-600 font-semibold hover:underline ml-1 whitespace-nowrap">Return to signup</a>
+                            </p>
+                        </div>
+                        <div>
+                            <label for="id_organization_name" class="text-gray-800 text-[15px] mb-2 block">Organization Name</label>
+                            <div class="relative flex items-center">
+                                {{ form.organization_name }}
+                            </div>
+                        </div>
+                
+                        <div class="mt-4">
+                            <label for="id_organization_description" class="text-gray-800 text-[15px] mb-2 block">Organization Description</label>
+                            <div class="relative flex items-center">
+                                {{ form.organization_description }}
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="id_street_number" class="text-gray-800 text-[15px] mb-2 block">Building</label>
+                            <div class="relative flex items-center">
+                                {{ form.street_number }}
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="id_route" class="text-gray-800 text-[15px] mb-2 block">Street Name</label>
+                            <div class="relative flex items-center">
+                                {{ form.route }}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <label for="id_locality" class="text-gray-800 text-[15px] mb-2 block">Town/City</label>
+                            <div class="relative flex items-center">
+                                {{ form.locality }}
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="id_postal_code" class="text-gray-800 text-[15px] mb-2 block">Postal Code</label>
+                            <div class="relative flex items-center">
+                                {{ form.postal_code }}
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="id_state" class="text-gray-800 text-[15px] mb-2 block">State/Province</label>
+                            <div class="relative flex items-center">
+                                {{ form.state }}
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="id_country" class="text-gray-800 text-[15px] mb-2 block">Country</label>
+                            <div class="relative flex items-center">
+                                {{ form.country }}
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="id_organization_website" class="text-gray-800 text-[15px] mb-2 block">Organization Website</label>
+                            <div class="relative flex items-center">
+                                {{ form.organization_website }}
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="id_organization_profile_img" class="text-gray-800 text-[15px] mb-2 block">Organization Profile Image</label>
+                            <div class="relative flex items-center">
+                                {{ form.organization_profile_img }}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8">
+                            <button type="submit" class="w-full shadow-xl py-3 px-4 text-sm tracking-wide rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none" style="box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);">
+                                Complete Signup
+                            </button>
+                        </div>
+                    </form>
                 {% endif %}
-                <form id="organization-form" method="post" action="{% url 'signup_final' %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div>
-                        <label for="id_organization_name" class="text-gray-800 text-[15px] mb-2 block">Organization Name</label>
-                        <div class="relative flex items-center">
-                            {{ form.organization_name }}
-                        </div>
-                    </div>
-            
-                    <div class="mt-4">
-                        <label for="id_organization_description" class="text-gray-800 text-[15px] mb-2 block">Organization Description</label>
-                        <div class="relative flex items-center">
-                            {{ form.organization_description }}
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="id_street_number" class="text-gray-800 text-[15px] mb-2 block">Building</label>
-                        <div class="relative flex items-center">
-                            {{ form.street_number }}
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="id_route" class="text-gray-800 text-[15px] mb-2 block">Street Name</label>
-                        <div class="relative flex items-center">
-                            {{ form.route }}
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4">
-                        <label for="id_locality" class="text-gray-800 text-[15px] mb-2 block">Town/City</label>
-                        <div class="relative flex items-center">
-                            {{ form.locality }}
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="id_postal_code" class="text-gray-800 text-[15px] mb-2 block">Postal Code</label>
-                        <div class="relative flex items-center">
-                            {{ form.postal_code }}
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="id_postal_code" class="text-gray-800 text-[15px] mb-2 block">Postal Code</label>
-                        <div class="relative flex items-center">
-                            {{ form.postal_code }}
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="id_state" class="text-gray-800 text-[15px] mb-2 block">State/Province</label>
-                        <div class="relative flex items-center">
-                            {{ form.state }}
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="id_country" class="text-gray-800 text-[15px] mb-2 block">Country</label>
-                        <div class="relative flex items-center">
-                            {{ form.country }}
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="id_organization_website" class="text-gray-800 text-[15px] mb-2 block">Organization Website</label>
-                        <div class="relative flex items-center">
-                            {{ form.organization_website }}
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="id_organization_profile_img" class="text-gray-800 text-[15px] mb-2 block">Organization Profile Image</label>
-                        <div class="relative flex items-center">
-                            {{ form.organization_profile_img }}
-                        </div>
-                    </div>
-                    
-                    <div class="mt-8">
-                        <button type="submit" class="w-full shadow-xl py-3 px-4 text-sm tracking-wide rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none" style="box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);">
-                            Complete Signup
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
+    <div id="modal-container"></div>
 </div>
 {% endblock %}
