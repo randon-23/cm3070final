@@ -2,18 +2,23 @@ document.addEventListener("htmx:afterSwap", function (event) {
   // Check if the modal was loaded
   if (event.detail.target.id === "modal-container") {
       const modal = document.querySelector("#modal-container .modal");
+      const redirectUrl = modal.dataset.redirectUrl;
+      const countdownElement = document.getElementById("countdown");
 
       if (modal) {
           modal.classList.add("modal-open");
-            
-          const redirectUrl = modal.dataset.redirectUrl;
-
-          if (redirectUrl) {
-              setTimeout(() => {
-                  window.location.href = redirectUrl; 
-              }, 3000);
-          }
       }
+
+      let timeLeft = 3;
+      const countdown = setInterval(() => {
+          timeLeft--
+          countdownElement.textContent = timeLeft;
+
+          if (timeLeft <= 0){
+              clearInterval(countdown)
+              window.location.href = redirectUrl;
+          }
+      }, 1000)
   }
 });
 

@@ -67,7 +67,7 @@
                         </div>
                     </form>
                 {% elif user_type == "organization" %}
-                    <form id="organization-form" method="post" action="{% url 'signup_final' %}" enctype="multipart/form-data">
+                    <form id="organization-form" method="post" action="{% url 'signup_final' %}" hx-post="{% url 'signup_final' %}" hx-target="#modal-container" hx-swap="innerHTML" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="mb-8">
                             <h3 class="text-gray-800 text-3xl font-bold">Organization details</h3>
