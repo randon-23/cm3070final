@@ -21,7 +21,7 @@ def authentication_view(request):
                 password = cleaned_data.pop('password_1')
                 cleaned_data.pop('password_2')
                 cleaned_data['password'] = password
-                request.session['account_data'] = form.cleaned_data
+                request.session['account_data'] = cleaned_data
                 print(request.session['account_data'])
 
                 return redirect('signup_final')

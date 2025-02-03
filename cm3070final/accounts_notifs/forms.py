@@ -63,7 +63,6 @@ class AccountSignupForm(forms.ModelForm):
 
     def save(self, commit=False):
         account = super().save(commit=False)
-        account.set_password(self.cleaned_data['password_1'])
         # if commit:
         #     account.save() # Not committing to the database yet as we need to navigate to volunteer/organization details and collect those so to not create an Account object which is not linked to a Volunteer or Organization object
         return account

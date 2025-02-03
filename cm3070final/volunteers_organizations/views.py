@@ -20,7 +20,8 @@ def signup_final(request):
 
     if request.method=='POST' and form.is_valid():
         account = Account(**account_data)
-        account.set_password(account_data.get('password_1'))
+        print(account)
+        account.set_password(account_data.get('password'))
         account.save()
 
         user=form.save(commit=False)

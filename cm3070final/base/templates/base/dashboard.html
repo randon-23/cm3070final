@@ -1,40 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-</head>
-<body>
-    <header>
-        <h1>Welcome to Your Dashboard</h1>
-        <nav>
-            <ul>
-                <!--
-                    <li><a href="{% url 'dashboard' %}">Home</a></li>
-                    <li><a href="{% url 'profile' %}">Profile</a></li>
-                    <li><a href="{% url 'logout' %}">Logout</a></li>
-                -->
-                
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <section>
-            <h2>Overview</h2>
-            <p>This is your dashboard overview.</p>
-        </section>
-        <section>
-            <h2>Recent Activities</h2>
-            <ul>
-                <li>Activity 1</li>
-                <li>Activity 2</li>
-                <li>Activity 3</li>
-            </ul>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2023 Your Company</p>
-    </footer>
-</body>
-</html>
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<script src="{% static 'js_frontend-scripts/logout-processes.js' %}"></script>
+<h1>Welcome to Your Dashboard</h1>
+<ul>
+    <li>Home</li>
+    <li>Profile</li>
+    <li>Logout</li>
+   
+    <button 
+        hx-post="{% url 'accounts_notifs:logout' %}"
+        hx-trigger="click"
+        hx-target="#logout-modal-content"
+        hx-swap="innerHTML"
+        hx-on::after-request="console.log('HTMX request completed'); showLogoutMessage(event);"
+        hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }'
+        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+        Logout
+    </button>
+    <script>
+        document.addEventListener("htmx:afterRequest", function(event) {
+            console.log("HTMX request fired!", event);
+            showLogoutMessage(event);
+        });
+    </script>
+</ul>
+<section>
+    <h2>Overview</h2>
+    <p>This is your dashboard overview.</p>
+</section>
+<section>
+    <h2>Recent Activities</h2>
+    <ul>
+        <li>Activity 1</li>
+        <li>Activity 2</li>
+        <li>Activity 3</li>
+    </ul>
+</section>
+<!-- Modal -->
+{% include 'base/partials/logging-out-modal.html' %}
+
+{% endblock %}
