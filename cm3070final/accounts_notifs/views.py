@@ -54,3 +54,7 @@ def authentication_view(request):
         'form_type': form_type,
         "country_prefixes": country_prefixes,
     })
+
+def password_reset_view(request):
+    reset_stage = request.GET.get('reset_stage', 'request')
+    return render(request, 'accounts_notifs/password_reset.html', {'reset_stage': reset_stage})
