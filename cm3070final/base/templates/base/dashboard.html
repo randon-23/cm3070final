@@ -29,6 +29,19 @@
 <section>
     <h2>Overview</h2>
     <p>This is your dashboard overview.</p>
+    {% if user.is_authenticated %}
+        <p>Welcome, {{ user.email_address }}!</p>
+        <p>This is your contact number: {{ user.contact_number }}</p>
+        <p>This is your user_type {{ user.user_type }}</p>
+        {% if user.volunteer %}
+            <p>You are a volunteer.</p>
+            <p>Your first and last name: {{ user.volunteer.first_name }} {{ user.volunteer.last_name }}</p>
+            <p>Your dob: {{ user.volunteer.dob }}</p>
+            <p>Your bio: {{ user.volunteer.bio }}</p>
+        {% elif user.organization %}
+            <p>You are an organization.</p>
+        {% endif %}
+    {% endif %}
 </section>
 <section>
     <h2>Recent Activities</h2>

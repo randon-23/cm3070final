@@ -31,7 +31,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-SITE_ID=1
+SITE_ID=2
 
 # Application definition
 
@@ -145,6 +145,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Django Allauth configurations
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
@@ -152,7 +153,7 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_UNIQUE_EMAIL = True
 SOCIALACCOUNT_EMAIL_REQUIRED = True
 SOCIALACCOUNT_AUTO_SIGNUP = False # Disable auto sign up with social accounts due to custom sign up process
-
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 # Email configurations
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -166,13 +167,9 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 LOGIN_REDIRECT_URL = '/dashboard/' # Redirect to dashboard after login
 LOGOUT_REDIRECT_URL = 'home' # Redirect to home page after logout
 
+# Google Social Account configurations - removed ['APP'] key from the dictionary as was defined in Django admin
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'APP': {
-            'client_id': '481496395344-mu32u8juvdjv5rhi7e6ujj9stjp2bi92.apps.googleusercontent.com',
-            'secret': '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',
-            'key': ''
-        },
         'SCOPE': [
             'profile',
             'email',
@@ -182,6 +179,7 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+SOCIALACCOUNT_ADAPTER = 'accounts_notifs.adapters.GoogleSocialAccountAdapter'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
