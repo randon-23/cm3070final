@@ -150,6 +150,9 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_UNIQUE_EMAIL = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_AUTO_SIGNUP = False # Disable auto sign up with social accounts due to custom sign up process
+
 
 # Email configurations
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -160,14 +163,14 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
 # Redirect after login/logout
-LOGIN_REDIRECT_URL = 'dashboard' # Redirect to dashboard after login
+LOGIN_REDIRECT_URL = '/dashboard/' # Redirect to dashboard after login
 LOGOUT_REDIRECT_URL = 'home' # Redirect to home page after logout
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
-            'client_id': '<your-google-client-id>',
-            'secret': '<your-google-client-secret>',
+            'client_id': '481496395344-mu32u8juvdjv5rhi7e6ujj9stjp2bi92.apps.googleusercontent.com',
+            'secret': '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',
             'key': ''
         },
         'SCOPE': [
