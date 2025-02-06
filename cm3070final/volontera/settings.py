@@ -12,9 +12,13 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -27,7 +31,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-SITE_ID=1
+SITE_ID=2
 
 # Application definition
 
@@ -38,6 +42,7 @@ INSTALLED_APPS = [
     'daphne',
     'drf_yasg',
     'address',
+    'phonenumber_field',
     # Default apps
     'django.contrib.admin',
     'django.contrib.auth',
@@ -67,7 +72,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware'
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'volontera.urls'
@@ -115,6 +120,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -122,6 +130,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'accounts_notifs.validators.UserPasswordValidator'
+    }
 ]
 
 # Overrod built-in user model and implemented Custom user model
@@ -134,23 +145,31 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Django Allauth configurations
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_UNIQUE_EMAIL = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_AUTO_SIGNUP = False # Disable auto sign up with social accounts due to custom sign up process
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# Email configurations
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
 # Redirect after login/logout
-LOGIN_REDIRECT_URL = 'dashboard' # Redirect to dashboard after login
+LOGIN_REDIRECT_URL = '/dashboard/' # Redirect to dashboard after login
 LOGOUT_REDIRECT_URL = 'home' # Redirect to home page after logout
 
+# Google Social Account configurations - removed ['APP'] key from the dictionary as was defined in Django admin
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'APP': {
-            'client_id': '<your-google-client-id>',
-            'secret': '<your-google-client-secret>',
-            'key': ''
-        },
         'SCOPE': [
             'profile',
             'email',
@@ -158,16 +177,9 @@ SOCIALACCOUNT_PROVIDERS = {
         'AUTH_PARAMS': {
             'access_type': 'online',
         }
-    },
-    # 'facebook': {
-    #     'APP': {
-    #         'client_id': '<your-facebook-app-id>',
-    #         'secret': '<your-facebook-app-secret>',
-    #     },
-    #     'METHOD': 'oauth2',
-    #     'SCOPE': ['email', 'public_profile'],
-    # }
+    }
 }
+SOCIALACCOUNT_ADAPTER = 'accounts_notifs.adapters.GoogleSocialAccountAdapter'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
@@ -184,7 +196,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static')
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -199,20 +214,19 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': True,
         }
     },
     '__main__': {
         'handlers': ['console'],
-        'level': 'DEBUG',
+        'level': 'WARNING',
     }
-
 }

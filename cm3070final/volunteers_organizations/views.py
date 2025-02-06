@@ -1,42 +1,37 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from .models import Account
 from .forms import VolunteerForm, OrganizationForm
-
-def volunteer_signup(request):
-    account_data = request.session.get('account_data')
-    if not account_data:
-        return redirect('account_signup')
-    if request.method == 'POST':
-        form = VolunteerForm(request.POST)
-        if form.is_valid():
-            account=Account(**account_data)
-            account.save()
-
-            volunteer=form.save(commit=False)
-            volunteer.account=account
-            volunteer.save()
-            del request.session['account_data'] # Clearing the session data
-            return redirect('login')
-    else:
-        form = VolunteerForm()
-    return render(request, 'volunteer_organization/volunteer_signup.html', {'form': form})
-
-def organization_signup(request):
-    account_data=request.session.get('account_data')
-    if not account_data:
-        return redirect('account_signup')
-    if request.method == 'POST':
-        form = OrganizationForm(request.POST)
-        if form.is_valid():
-            account=Account(**account_data)
-            account.save()
-
-            organization=form.save(commit=False)
-            organization.account=account
-            organization.save()
-            del request.session['account_data']
-            return redirect('login')
-    else:
-        form = OrganizationForm()
-    return render(request, 'volunteer_organization/organization_signup.html', {'form': form})
     
+def signup_final(request):
+    account_data=request.session.get('account_data')
+
+    if not account_data:
+        return redirect('accounts_notifs:authentication', type='signup')
+    
+    user_type=account_data.get('user_type')
+    form=None
+
+    if user_type=='volunteer':
+        form=VolunteerForm(request.POST or None)
+    elif user_type=='organization':
+        form=OrganizationForm(request.POST or None)
+
+    if request.method=='POST' and form.is_valid():
+        account = Account(**account_data)
+        print(account)
+        account.set_password(account_data.get('password'))
+        account.save()
+
+        user=form.save(commit=False)
+        user.account=account
+        user.save()
+        request.session.pop('account_data', None)
+
+        return render(request, 'volunteers_organizations/partials/signup_success_modal.html', status=200)
+    
+    return render(request, 'volunteers_organizations/signup_final.html', {
+        'form': form,
+        'user_type': user_type
+    })

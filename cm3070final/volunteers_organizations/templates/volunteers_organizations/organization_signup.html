@@ -1,7 +1,0 @@
-<form method="post" action="{% url 'organization_signup' %}">
-    {% csrf_token %}
-    <div>
-        {{form.as_p}}
-    </div>
-    <button type="submit" class="btn btn-primary">Sign Up</button>
-</form>
