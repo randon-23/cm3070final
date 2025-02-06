@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
-from .forms import AccountSignupForm, LoginForm
+from django.contrib.auth.hashers import make_password
+from .forms import AccountSignupForm, LoginForm, AccountSignupFormSSO
 from phonenumbers.data import _COUNTRY_CODE_TO_REGION_CODE
 
 def authentication_view(request):
@@ -13,24 +14,48 @@ def authentication_view(request):
 
     if request.method == 'POST':
         if form_type == 'signup':
-            form = AccountSignupForm(request.POST)
-            if form.is_valid():
-                # account = form.save(commit=False) dont need to differentiate between volunteer and organization at this stage due to change in template (from 2 into 1) all we need is the account data
-                cleaned_data = form.cleaned_data
+            # Google Email is stored in session if user is redirected from Google login
+            google_email = request.session.get('google_email', None)
+            print(google_email)
+            if not google_email:
+                form = AccountSignupForm(request.POST)
+                if form.is_valid():
+                    # account = form.save(commit=False) dont need to differentiate between volunteer and organization at this stage due to change in template (from 2 into 1) all we need is the account data
+                    cleaned_data = form.cleaned_data
 
-                password = cleaned_data.pop('password_1')
-                cleaned_data.pop('password_2')
-                cleaned_data['password'] = password
-                request.session['account_data'] = cleaned_data
-                print(request.session['account_data'])
+                    password = cleaned_data.pop('password_1')
+                    cleaned_data.pop('password_2')
+                    cleaned_data['password'] = password
+                    request.session['account_data'] = cleaned_data
+                    print(request.session['account_data'])
 
-                return redirect('signup_final')
+                    return redirect('signup_final')
+                else:
+                    return render(request, 'accounts_notifs/authentication.html', {
+                        'form': form,
+                        'form_type': form_type,
+                        "country_prefixes": country_prefixes,
+                    })
             else:
-                return render(request, 'accounts_notifs/authentication.html', {
-                    'form': form,
-                    'form_type': form_type,
-                    "country_prefixes": country_prefixes,
-                })
+                print('hello')
+                form = AccountSignupFormSSO(request.POST)
+                if form.is_valid():
+                    print('salam')
+                    cleaned_data = form.cleaned_data
+                    cleaned_data['email_address'] = google_email
+                    cleaned_data['password'] = make_password(None)
+
+                    request.session['account_data'] = cleaned_data
+                    print(request.session['account_data'])
+
+                    return redirect('signup_final')
+                else:
+                    print('fail lol')
+                    return render(request, 'accounts_notifs/authentication.html', {
+                        'form': form,
+                        'form_type': form_type,
+                        "country_prefixes": country_prefixes,
+                    })
         elif form_type == 'login': 
             form = LoginForm(request, data=request.POST)
             if form.is_valid():

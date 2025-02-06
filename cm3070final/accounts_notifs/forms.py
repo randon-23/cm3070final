@@ -66,6 +66,46 @@ class AccountSignupForm(forms.ModelForm):
         # if commit:
         #     account.save() # Not committing to the database yet as we need to navigate to volunteer/organization details and collect those so to not create an Account object which is not linked to a Volunteer or Organization object
         return account
+    
+class AccountSignupFormSSO(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(AccountSignupFormSSO, self).__init__(*args, **kwargs)
+        for fieldname, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': 'w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600',
+                'placeholder': field.label + ' (Required)' if field.required else field.label
+            })
+            field.label = ''
+            
+    email_address = forms.EmailField(required=True,label='Your Email')
+    user_type = forms.ChoiceField(choices=LIMITED_USER_TYPE_CHOICES, required=True, label='User Type')
+    contact_number = forms.CharField(required=True, label='Contact Number', widget=forms.TextInput(attrs={
+            'type': 'tel',       
+            'pattern': '[0-9]*',          
+            'inputmode': 'numeric',       
+        }))
+
+    class Meta:
+        model = Account
+        fields = ['email_address', 'user_type', 'contact_number']
+
+    def clean_contact_number(self):
+        prefix = self.data.get('contact_prefix')
+        number = self.cleaned_data.get('contact_number')
+
+        if not prefix or not number:
+            raise forms.ValidationError("Please enter a valid contact number")
+        if not number.isdigit():
+            raise forms.ValidationError("Please enter a valid contact number")
+        full_contact_number = f"{prefix}{number}"
+        if not full_contact_number.startswith('+'):
+            raise forms.ValidationError("Please enter a valid contact number")
+        
+        return full_contact_number
+
+    def save(self, commit=False):
+        account = super().save(commit=False)
+        return account
 
 class LoginForm(AuthenticationForm):
     # Password field automatically included and validated
