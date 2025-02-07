@@ -2,7 +2,7 @@ from .base import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['volontera.app.com']
+ALLOWED_HOSTS = ['volontera.app.com', '34.175.6.80']
 
 DATABASES = {
     'default': {
