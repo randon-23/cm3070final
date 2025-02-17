@@ -37,20 +37,16 @@ def authentication_view(request):
                         "country_prefixes": country_prefixes,
                     })
             else:
-                print('hello')
                 form = AccountSignupFormSSO(request.POST)
                 if form.is_valid():
-                    print('salam')
                     cleaned_data = form.cleaned_data
                     cleaned_data['email_address'] = google_email
                     cleaned_data['password'] = make_password(None)
 
                     request.session['account_data'] = cleaned_data
-                    print(request.session['account_data'])
 
                     return redirect('signup_final')
                 else:
-                    print('fail lol')
                     return render(request, 'accounts_notifs/authentication.html', {
                         'form': form,
                         'form_type': form_type,
