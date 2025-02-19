@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
 from .models import Account
 from .forms import VolunteerForm, OrganizationForm
     
@@ -35,3 +36,12 @@ def signup_final(request):
         'form': form,
         'user_type': user_type
     })
+
+@login_required
+def profile_view(request, account_uuid):
+
+    is_own_profile = request.user.account.uuid == account_uuid
+
+    
+
+    return render(request, 'volunteers_organizations/profile.html')

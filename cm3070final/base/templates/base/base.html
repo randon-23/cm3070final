@@ -8,20 +8,15 @@
         <meta name="author" content="Adam Randon">
         <!-- Include HTMX -->
         <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
         <link href="{% static 'css/output.css' %}" rel="stylesheet">
         <title>{% block title %}Volontera{% endblock %}</title>
     </head>
     <body>
-        <!-- Navbar -->
-        <header>
-            <nav>
-                <!-- Add navigation links here -->
-            </nav>
-        </header>
-
         <!-- Main content -->
         <main>
-            {% block content %} {% endblock %}
+            {% block content %}
+            {% endblock %}
         </main>
     </body>
 </html>

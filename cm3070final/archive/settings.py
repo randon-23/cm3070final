@@ -164,7 +164,7 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
 # Redirect after login/logout
-LOGIN_REDIRECT_URL = '/dashboard/' # Redirect to dashboard after login
+LOGIN_REDIRECT_URL = '/profile/' # Redirect to profile page after login
 LOGOUT_REDIRECT_URL = 'home' # Redirect to home page after logout
 
 # Google Social Account configurations - removed ['APP'] key from the dictionary as was defined in Django admin
