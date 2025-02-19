@@ -16,7 +16,6 @@ def authentication_view(request):
         if form_type == 'signup':
             # Google Email is stored in session if user is redirected from Google login
             google_email = request.session.get('google_email', None)
-            print(google_email)
             if not google_email:
                 form = AccountSignupForm(request.POST)
                 if form.is_valid():
@@ -37,20 +36,16 @@ def authentication_view(request):
                         "country_prefixes": country_prefixes,
                     })
             else:
-                print('hello')
                 form = AccountSignupFormSSO(request.POST)
                 if form.is_valid():
-                    print('salam')
                     cleaned_data = form.cleaned_data
                     cleaned_data['email_address'] = google_email
                     cleaned_data['password'] = make_password(None)
 
                     request.session['account_data'] = cleaned_data
-                    print(request.session['account_data'])
 
                     return redirect('signup_final')
                 else:
-                    print('fail lol')
                     return render(request, 'accounts_notifs/authentication.html', {
                         'form': form,
                         'form_type': form_type,
@@ -64,7 +59,7 @@ def authentication_view(request):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     login(request, user)
-                    return redirect('dashboard')
+                    return redirect('profile', account_uuid=user.account.uuid)
                 else:
                     form.add_error(None, 'Invalid email address or password')
             else:

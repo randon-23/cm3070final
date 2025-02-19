@@ -164,7 +164,7 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
 # Redirect after login/logout
-LOGIN_REDIRECT_URL = '/dashboard/' # Redirect to dashboard after login
+LOGIN_REDIRECT_URL = '/profile/' # Redirect to profile page after login
 LOGOUT_REDIRECT_URL = 'home' # Redirect to home page after logout
 
 # Google Social Account configurations - removed ['APP'] key from the dictionary as was defined in Django admin
@@ -206,7 +206,7 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-GOOGLE_API_KEY='AIzaSyA29sFn-7vH4j5JSlu89gQ86QUdvjHbCCA'
+GOOGLE_API_KEY=env('GOOGLE_API_KEY')
 
 # Logging - Console logging for development and production environment
 LOGGING = {

@@ -1,0 +1,88 @@
+{% extends 'base/base_authenticated.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block auth_content %}
+    <button onclick="toggleSidebar()" class="md:hidden bg-gray-700 text-white p-2 rounded mb-4">
+        ☰ Menu
+    </button>
+
+    <!-- Profile Card -->
+    <div class="bg-white p-6 rounded-lg shadow-lg flex items-center space-x-6">
+        <div class="grid grid-cols-3 gap-6 items-center w-full">
+            <!-- Profile Image -->
+            <div class="flex justify-center">
+                {% if user.volunteer %}
+                    {% if user.volunteer.profile_img %}
+                        <img class="w-64 h-64 rounded-full object-cover" src="{{ user.volunteer.profile_img.url }}" alt="Profile Picture">
+                    {% else %}
+                        <img class="w-64 h-64 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
+                    {% endif %}
+                {% elif user.organization %}
+                    {% if user.organization.organization_profile_img %}
+                        <img class="w-64 h-64 rounded-full object-cover" src="{{ user.organization.organization_profile_img.url }}" alt="Profile Picture">
+                    {% else %}
+                        <img class="w-64 h-64 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Profile Details -->
+            <div class="col-span-2 flex flex-col space-y-2">
+                {% if user.volunteer %}
+                    <h1 class="text-xl font-semibold">{{ user.volunteer.first_name }} {{ user.volunteer.last_name }}</h1>
+                    <p class="text-gray-700">User Type: <strong>{{ user.user_type }}</strong></p>
+                    <p class="text-gray-700">Email: <strong>{{ user.email_address }}</strong></p>
+                    <p class="text-gray-700">Contact Number: <strong>{{ user.contact_number }}</strong></p>
+                    <p class="text-gray-700">Location: <strong>San Francisco, CA</strong></p>
+                    <p class="text-gray-700">Bio: <strong>{{ user.volunteer.bio }}</strong></p>
+                    <p class="text-gray-700">Date of Birth: <strong>{{ user.volunteer.dob }}</strong></p>
+                    <p class="text-gray-700">Followers: <strong>{{ user.volunteer.followers }}</strong></p>
+                {% elif user.organization %}
+                    <h1 class="text-xl font-semibold">{{ user.organization.name }}</h1>
+                    <p class="text-gray-700">User Type: <strong>{{ user.user_type }}</strong></p>
+                    <p class="text-gray-700">Email: <strong>{{ user.email_address }}</strong></p>
+                    <p class="text-gray-700">Contact Number: <strong>{{ user.contact_number }}</strong></p>
+                    <p class="text-gray-700">Organization Description: <strong>{{ user.organization.organization_description }}</strong></p>
+                    <p class="text-gray-700">Organization Address: <strong>{{ user.organization.organization_address }}</strong></p>
+                    <p class="text-gray-700">Organization Website: <strong>{{ user.organization.organization_website }}</strong></p>
+                    <p class="text-gray-700">Followers: <strong>{{ user.organization.followers }}</strong></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="grid grid-cols-2 gap-6 mt-6">
+        <div class="bg-white p-4 rounded-lg shadow-md text-center">
+            <p class="text-2xl font-bold">248</p>
+            <p class="text-gray-500">Total Hours</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-md text-center">
+            <p class="text-2xl font-bold">12</p>
+            <p class="text-gray-500">Organizations</p>
+        </div>
+    </div>
+
+    <!-- Endorsements -->
+    <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+        <h2 class="text-lg font-semibold mb-4">Endorsements</h2>
+        <div class="space-y-4">
+            <div class="flex items-center space-x-4">
+                <img class="w-12 h-12 rounded-full" src="https://i.pravatar.cc/100?img=3" alt="">
+                <div>
+                    <h3 class="font-semibold">John Smith</h3>
+                    <p class="text-sm text-gray-500">Project Manager, Green Earth Initiative</p>
+                    <p class="text-gray-700">Sarah has been an exceptional volunteer, showing great dedication and leadership in our conservation projects.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <img class="w-12 h-12 rounded-full" src="https://i.pravatar.cc/100?img=5" alt="">
+                <div>
+                    <h3 class="font-semibold">Maria Rodriguez</h3>
+                    <p class="text-sm text-gray-500">Volunteer Coordinator, Local Food Bank</p>
+                    <p class="text-gray-700">Always reliable and brings positive energy to every project. A true asset to our organization.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
