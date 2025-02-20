@@ -20,7 +20,7 @@ from .serializers import VolunteerSerializer, OrganizationSerializer
 @permission_classes([IsAuthenticated])
 def get_user_profile(request, account_uuid):
     try:
-        account = Account.objects.get(uuid=account_uuid)
+        account = Account.objects.get(account_uuid=account_uuid)
     except Account.DoesNotExist:
         return Response({'message': 'Account not found'},status=status.HTTP_404_NOT_FOUND)
     

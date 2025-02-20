@@ -8,9 +8,9 @@
 
     <!-- Profile Card -->
     <div class="bg-white p-6 rounded-lg shadow-lg flex items-center space-x-6">
-        <div class="grid grid-cols-3 gap-6 items-center w-full">
+        <div class="grid grid-cols-5 gap-6 items-center w-full place-items-center relative">
             <!-- Profile Image -->
-            <div class="flex justify-center">
+            <div class="flex justify-center relative">
                 {% if is_own_profile %}
                     {% if user.volunteer %}
                         {% if user.volunteer.profile_img %}
@@ -42,23 +42,60 @@
                 {% endif %}
             </div>
 
-            <!-- Profile Details -->
-            <div class="col-span-2 flex flex-col space-y-2">
+            <!--Name Section-->
+            <div class="flex flex-col justify-center text-center relative">
                 {% if is_own_profile %}
                     {% if user.volunteer %}
-                        <h1 class="text-xl font-semibold">{{ user.volunteer.first_name }} {{ user.volunteer.last_name }}</h1>
+                        <h1 class="text-4xl font-bold">{{ user.volunteer.first_name }}</h1>
+                        <h1 class="text-4xl font-bold">{{ user.volunteer.last_name }}</h1>
+                    {% elif user.organization %}
+                        <h1 class="text-4xl font-bold">{{ user.organization.name }}</h1>
+                    {% endif %}
+                {% else %}
+                    {% if user_profile.volunteer %}
+                        <h1 class="text-4xl font-bold">{{ user_profile.volunteer.first_name }}</h1>
+                        <h1 class="text-4xl font-bold">{{ user_profile.volunteer.last_name }}</h1>
+                    {% elif user_profile.organization %}
+                        <h1 class="text-4xl font-bold">{{ user_profile.organization.organization_name }}</h1>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Profile Details -->
+            <!--Column 1-->
+            <div class="flex flex-col justify-center text-center space-y-2 relative">
+                {% if is_own_profile %}
+                    {% if user.volunteer %}
                         <p class="text-gray-700">User Type: <strong>{{ user.user_type }}</strong></p>
                         <p class="text-gray-700">Email: <strong>{{ user.email_address }}</strong></p>
                         <p class="text-gray-700">Contact Number: <strong>{{ user.contact_number }}</strong></p>
+                    {% elif user.organization %}
+                        <p class="text-gray-700">User Type: <strong>{{ user.user_type }}</strong></p>
+                        <p class="text-gray-700">Email: <strong>{{ user.email_address }}</strong></p>
+                        <p class="text-gray-700">Contact Number: <strong>{{ user.contact_number }}</strong></p>
+                    {% endif %}
+                {% else %}
+                    {% if user_profile.volunteer %}
+                        <p class="text-gray-700">User Type: <strong>{{ user_profile.account.user_type }}</strong></p>
+                        <p class="text-gray-700">Email: <strong>{{ user_profile.account.email_address }}</strong></p>
+                        <p class="text-gray-700">Contact Number: <strong>{{ user_profile.account.contact_number }}</strong></p>
+                    {% elif user_profile.organization %}
+                        <p class="text-gray-700">User Type: <strong>{{ user_profile.account.user_type }}</strong></p>
+                        <p class="text-gray-700">Email: <strong>{{ user_profile.account.email_address }}</strong></p>
+                        <p class="text-gray-700">Contact Number: <strong>{{ user_profile.account.contact_number }}</strong></p>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!--Column 2-->
+            <div class="flex flex-col justify-center text-center space-y-2 relative">
+                {% if is_own_profile %}
+                    {% if user.volunteer %}
                         <p class="text-gray-700">Location: <strong>San Francisco, CA</strong></p>
                         <p class="text-gray-700">Bio: <strong>{{ user.volunteer.bio }}</strong></p>
                         <p class="text-gray-700">Date of Birth: <strong>{{ user.volunteer.dob }}</strong></p>
                         <p class="text-gray-700">Followers: <strong>{{ user.volunteer.followers }}</strong></p>
                     {% elif user.organization %}
-                        <h1 class="text-xl font-semibold">{{ user.organization.name }}</h1>
-                        <p class="text-gray-700">User Type: <strong>{{ user.user_type }}</strong></p>
-                        <p class="text-gray-700">Email: <strong>{{ user.email_address }}</strong></p>
-                        <p class="text-gray-700">Contact Number: <strong>{{ user.contact_number }}</strong></p>
                         <p class="text-gray-700">Organization Description: <strong>{{ user.organization.organization_description }}</strong></p>
                         <p class="text-gray-700">Organization Address: <strong>{{ user.organization.organization_address }}</strong></p>
                         <p class="text-gray-700">Organization Website: <strong>{{ user.organization.organization_website }}</strong></p>
@@ -66,19 +103,11 @@
                     {% endif %}
                 {% else %}
                     {% if user_profile.volunteer %}
-                        <h1 class="text-xl font-semibold">{{ user_profile.volunteer.first_name }} {{ user_profile.volunteer.last_name }}</h1>
-                        <p class="text-gray-700">User Type: <strong>{{ user_profile.account.user_type }}</strong></p>
-                        <p class="text-gray-700">Email: <strong>{{ user_profile.account.email_address }}</strong></p>
-                        <p class="text-gray-700">Contact Number: <strong>{{ user_profile.account.contact_number }}</strong></p>
                         <p class="text-gray-700">Location: <strong>San Francisco, CA</strong></p>
                         <p class="text-gray-700">Bio: <strong>{{ user_profile.volunteer.bio }}</strong></p>
                         <p class="text-gray-700">Date of Birth: <strong>{{ user_profile.volunteer.dob }}</strong></p>
                         <p class="text-gray-700">Followers: <strong>{{ user_profile.volunteer.followers }}</strong></p>
                     {% elif user_profile.organization %}
-                        <h1 class="text-xl font-semibold">{{ user_profile.organization.organization_name }}</h1>
-                        <p class="text-gray-700">User Type: <strong>{{ user_profile.account.user_type }}</strong></p>
-                        <p class="text-gray-700">Email: <strong>{{ user_profile.account.email_address }}</strong></p>
-                        <p class="text-gray-700">Contact Number: <strong>{{ user_profile.account.contact_number }}</strong></p>
                         <p class="text-gray-700">Organization Description: <strong>{{ user_profile.organization.organization_description }}</strong></p>
                         <p class="text-gray-700">Organization Address: <strong>{{ user_profile.organization.organization_address }}</strong></p>
                         <p class="text-gray-700">Organization Website: <strong>{{ user_profile.organization.organization_website }}</strong></p>
@@ -86,26 +115,33 @@
                     {% endif %}
                 {% endif %}
             </div>
+
+            <!-- Edit Profile Button (Only for Own Profile) / Follow Button-->
+            <div class="w-full flex justify-center items-center relative">
+                {% if is_own_profile %}
+                    <button class="w-full mx-4 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                        </svg>                          
+                        <span class="font-bold">Edit Profile</span>
+                    </button>   
+                {% else %}
+                    <button class="w-full mx-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>                          
+                        <span class="font-bold">Follow</span>
+                    </button>
+                {% endif %}
+            </div>
+                
+            <!-- Separators (Tailwind using `after:` pseudo-elements) -->
+            <div class="absolute top-1/2 left-[20%] w-[1px] bg-gray-300 h-[75%] transform -translate-y-1/2"></div>
+            <div class="absolute top-1/2 left-[40%] w-[1px] bg-gray-300 h-[75%] transform -translate-y-1/2"></div>
+            <div class="absolute top-1/2 left-[60%] w-[1px] bg-gray-300 h-[75%] transform -translate-y-1/2"></div>
+            <div class="absolute top-1/2 left-[80%] w-[1px] bg-gray-300 h-[75%] transform -translate-y-1/2"></div>
         </div>
     </div>
-
-    <!-- Show Edit Button for Own Profile -->
-    {% if is_own_profile %}
-        <div class="mt-4 text-center">
-            <a href= "#" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                Edit Profile
-            </a>
-        </div>
-    {% endif %}
-
-    <!-- Show Follow Button for Other Users -->
-    {% if not is_own_profile %}
-        <div class="mt-4 text-center">
-            <button class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                Follow
-            </button>
-        </div>
-    {% endif %}
 
     <!-- Stats Section -->
     <div class="grid grid-cols-2 gap-6 mt-6">
@@ -119,24 +155,77 @@
         </div>
     </div>
 
-    <!-- Endorsements -->
-    <div class="bg-white p-6 rounded-lg shadow-md mt-6">
-        <h2 class="text-lg font-semibold mb-4">Endorsements</h2>
-        <div class="space-y-4">
-            <div class="flex items-center space-x-4">
-                <img class="w-12 h-12 rounded-full" src="https://i.pravatar.cc/100?img=3" alt="">
-                <div>
-                    <h3 class="font-semibold">John Smith</h3>
-                    <p class="text-sm text-gray-500">Project Manager, Green Earth Initiative</p>
-                    <p class="text-gray-700">Sarah has been an exceptional volunteer, showing great dedication and leadership in our conservation projects.</p>
+    <!-- Two column layour for endorsements & contributions and status updates -->
+    <div class="grid grid-cols-2 gap-6 mt-6 items-start">
+        <!-- Status Updates (Left Side) -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h1 class="text-lg text-center font-bold mb-2">Status Updates</h1>
+            <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
+            <div class="space-y-4">
+                <div class="border-l-4 border-blue-500 pl-4">
+                    <p class="text-gray-700"><strong>Adam Randon</strong> completed an 8-hour volunteering shift at the Local Food Bank.</p>
+                    <p class="text-sm text-gray-500">2 hours ago</p>
+                </div>
+                <div class="border-l-4 border-green-500 pl-4">
+                    <p class="text-gray-700"><strong>Sarah Lee</strong> started a new initiative for tree planting in urban areas.</p>
+                    <p class="text-sm text-gray-500">1 day ago</p>
+                </div>
+                <div class="border-l-4 border-yellow-500 pl-4">
+                    <p class="text-gray-700"><strong>John Doe</strong> reached 500 total volunteer hours milestone!</p>
+                    <p class="text-sm text-gray-500">3 days ago</p>
+                </div>
+                <div class="border-l-4 border-red-500 pl-4">
+                    <p class="text-gray-700"><strong>Real Nigga</strong> done been that nigga!</p>
+                    <p class="text-sm text-gray-500">4 days ago</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <img class="w-12 h-12 rounded-full" src="https://i.pravatar.cc/100?img=5" alt="">
-                <div>
-                    <h3 class="font-semibold">Maria Rodriguez</h3>
-                    <p class="text-sm text-gray-500">Volunteer Coordinator, Local Food Bank</p>
-                    <p class="text-gray-700">Always reliable and brings positive energy to every project. A true asset to our organization.</p>
+            <!-- "All statuses loaded" at bottom -->
+            <div class="text-center mt-4 text-sm text-gray-500">All statuses loaded</div>
+        </div>
+    
+        <!-- Right Column (Stacked Sections) -->
+        <div class="flex flex-col space-y-6">
+            <!-- Endorsements -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h1 class="text-lg text-center font-bold mb-2">Endorsements</h1>
+                <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-4">
+                        <img class="w-10 h-10 rounded-full" src="https://i.pravatar.cc/100?img=3" alt="">
+                        <div>
+                            <h3 class="font-semibold">John Smith</h3>
+                            <p class="text-sm text-gray-500">Project Manager, Green Earth Initiative</p>
+                            <p class="text-gray-700">Sarah has been an exceptional volunteer, showing great dedication and leadership in our conservation projects.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <img class="w-10 h-10 rounded-full" src="https://i.pravatar.cc/100?img=5" alt="">
+                        <div>
+                            <h3 class="font-semibold">Maria Rodriguez</h3>
+                            <p class="text-sm text-gray-500">Volunteer Coordinator, Local Food Bank</p>
+                            <p class="text-gray-700">Always reliable and brings positive energy to every project. A true asset to our organization.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Latest Contributions -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-lg text-center font-bold mb-2">Latest Contributions</h2>
+                <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
+                <div class="space-y-4">
+                    <div class="flex justify-between border-b pb-2">
+                        <p class="text-gray-700">Contributed 4 hours at Animal Shelter</p>
+                        <p class="text-gray-500 text-sm">Feb 15, 2025</p>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <p class="text-gray-700">Helped organize fundraising event</p>
+                        <p class="text-gray-500 text-sm">Feb 10, 2025</p>
+                    </div>
+                    <div class="flex justify-between">
+                        <p class="text-gray-700">Mentored new volunteers</p>
+                        <p class="text-gray-500 text-sm">Feb 5, 2025</p>
+                    </div>
                 </div>
             </div>
         </div>

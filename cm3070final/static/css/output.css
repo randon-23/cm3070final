@@ -587,12 +587,36 @@ video {
   right: 1rem;
 }
 
+.left-\[20\%\] {
+  left: 20%;
+}
+
+.left-\[40\%\] {
+  left: 40%;
+}
+
+.left-\[60\%\] {
+  left: 60%;
+}
+
+.left-\[80\%\] {
+  left: 80%;
+}
+
+.top-1\/2 {
+  top: 50%;
+}
+
 .z-50 {
   z-index: 50;
 }
 
 .col-span-2 {
   grid-column: span 2 / span 2;
+}
+
+.m-16 {
+  margin: 4rem;
 }
 
 .mx-auto {
@@ -603,6 +627,31 @@ video {
 .my-4 {
   margin-top: 1rem;
   margin-bottom: 1rem;
+}
+
+.mx-4 {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.mx-8 {
+  margin-left: 2rem;
+  margin-right: 2rem;
+}
+
+.mx-16 {
+  margin-left: 4rem;
+  margin-right: 4rem;
+}
+
+.mx-32 {
+  margin-left: 8rem;
+  margin-right: 8rem;
+}
+
+.mx-48 {
+  margin-left: 12rem;
+  margin-right: 12rem;
 }
 
 .mb-2 {
@@ -663,6 +712,30 @@ video {
 
 .mt-8 {
   margin-top: 2rem;
+}
+
+.ml-16 {
+  margin-left: 4rem;
+}
+
+.mr-16 {
+  margin-right: 4rem;
+}
+
+.mr-32 {
+  margin-right: 8rem;
+}
+
+.mr-48 {
+  margin-right: 12rem;
+}
+
+.ml-96 {
+  margin-left: 24rem;
+}
+
+.-ml-px {
+  margin-left: -1px;
 }
 
 .block {
@@ -726,6 +799,10 @@ video {
   height: 100%;
 }
 
+.h-\[75\%\] {
+  height: 75%;
+}
+
 .min-h-screen {
   min-height: 100vh;
 }
@@ -770,12 +847,56 @@ video {
   width: 100%;
 }
 
+.w-\[1px\] {
+  width: 1px;
+}
+
 .max-w-md {
   max-width: 28rem;
 }
 
 .max-w-xl {
   max-width: 36rem;
+}
+
+.max-w-48 {
+  max-width: 12rem;
+}
+
+.max-w-4xl {
+  max-width: 56rem;
+}
+
+.max-w-6xl {
+  max-width: 72rem;
+}
+
+.max-w-7xl {
+  max-width: 80rem;
+}
+
+.max-w-\[90rem\] {
+  max-width: 90rem;
+}
+
+.max-w-\[rem\] {
+  max-width: rem;
+}
+
+.max-w-\[100rem\] {
+  max-width: 100rem;
+}
+
+.max-w-\[150rem\] {
+  max-width: 150rem;
+}
+
+.max-w-\[125rem\] {
+  max-width: 125rem;
+}
+
+.max-w-\[135rem\] {
+  max-width: 135rem;
 }
 
 .flex-1 {
@@ -788,6 +909,11 @@ video {
 
 .-translate-x-full {
   --tw-translate-x: -100%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.-translate-y-1\/2 {
+  --tw-translate-y: -50%;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
@@ -811,12 +937,20 @@ video {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.grid-cols-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .flex-col {
   flex-direction: column;
 }
 
 .flex-wrap {
   flex-wrap: wrap;
+}
+
+.place-items-center {
+  place-items: center;
 }
 
 .items-start {
@@ -971,6 +1105,16 @@ video {
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
 }
 
+.bg-gray-600 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(75 85 99 / var(--tw-bg-opacity, 1));
+}
+
+.bg-gray-300 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(209 213 219 / var(--tw-bg-opacity, 1));
+}
+
 .bg-opacity-50 {
   --tw-bg-opacity: 0.5;
 }
@@ -1071,6 +1215,11 @@ video {
   line-height: 1.75rem;
 }
 
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
 .font-bold {
   font-weight: 700;
 }
@@ -1125,6 +1274,11 @@ video {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+
+.text-black {
+  --tw-text-opacity: 1;
+  color: rgb(0 0 0 / var(--tw-text-opacity, 1));
 }
 
 .shadow-lg {
@@ -1188,6 +1342,16 @@ video {
   background-color: transparent;
 }
 
+.hover\:bg-gray-700:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(55 65 81 / var(--tw-bg-opacity, 1));
+}
+
+.hover\:bg-gray-600:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(75 85 99 / var(--tw-bg-opacity, 1));
+}
+
 .hover\:text-blue-500:hover {
   --tw-text-opacity: 1;
   color: rgb(59 130 246 / var(--tw-text-opacity, 1));
@@ -1226,6 +1390,14 @@ video {
     margin-left: 24rem;
   }
 
+  .md\:ml-64 {
+    margin-left: 16rem;
+  }
+
+  .md\:ml-48 {
+    margin-left: 12rem;
+  }
+
   .md\:hidden {
     display: none;
   }
@@ -1249,6 +1421,18 @@ video {
 
   .md\:rounded-tr-xl {
     border-top-right-radius: 0.75rem;
+  }
+
+  .md\:pl-96 {
+    padding-left: 24rem;
+  }
+
+  .md\:pl-1 {
+    padding-left: 0.25rem;
+  }
+
+  .md\:pl-\[26rem\] {
+    padding-left: 26rem;
   }
 }
 

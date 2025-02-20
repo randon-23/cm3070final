@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Account
 from .api import get_user_profile
 from .forms import VolunteerForm, OrganizationForm
+import json
     
 def signup_final(request):
     account_data=request.session.get('account_data')
@@ -47,5 +48,5 @@ def profile_view(request, account_uuid):
         if user_profile.status_code==404:
             context['message'] = 'Profile not found'
         else:
-            context['user_profile'] = user_profile.data
+            context['user_profile'] = json.loads(user_profile.content)
     return render(request, 'volunteers_organizations/profile.html', context)
