@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .models import Account
+from .api import get_user_profile
 from .forms import VolunteerForm, OrganizationForm
     
 def signup_final(request):
@@ -39,9 +40,12 @@ def signup_final(request):
 
 @login_required
 def profile_view(request, account_uuid):
-
-    is_own_profile = request.user.account.uuid == account_uuid
-
-    
-
-    return render(request, 'volunteers_organizations/profile.html')
+    is_own_profile = request.user.account_uuid == account_uuid
+    context ={'is_own_profile': is_own_profile}
+    if not is_own_profile:
+        user_profile = get_user_profile(request, account_uuid)
+        if user_profile.status_code==404:
+            context['message'] = 'Profile not found'
+        else:
+            context['user_profile'] = user_profile.data
+    return render(request, 'volunteers_organizations/profile.html', context)

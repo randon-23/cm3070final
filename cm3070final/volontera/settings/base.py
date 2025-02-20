@@ -124,10 +124,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
-# Redirect after login/logout
-LOGIN_REDIRECT_URL = '/profile/' # Redirect to profile page after login
-LOGOUT_REDIRECT_URL = 'home' # Redirect to home page after logout
-
 # Google Social Account configurations - removed ['APP'] key from the dictionary as was defined in Django admin
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -141,6 +137,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 SOCIALACCOUNT_ADAPTER = 'accounts_notifs.adapters.GoogleSocialAccountAdapter'
+# Redirect after login/logout
+LOGIN_REDIRECT_URL = 'volunteers_organizations:profile'
+LOGOUT_REDIRECT_URL = 'home' # Redirect to home page after logout
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/

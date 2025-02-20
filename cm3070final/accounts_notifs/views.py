@@ -28,7 +28,7 @@ def authentication_view(request):
                     request.session['account_data'] = cleaned_data
                     print(request.session['account_data'])
 
-                    return redirect('signup_final')
+                    return redirect('volunteers_organizations:signup_final')
                 else:
                     return render(request, 'accounts_notifs/authentication.html', {
                         'form': form,
@@ -44,7 +44,7 @@ def authentication_view(request):
 
                     request.session['account_data'] = cleaned_data
 
-                    return redirect('signup_final')
+                    return redirect('volunteers_organizations:signup_final')
                 else:
                     return render(request, 'accounts_notifs/authentication.html', {
                         'form': form,
@@ -59,7 +59,7 @@ def authentication_view(request):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     login(request, user)
-                    return redirect('profile', account_uuid=user.account.uuid)
+                    return redirect('volunteers_organizations:profile', account_uuid=user.account_uuid)
                 else:
                     form.add_error(None, 'Invalid email address or password')
             else:
