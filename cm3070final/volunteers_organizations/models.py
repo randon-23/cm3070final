@@ -14,7 +14,7 @@ class Volunteer(models.Model):
     followers = models.IntegerField(default=0)
     
     def clean(self):
-        if self.dob > now().date():
+        if self.dob is not None and self.dob > now().date():
             raise ValidationError("Date of birth cannot be in the future.")
 
     def save(self, *args, **kwargs):

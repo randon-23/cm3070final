@@ -32,7 +32,7 @@ class TestVolunteerForm(TestCase):
         self.assertIn('first_name', form.errors)
 
     def test_form_invalid_with_invalid_dob(self):
-        self.valid_data['dob'] = date(1899,1,1)
+        self.valid_data['dob'] = date(2026,1,1)
         form = VolunteerForm(data=self.valid_data)
         self.assertFalse(form.is_valid())
         self.assertIn('dob', form.errors)
