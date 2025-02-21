@@ -1,6 +1,6 @@
 from django.db import models
 from accounts_notifs.models import Account
-from datetime import datetime
+from django.utils.timezone import now
 from django.core.exceptions import ValidationError
 
 class Volunteer(models.Model):
@@ -13,6 +13,10 @@ class Volunteer(models.Model):
     volontera_points = models.IntegerField(default=0)
     followers = models.IntegerField(default=0)
     
+    def clean(self):
+        if self.dob > now().date():
+            raise ValidationError("Date of birth cannot be in the future.")
+
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)

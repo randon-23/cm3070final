@@ -12,12 +12,14 @@ def create_common_objects():
     volunteer_account = Account.objects.create(
         email_address='test_email_vol@tester.com',
         password='testerpassword',
-        user_type='volunteer'
+        user_type='volunteer',
+        contact_number="+35612345678"
     )
     organization_account = Account.objects.create(
         email_address='test_email_org@tester.com',
         password='testerpassword',
-        user_type='organization'
+        user_type='organization',
+        contact_number="+35612345679"
     )
     return volunteer_account, organization_account
 

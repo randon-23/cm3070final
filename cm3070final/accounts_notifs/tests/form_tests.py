@@ -51,6 +51,9 @@ class TestAccountSignupForm(TestCase):
         form = AccountSignupForm(data=self.valid_data)
         self.assertTrue(form.is_valid())
         account = form.save(commit=False)
+        # Setting paszword is done separately in signup_final so needed to add it here for tests sake
+        account.set_password(self.valid_data['password_1'])
+        account.save()
         self.assertEqual(account.email_address, self.valid_data['email_address'])
         self.assertTrue(account.check_password(self.valid_data['password_1']))
         self.assertEqual(account.contact_number, f"{self.valid_data['contact_prefix']}{self.valid_data['contact_number']}")

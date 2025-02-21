@@ -13,12 +13,14 @@ def create_common_objects():
     volunteer_account = Account.objects.create(
         email_address='test_email_vol@tester.com',
         password='testerpassword',
-        user_type='volunteer'
+        user_type='volunteer',
+        contact_number='+1234567890'
     )
     organization_account = Account.objects.create(
         email_address='test_email_org@tester.com',
         password='testerpassword',
-        user_type='organization'
+        user_type='organization',
+        contact_number='+0987654321'
     )
     return volunteer_account, organization_account
 
@@ -45,13 +47,15 @@ class TestVolunteerModel(TestCase):
         self.assertEqual(volunteer.followers, 0)
 
     def test_create_volunteer_dob_future(self):
+        volunteer = Volunteer(
+            account=self.volunteer_account,
+            first_name="John",
+            last_name="Doe",
+            dob=date(2026, 1, 1), 
+        )
+
         with self.assertRaises(ValidationError):
-            Volunteer.objects.create(
-                account=self.volunteer_account,
-                first_name="John",
-                last_name="Doe",
-                dob=date(2022, 1, 1),
-            )
+            volunteer.full_clean() 
 
     def test_volunteer_account_association_uniqueness(self):
         #Creating a volunteer
@@ -409,12 +413,14 @@ class TestMembershipModel(TestCase):
         cls.volunteer_account_1 = Account.objects.create_user(
             email_address="volunteer1@test.com",
             password="password123",
-            user_type="volunteer"
+            user_type="volunteer",
+            contact_number="+1234567890"
         )
         cls.volunteer_account_2 = Account.objects.create_user(
             email_address="volunteer2@test.com",
             password="password123",
-            user_type="volunteer"
+            user_type="volunteer",
+            contact_number="+0987654321"
         )
         cls.volunteer_1 = Volunteer.objects.create(
             account=cls.volunteer_account_1,
@@ -432,7 +438,8 @@ class TestMembershipModel(TestCase):
         cls.organization_account = Account.objects.create_user(
             email_address="organization@test.com",
             password="password123",
-            user_type="organization"
+            user_type="organization",
+            contact_number="+23499876652"
         )
         cls.organization = Organization.objects.create(
             account=cls.organization_account,

@@ -93,6 +93,14 @@
 
             <!-- Main Content for Authenticated Users -->
             <main class="flex-1 p-6 mx-auto max-w-[135rem] md:pl-[26rem]">
+                <!-- Search Bar -->
+                <div class="relative w-full max-w-2xl mx-auto mb-6">
+                    <input type="text" placeholder="Search for volunteers and organizations..."
+                        class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm">
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path>
+                    </svg>
+                </div>
                 {% block auth_content %}
                 {% endblock %}
             </main>
