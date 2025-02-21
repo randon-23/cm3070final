@@ -265,7 +265,7 @@ class TestOrganizationModel(TestCase):
         self.organization.organization_address = new_address
         self.organization.save()
 
-        self.assertEqual(self.organization.organization_address, new_address)
+        self.assertEqual(self.organization.organization_address['raw'], new_address)
 
 
 class TestFollowingModel(TestCase):
