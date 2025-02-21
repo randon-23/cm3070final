@@ -13,6 +13,13 @@ class OrganizationSerializer(serializers.ModelSerializer):
         fields = ["organization_name", "organization_description", "organization_address", "organization_website", "organization_profile_img", "followers"]
 
 class FollowingCreateSerializer(serializers.ModelSerializer):
+    followed_volunteer = serializers.PrimaryKeyRelatedField(
+        queryset=Volunteer.objects.all(), required=False, allow_null=True
+    )
+    followed_organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all(), required=False, allow_null=True
+    )
+
     class Meta:
         model = Following
         fields = ['follower', 'followed_volunteer', 'followed_organization', 'created_at']
@@ -21,14 +28,21 @@ class FollowingCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         follower = self.context['request'].user
 
-        if data.get('followed_volunteer') and data.get('followed_organization'):
+        followed_volunteer = data.get('followed_volunteer')
+        followed_organization = data.get('followed_organization')
+
+        if not followed_volunteer and not followed_organization:
+            raise serializers.ValidationError("You must follow either a volunteer or an organization.")
+        
+        if followed_volunteer and followed_organization:
             raise serializers.ValidationError("Cannot follow both a volunteer and an organization.")
-        
-        if follower == data.get('followed_volunteer') or follower == data.get('followed_organization'):
-            raise serializers.ValidationError("Cannot follow yourself")
-        
+            
         if follower.is_organization():
             raise serializers.ValidationError("Organizations cannot follow")
+        
+        if follower.volunteer:
+            if follower.volunteer == followed_volunteer or follower.volunteer == followed_organization:
+                raise serializers.ValidationError("Cannot follow yourself")
         
         return data
     

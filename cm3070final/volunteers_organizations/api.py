@@ -67,7 +67,7 @@ def get_all_followers(request, account_uuid):
 
         follower_count = followers.count()
 
-        return Response({'followers': follower_count}, safe=False)
+        return Response({'followers': follower_count})
     else:
         return Response({'message': 'Method not allowed'},status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -87,7 +87,7 @@ def get_following(request, account_uuid):
             followed_organization=followed_account.organization if followed_account.is_organization() else None
         ).exists() # Returns True if exists, False otherwise
 
-        return Response({'is_following': is_following}, safe=False)
+        return Response({'is_following': is_following})
     else:
         return Response({'message': 'Method not allowed'},status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
