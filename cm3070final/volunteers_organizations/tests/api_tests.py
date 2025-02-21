@@ -117,7 +117,7 @@ class TestFollowUnfollowAPITestCase(APITestCase):
         url = reverse('volunteers_organizations:delete_following', args=[self.followed_volunteer.account_uuid])
         response = self.client.delete(url)
         
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Check that the Following object was deleted
         self.assertFalse(Following.objects.filter(pk=following.pk).exists())

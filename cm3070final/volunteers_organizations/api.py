@@ -109,7 +109,13 @@ def create_following(request, account_uuid):
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+            followers_count = Following.objects.filter(
+                models.Q(followed_volunteer=followed_volunteer) |
+                models.Q(followed_organization=followed_organization)
+            ).count()
+
+            return Response({'message': 'Followed successfully', 'followers_count': followers_count, "is_following": True}, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:
@@ -140,6 +146,11 @@ def delete_following(request, account_uuid):
         
         following.delete()
 
-        return Response({'message': 'Following deleted'}, status=status.HTTP_204_NO_CONTENT)
+        followers_count = Following.objects.filter(
+            models.Q(followed_volunteer=followed_volunteer) |
+            models.Q(followed_organization=followed_organization)
+        ).count()
+
+        return Response({'message': 'Unfollowed successfully', 'followers_count': followers_count, 'is_following': False}, status=status.HTTP_200_OK)
     else:
         return Response({'message': 'Method not allowed'},status=status.HTTP_405_METHOD_NOT_ALLOWED)

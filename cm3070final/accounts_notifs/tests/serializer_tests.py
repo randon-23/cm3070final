@@ -16,6 +16,7 @@ class TestAccountSerializer(TestCase):
         serializer = AccountSerializer(instance=self.account)
         data = serializer.data
 
+        self.assertEqual(data["account_uuid"], str(self.account.account_uuid))
         self.assertEqual(data["email_address"], self.account.email_address)
         self.assertEqual(data["contact_number"], self.account.contact_number)
         self.assertEqual(data["user_type"], self.account.user_type)
