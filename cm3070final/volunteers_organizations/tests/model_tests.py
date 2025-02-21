@@ -203,24 +203,24 @@ class TestOrganizationModel(TestCase):
         self.assertEqual(self.organization.followers, 0)
 
         organization_address = self.organization.organization_address
-        self.assertEqual(organization_address.raw, self.organization_address['raw'])
-        self.assertEqual(organization_address.street_number, self.organization_address['street_number'])
-        self.assertEqual(organization_address.route, self.organization_address['route'])
-        self.assertEqual(organization_address.locality.name, self.organization_address['locality'])
-        self.assertEqual(organization_address.locality.postal_code, self.organization_address['postal_code'])
-        self.assertEqual(organization_address.locality.state.name, self.organization_address['state'])
-        self.assertEqual(organization_address.locality.state.code, self.organization_address['state_code'])
-        self.assertEqual(organization_address.locality.state.country.name, self.organization_address['country'])
-        self.assertEqual(organization_address.locality.state.country.code, self.organization_address['country_code'])
+        self.assertEqual(organization_address['raw'], self.organization_address['raw'])
+        self.assertEqual(organization_address['street_number'], self.organization_address['street_number'])
+        self.assertEqual(organization_address['route'], self.organization_address['route'])
+        self.assertEqual(organization_address['locality'], self.organization_address['locality'])
+        self.assertEqual(organization_address['postal_code'], self.organization_address['postal_code'])
+        self.assertEqual(organization_address['state'], self.organization_address['state'])
+        self.assertEqual(organization_address['state_code'], self.organization_address['state_code'])
+        self.assertEqual(organization_address['country'], self.organization_address['country'])
+        self.assertEqual(organization_address['country_code'], self.organization_address['country_code'])
 
     def test_organization_address_components(self):
-        self.assertEqual(self.organization.organization_address.street_number, '1')
-        self.assertEqual(self.organization.organization_address.locality.name, 'Northcote')
-        self.assertEqual(self.organization.organization_address.locality.postal_code, '3070')
-        self.assertEqual(self.organization.organization_address.locality.state.name, 'Victoria')
-        self.assertEqual(self.organization.organization_address.locality.state.code, 'VIC')
-        self.assertEqual(self.organization.organization_address.locality.state.country.name, 'Australia')
-        self.assertEqual(self.organization.organization_address.locality.state.country.code, 'AU')
+        self.assertEqual(self.organization.organization_address['street_number'], '1')
+        self.assertEqual(self.organization.organization_address['locality'], 'Northcote')
+        self.assertEqual(self.organization.organization_address['postal_code'], '3070')
+        self.assertEqual(self.organization.organization_address['state'], 'Victoria')
+        self.assertEqual(self.organization.organization_address['state_code'], 'VIC')
+        self.assertEqual(self.organization.organization_address['country'], 'Australia')
+        self.assertEqual(self.organization.organization_address['country_code'], 'AU')
     
     def test_organization_name_max_length(self):
         self.organization.organization_name = "A" * 101
@@ -259,9 +259,9 @@ class TestOrganizationModel(TestCase):
             organization.full_clean()
 
     def test_update_organization_address(self):
-        new_address = Address.objects.create(
-            raw="10 Second Street, Springfield, IL 62701, United States"
-        )
+        new_address = {
+            'raw': '1 Somewhere Ave, Northcote, VIC 3070, AU'
+        }
         self.organization.organization_address = new_address
         self.organization.save()
 
