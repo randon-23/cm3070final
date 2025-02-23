@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from ..models import Volunteer, Organization, Following
+from ..models import Volunteer, Organization, Following, Endorsement, StatusPost
 from ..serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer
 from accounts_notifs.models import Account
 from accounts_notifs.serializers import AccountSerializer
@@ -9,7 +9,7 @@ from django.urls import reverse
 
 Account = get_user_model()
 
-class TestFollowUnfollowAPITestCase(APITestCase):
+class TestFollowUnfollowAPI(APITestCase):
     @classmethod
     def setUpTestData(cls):
         # Create a user who will be the follower
@@ -128,3 +128,121 @@ class TestFollowUnfollowAPITestCase(APITestCase):
         response = self.client.delete(url)
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class TestEndorsementAPI(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.volunteer1 = Account.objects.create_user(
+            email_address="vol1@example.com", 
+            password="Securepass123!", 
+            user_type="volunteer",
+            contact_number="+356123456778"    
+        )
+        cls.volunteer2 = Account.objects.create_user(
+            email_address="vol2@example.com", 
+            password="Securepass123!", 
+            user_type="volunteer",
+            contact_number="+356123456779"    
+        )
+        cls.organization = Account.objects.create_user(
+            email_address="org@example.com", 
+            password="Securepass123!", 
+            user_type="organization",
+            contact_number="+356123456780"
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.volunteer1)
+
+    # Test valid endorsement from volunteer to volunteer
+    def test_create_valid_endorsement(self):
+        url = reverse('volunteers_organizations:create_endorsement', args=[self.volunteer2.account_uuid])
+        data = {"endorsement": "Great work!"}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(Endorsement.objects.filter(giver=self.volunteer1, receiver=self.volunteer2).exists())
+
+    # Test a user cannot endorse themselves
+    def test_cannot_endorse_self(self):
+        url = reverse('volunteers_organizations:create_endorsement', args=[self.volunteer1.account_uuid])
+        data = {"endorsement": "I'm amazing!"}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # Test valid endorsement from organization to volunteer
+    def test_create_valid_endorsement_org_to_volunteer(self):
+        self.client.force_authenticate(user=self.organization)
+        url = reverse('volunteers_organizations:create_endorsement', args=[self.volunteer1.account_uuid])
+        data = {"endorsement": "Reliable volunteer!"}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(Endorsement.objects.filter(giver=self.organization, receiver=self.volunteer1).exists())
+
+    # Test organizations cannot endorse each other
+    def test_organization_cannot_endorse_organization(self):
+        self.client.force_authenticate(user=self.organization)
+        url = reverse('volunteers_organizations:create_endorsement', args=[self.organization.account_uuid])
+        data = {"endorsement": "Great org!"}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # Test retrieving endorsements for a user
+    def test_get_endorsements(self):
+        Endorsement.objects.create(giver=self.volunteer1, receiver=self.volunteer2, endorsement="Hard worker!")
+        url = reverse('volunteers_organizations:get_endorsements', args=[self.volunteer2.account_uuid])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    # Test deleting an endorsement
+    def test_delete_endorsement(self):
+        endorsement = Endorsement.objects.create(giver=self.volunteer1, receiver=self.volunteer2, endorsement="Great job!")
+        url = reverse('volunteers_organizations:delete_endorsement', args=[endorsement.id])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Endorsement.objects.filter(id=endorsement.id).exists())
+
+class TestStatusPostAPI(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = Account.objects.create_user(
+            email_address="user@example.com", 
+            password="Securepass123!", 
+            user_type="volunteer",
+            contact_number="+356123456778"
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.user)
+
+    # Test valid status post creation
+    def test_create_valid_status_post(self):
+        url = reverse('volunteers_organizations:create_status_post')
+        data = {"content": "My first status update!"}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(StatusPost.objects.filter(author=self.user, content="My first status update!").exists())
+
+    # Test empty status post fails
+    def test_empty_status_post_fails(self):
+        url = reverse('volunteers_organizations:create_status_post')
+        data = {"content": ""}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # Test retrieving all status posts
+    def test_get_status_posts(self):
+        StatusPost.objects.create(author=self.user, content="Test status")
+        url = reverse('volunteers_organizations:get_status_posts', args=[self.user.account_uuid])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    # Test deleting a status post
+    def test_delete_status_post(self):
+        status_post = StatusPost.objects.create(author=self.user, content="Test status")
+        url = reverse('volunteers_organizations:delete_status_post', args=[status_post.id])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(StatusPost.objects.filter(id=status_post.id).exists())

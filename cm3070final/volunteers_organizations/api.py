@@ -169,8 +169,9 @@ def get_endorsements(request, account_uuid):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_endorsement(request, account_uuid):
-    request.data["receiver"] = account_uuid  # Inject receiver into data
-    serializer = EndorsementSerializer(data=request.data, context={"request": request})
+    data = request.data.copy()
+    data["receiver"] = account_uuid  # Inject receiver
+    serializer = EndorsementSerializer(data=data, context={"request": request})
     
     if serializer.is_valid():
         serializer.save()
@@ -181,14 +182,17 @@ def create_endorsement(request, account_uuid):
 #Delete an Endorsement
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def delete_endorsement(request, endorsement_id):
-    try:
-        endorsement = Endorsement.objects.get(id=endorsement_id, giver=request.user)
-    except Endorsement.DoesNotExist:
+def delete_endorsement(request, id):
+    endorsement = Endorsement.objects.filter(id=id).first()
+    
+    if not endorsement:
         return Response({"message": "Endorsement not found"}, status=status.HTTP_404_NOT_FOUND)
-
+    
+    if endorsement.giver != request.user:
+        return Response({"message": "You are not authorized to delete this endorsement."}, status=status.HTTP_403_FORBIDDEN)
+    
     endorsement.delete()
-    return Response({"message": "Endorsement deleted"}, status=status.HTTP_204_NO_CONTENT)
+    return Response({"message": "Endorsement deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 #Get All Status Posts for a User
 @api_view(["GET"])
@@ -213,9 +217,9 @@ def create_status_post(request):
 #Delete a Status Post
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def delete_status_post(request, status_id):
+def delete_status_post(request, id):
     try:
-        status_post = StatusPost.objects.get(id=status_id, author=request.user)
+        status_post = StatusPost.objects.get(id=id)
     except StatusPost.DoesNotExist:
         return Response({"message": "Status post not found"}, status=status.HTTP_404_NOT_FOUND)
 
