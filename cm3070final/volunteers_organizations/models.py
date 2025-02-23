@@ -2,6 +2,7 @@ from django.db import models
 from accounts_notifs.models import Account
 from django.utils.timezone import now
 from django.core.exceptions import ValidationError
+import uuid
 
 class Volunteer(models.Model):
     account = models.OneToOneField(Account, on_delete=models.CASCADE, primary_key=True)
@@ -244,6 +245,7 @@ class Membership(models.Model):
         super().save(*args, **kwargs)
 
 class Endorsement(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     giver = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='endorsement_giver')
     receiver = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='endorsement_receiver')
     endorsement = models.TextField()
@@ -258,11 +260,12 @@ class Endorsement(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
-        
+
     def __str__(self):
         return f"{self.giver.email_address} → {self.receiver.email_address}"
         
 class StatusPost(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     author = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='status_post_author')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)

@@ -50,6 +50,7 @@ def get_user_profile(request, account_uuid):
     else:
         return Response({'message': 'Method not allowed'},status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+### FOLLOWING ###
 # Get all followers of a given account    
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -154,3 +155,5 @@ def delete_following(request, account_uuid):
         return Response({'message': 'Unfollowed successfully', 'followers_count': followers_count, 'is_following': False}, status=status.HTTP_200_OK)
     else:
         return Response({'message': 'Method not allowed'},status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+### ENDORSEMENTS ###
