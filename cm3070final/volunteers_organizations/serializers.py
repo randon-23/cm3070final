@@ -1,6 +1,9 @@
 from rest_framework import serializers
-from .models import Volunteer, Organization, Following
+from .models import Volunteer, Organization, Following, Endorsement, StatusPost
 from accounts_notifs.serializers import AccountSerializer
+from django.contrib.auth import get_user_model
+
+Account = get_user_model()
 
 class VolunteerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -53,3 +56,41 @@ class FollowingCreateSerializer(serializers.ModelSerializer):
             return Following.objects.create(follower=follower, followed_volunteer=validated_data['followed_volunteer'])
         else:
             return Following.objects.create(follower=follower, followed_organization=validated_data['followed_organization'])
+        
+class EndorsementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Endorsement
+        fields = ["id", "giver", "receiver", "endorsement", "created_at"]
+        read_only_fields = ["id", "giver", "created_at"]
+
+    def validate(self, data):
+        giver = self.context["request"].user
+
+        if giver.is_organization() and data["receiver"].is_organization():
+            raise serializers.ValidationError("Organizations cannot endorse each other.")
+        
+        if giver == data["receiver"]:
+            raise serializers.ValidationError("Cannot endorse yourself.")
+        
+        return data
+
+    def create(self, validated_data):
+        giver = self.context["request"].user
+        validated_data["giver"] = giver
+        return super().create(validated_data)
+
+class StatusPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StatusPost
+        fields = ["id", "author", "content", "created_at"]
+        read_only_fields = ["id", "author", "created_at"]
+
+    def validate_content(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Status post cannot be empty.", code="blank")
+        return value
+
+    def create(self, validated_data):
+        author = self.context["request"].user
+        validated_data["author"] = author
+        return super().create(validated_data)

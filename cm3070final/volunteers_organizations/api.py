@@ -9,9 +9,9 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from accounts_notifs.models import Account
-from .models import Volunteer, Organization, Following
+from .models import Volunteer, Organization, Following, Endorsement, StatusPost
 from accounts_notifs.serializers import AccountSerializer
-from .serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer
+from .serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer
 
 
 # Designed to get both Account and related Volunteer/Organization model data
@@ -157,3 +157,67 @@ def delete_following(request, account_uuid):
         return Response({'message': 'Method not allowed'},status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
 ### ENDORSEMENTS ###
+#Get All Endorsements for a User
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_endorsements(request, account_uuid):
+    endorsements = Endorsement.objects.filter(receiver__account_uuid=account_uuid).order_by("-created_at")
+    serializer = EndorsementSerializer(endorsements, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+#Create an Endorsement
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_endorsement(request, account_uuid):
+    request.data["receiver"] = account_uuid  # Inject receiver into data
+    serializer = EndorsementSerializer(data=request.data, context={"request": request})
+    
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#Delete an Endorsement
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_endorsement(request, endorsement_id):
+    try:
+        endorsement = Endorsement.objects.get(id=endorsement_id, giver=request.user)
+    except Endorsement.DoesNotExist:
+        return Response({"message": "Endorsement not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    endorsement.delete()
+    return Response({"message": "Endorsement deleted"}, status=status.HTTP_204_NO_CONTENT)
+
+#Get All Status Posts for a User
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_status_posts(request, account_uuid):
+    status_posts = StatusPost.objects.filter(author__account_uuid=account_uuid).order_by("-created_at")
+    serializer = StatusPostSerializer(status_posts, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+#Create a Status Post
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_status_post(request):
+    serializer = StatusPostSerializer(data=request.data, context={"request": request})
+    
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#Delete a Status Post
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_status_post(request, status_id):
+    try:
+        status_post = StatusPost.objects.get(id=status_id, author=request.user)
+    except StatusPost.DoesNotExist:
+        return Response({"message": "Status post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    status_post.delete()
+    return Response({"message": "Status post deleted"}, status=status.HTTP_204_NO_CONTENT)

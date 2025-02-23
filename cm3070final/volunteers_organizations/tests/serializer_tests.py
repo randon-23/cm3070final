@@ -1,6 +1,6 @@
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
-from ..serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer
+from ..serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer
 from ..models import Volunteer, Organization, Following
 from accounts_notifs.models import Account
 from datetime import date
@@ -145,3 +145,95 @@ class TestFollowingCreateSerializer(TestCase):
         with self.assertRaises(ValidationError) as error:
             serializer.is_valid(raise_exception=True)
         self.assertIn("Organizations cannot follow", str(error.exception))
+
+class TestEndorsementSerializer(TestCase):
+    def setUp(self):
+        self.volunteer1 = Account.objects.create_user(
+            email_address="vol1@example.com",
+            password="SecurePass123!",
+            user_type="volunteer",
+            contact_number="+35699998888"
+        )
+        self.volunteer2 = Account.objects.create_user(
+            email_address="vol2@example.com",
+            password="SecurePass123!",
+            user_type="volunteer",
+            contact_number="+35688887777"
+        )
+        self.organization = Account.objects.create_user(
+            email_address="org@example.com",
+            password="SecurePass123!",
+            user_type="organization",
+            contact_number="+35677776666"
+        )
+
+        # Mock request
+        self.mock_request = Mock()
+        self.mock_request.user = self.volunteer1
+
+    def test_create_valid_endorsement_volunteer_to_volunteer(self):
+        data = {"receiver": self.volunteer2.account_uuid, "endorsement": "Hard worker!"}
+        serializer = EndorsementSerializer(data=data, context={"request": self.mock_request})
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+        endorsement = serializer.save()
+        self.assertEqual(endorsement.giver, self.volunteer1)
+        self.assertEqual(endorsement.receiver, self.volunteer2)
+        self.assertEqual(endorsement.endorsement, "Hard worker!")
+
+    def test_create_valid_endorsement_org_to_volunteer(self):
+        self.mock_request.user = self.organization
+        data = {"receiver": self.volunteer1.account_uuid, "endorsement": "Reliable volunteer!"}
+        serializer = EndorsementSerializer(data=data, context={"request": self.mock_request})
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+        endorsement = serializer.save()
+        self.assertEqual(endorsement.giver, self.organization)
+        self.assertEqual(endorsement.receiver, self.volunteer1)
+
+    def test_organization_cannot_endorse_organization(self):
+        self.mock_request.user = self.organization
+        data = {"receiver": self.organization.account_uuid, "endorsement": "Great organization!"}
+        serializer = EndorsementSerializer(data=data, context={"request": self.mock_request})
+        
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Organizations cannot endorse each other.", str(error.exception))
+
+    def test_cannot_endorse_self(self):
+        data = {"receiver": self.volunteer1.account_uuid, "endorsement": "I'm amazing!"}
+        serializer = EndorsementSerializer(data=data, context={"request": self.mock_request})
+        
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Cannot endorse yourself.", str(error.exception))
+
+class TestStatusPostSerializer(TestCase):
+    def setUp(self):
+        self.user = Account.objects.create_user(
+            email_address="user@example.com",
+            password="SecurePass123!",
+            user_type="volunteer",
+            contact_number="+35655554444"
+        )
+
+        # Mock request
+        self.mock_request = Mock()
+        self.mock_request.user = self.user
+
+    def test_create_valid_status_post(self):
+        data = {"content": "This is my first status update!"}
+        serializer = StatusPostSerializer(data=data, context={"request": self.mock_request})
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+        status_post = serializer.save()
+        self.assertEqual(status_post.author, self.user)
+        self.assertEqual(status_post.content, "This is my first status update!")
+
+    def test_create_status_post_fails_with_empty_content(self):
+        data = {"content": ""}
+        serializer = StatusPostSerializer(data=data, context={"request": self.mock_request})
+        
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("This field may not be blank.", str(error.exception))
