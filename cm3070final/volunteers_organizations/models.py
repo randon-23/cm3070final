@@ -242,3 +242,38 @@ class Membership(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+class Endorsement(models.Model):
+    giver = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='endorsement_giver')
+    receiver = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='endorsement_receiver')
+    endorsement = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if self.giver.is_organization() and self.receiver.is_organization():
+            raise ValidationError("Organizations cannot endorse each other.")
+        if self.giver == self.receiver:
+            raise ValidationError("Cannot endorse oneself.")
+    
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return f"{self.giver.email_address} → {self.receiver.email_address}"
+        
+class StatusPost(models.Model):
+    author = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='status_post_author')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if not self.content.strip():
+            raise ValidationError("Status post content cannot be empty.")
+        
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Status by {self.author.email_address} at {self.created_at}"

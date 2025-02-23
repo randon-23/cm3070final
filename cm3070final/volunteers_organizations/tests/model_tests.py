@@ -2,11 +2,10 @@ from django.test import TestCase
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group
-from ..models import Volunteer, VolunteerMatchingPreferences, Organization, Following, Membership
+from ..models import Volunteer, VolunteerMatchingPreferences, Organization, Following, Membership, Endorsement, StatusPost
 from accounts_notifs.models import Account
 from uuid import UUID
 from datetime import date
-from address.models import Address
 
 def create_common_objects():
     #Creating a volunteer account
@@ -533,3 +532,93 @@ class TestMembershipModel(TestCase):
                 organization=self.organization,
                 role='invalid_role'
             )
+
+class TestEndorsementModel(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.volunteer1 = Account.objects.create_user(
+            email_address="volunteer1@example.com",
+            password="SecurePass123!",
+            user_type="volunteer",
+            contact_number="+1234567890"
+        )
+        cls.volunteer2 = Account.objects.create_user(
+            email_address="volunteer2@example.com",
+            password="SecurePass123!",
+            user_type="volunteer",
+            contact_number="+0987654321"
+        )
+        cls.organization1 = Account.objects.create_user(
+            email_address="org1@example.com",
+            password="SecurePass123!",
+            user_type="organization",
+            contact_number="+23499876652"
+        )
+        cls.organization2 = Account.objects.create_user(
+            email_address="org2@example.com",
+            password="SecurePass123!",
+            user_type="organization",
+            contact_number="+23499876653"
+        )
+
+    def test_valid_volunteer_to_volunteer_endorsement(self):
+        endorsement = Endorsement.objects.create(
+            giver=self.volunteer1,
+            receiver=self.volunteer2,
+            endorsement="Great work!"
+        )
+        self.assertEqual(endorsement.giver, self.volunteer1)
+        self.assertEqual(endorsement.receiver, self.volunteer2)
+
+    def test_valid_organization_to_volunteer_endorsement(self):
+        endorsement = Endorsement.objects.create(
+            giver=self.organization1,
+            receiver=self.volunteer1,
+            endorsement="Awesome volunteer!"
+        )
+        self.assertEqual(endorsement.giver, self.organization1)
+        self.assertEqual(endorsement.receiver, self.volunteer1)
+
+    def test_organization_cannot_endorse_organization(self):
+        endorsement = Endorsement(
+            giver=self.organization1,
+            receiver=self.organization2,
+            endorsement="Supportive organization!"
+        )
+        with self.assertRaises(ValidationError) as e:
+            endorsement.full_clean()
+        self.assertIn("Organizations cannot endorse each other.", str(e.exception))
+
+    def test_cannot_endorse_self(self):
+        endorsement = Endorsement(
+            giver=self.volunteer1,
+            receiver=self.volunteer1,
+            endorsement="Self-endorsement!"
+        )
+        with self.assertRaises(ValidationError) as e:
+            endorsement.full_clean()
+        self.assertIn("Cannot endorse oneself.", str(e.exception))
+
+class TestStatusPostModel(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = Account.objects.create_user(
+            email_address="user@example.com",
+            password="SecurePass123!",
+            user_type="volunteer",
+            contact_number="+1234567890"
+        )
+
+    def test_create_status_post(self):
+        status = StatusPost.objects.create(
+            author=self.user,
+            content="Excited to volunteer today!"
+        )
+        self.assertEqual(status.author, self.user)
+        self.assertEqual(status.content, "Excited to volunteer today!")
+
+    def test_create_status_post_empty_content_fails(self):
+        status = StatusPost(author=self.user, content="   ")
+        with self.assertRaises(ValidationError) as e:
+            status.full_clean()
+        self.assertIn("Status post content cannot be empty.", str(e.exception))
