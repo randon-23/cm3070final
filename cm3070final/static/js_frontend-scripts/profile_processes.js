@@ -54,3 +54,25 @@ function updateFollowerCount(event) {
         console.error("Invalid JSON response:", response);
     }
 }
+
+function updateContent(event){
+    let response = event.detail.xhr.responseText;
+    try{
+        let data = JSON.parse(response);
+        console.log(data);
+        document.getElementById("loading-modal-content").innerHTML = `<p>${data.message}</p>`;
+        
+        let modal = document.getElementById("loading-modal");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+        setTimeout(() => {
+            if(event.detail.xhr.status === 201){
+                window.location.reload();
+            }
+        }
+        , 1000);
+    } catch(error){
+        console.error("Invalid JSON response:", response);
+    }
+}

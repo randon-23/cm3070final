@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .models import Account
-from .api import get_user_profile, get_following, get_all_followers
+from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements
 from .forms import VolunteerForm, OrganizationForm
 import json
     
@@ -43,6 +43,7 @@ def signup_final(request):
 def profile_view(request, account_uuid):
     is_own_profile = request.user.account_uuid == account_uuid
     context ={'is_own_profile': is_own_profile}
+
     if not is_own_profile:
         # Get user profile data
         user_profile = get_user_profile(request, account_uuid)
@@ -70,5 +71,17 @@ def profile_view(request, account_uuid):
             context['message'] = 'Followers not found'
         else:
             context['followers_count'] = followers.data
+    
+    status_posts = get_status_posts(request, account_uuid)
+    if status_posts.status_code==404:
+        context['message'] = 'Status posts not found'
+    else:
+        context['status_posts'] = status_posts.data
+
+    endorsements = get_endorsements(request, account_uuid)
+    if endorsements.status_code==404:
+        context['message'] = 'Endorsements not found'
+    else:
+        context['endorsements'] = endorsements.data
     print(context)
     return render(request, 'volunteers_organizations/profile.html', context)

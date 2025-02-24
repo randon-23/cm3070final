@@ -175,9 +175,9 @@ def create_endorsement(request, account_uuid):
     
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({"message": "Endorsement created successfully!", "data": serializer.data}, status=status.HTTP_201_CREATED)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response({"message": "Error occurred", "data": serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
 
 #Delete an Endorsement
 @api_view(["DELETE"])
@@ -210,9 +210,9 @@ def create_status_post(request):
     
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({"message": "Status post created successfully!", "data": serializer.data}, status=status.HTTP_201_CREATED)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response({"message": "Error occurred", "data": serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
 
 #Delete a Status Post
 @api_view(["DELETE"])

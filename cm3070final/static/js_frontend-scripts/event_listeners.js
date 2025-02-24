@@ -8,5 +8,11 @@ document.addEventListener("htmx:afterRequest", function(event) {
     } else if (url.includes("following")){
         console.log("Updating following count!", event);
         updateFollowerCount(event);
+    } else if(url.includes("/status/create_status_post/")){
+        console.log("Updating status post!", event);
+        updateContent(event);
+    } else if(url.includes("/endorsements/create_endorsement/")){
+        console.log("Updating endorsements!", event);
+        updateContent(event);
     }
 });

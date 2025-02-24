@@ -175,38 +175,98 @@
 
     <!-- Two column layour for endorsements & contributions and posts -->
     <div class="grid grid-cols-2 gap-6 mt-6 items-start">
-        <!-- Posts (Left Side) -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h1 class="text-lg text-center font-bold mb-2">Posts</h1>
-            <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
-            <div class="space-y-4">
-                <div class="border-l-4 border-blue-500 pl-4">
-                    <p class="text-gray-700"><strong>Adam Randon</strong> completed an 8-hour volunteering shift at the Local Food Bank.</p>
-                    <p class="text-sm text-gray-500">2 hours ago</p>
-                </div>
-                <div class="border-l-4 border-green-500 pl-4">
-                    <p class="text-gray-700"><strong>Sarah Lee</strong> started a new initiative for tree planting in urban areas.</p>
-                    <p class="text-sm text-gray-500">1 day ago</p>
-                </div>
-                <div class="border-l-4 border-yellow-500 pl-4">
-                    <p class="text-gray-700"><strong>John Doe</strong> reached 500 total volunteer hours milestone!</p>
-                    <p class="text-sm text-gray-500">3 days ago</p>
-                </div>
-                <div class="border-l-4 border-red-500 pl-4">
-                    <p class="text-gray-700"><strong>Real Nigga</strong> done been that nigga!</p>
-                    <p class="text-sm text-gray-500">4 days ago</p>
-                </div>
-            </div>
-            <!-- "All statuses loaded" at bottom -->
-            <div class="text-center mt-4 text-sm text-gray-500">All posts loaded</div>
-        </div>
-    
-        <!-- Right Column (Stacked Sections) -->
+        <!-- Left Column (Posts) -->
         <div class="flex flex-col space-y-6">
+            <!-- Create a Post (Only for Own Profile) -->
+            {% if is_own_profile %}
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-bold mb-2">Create a Post</h2>
+                <form id="status-post-form" 
+                    hx-post="{% url 'volunteers_organizations:create_status_post' %}" 
+                    hx-trigger="submit"
+                    hx-target="#status-posts-container"
+                    class="space-y-3">
+                    <textarea name="content" class="w-full p-2 border rounded" placeholder="What's on your mind?" required></textarea>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-1 text-sm rounded-md flex items-center justify-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                            </svg>                              
+                            <span class="font-bold">Post</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Posts -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h1 class="text-lg text-center font-bold mb-2">Posts</h1>
+                <div id="status-posts-container" class="w-full mb-6 space-y-4">
+                    {% for post in status_posts %}
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <p class="text-gray-700 font-bold">
+                            {% if post.author.user_type == "Volunteer" %}
+                                {{ post.author.volunteer.first_name }} {{ post.author.volunteer.last_name }}
+                            {% elif post.author.user_type == "Organization" %}
+                                {{ post.author.organization.organization_name }}
+                            {% else %}
+                                Unknown User
+                            {% endif %}
+                        </p>
+                        <p class="text-gray-500 text-sm italic">{{ post.author.user_type }}</p> 
+                        <p class="text-gray-700">{{ post.content }}</p>
+                        <p class="text-sm text-gray-500">{{ post.created_at|timesince }} ago</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center">No posts yet.</p>
+                    {% endfor %}
+                </div>
+                <!-- Show "All posts loaded" only if there are posts -->
+                {% if status_posts %}
+                <div class="text-center mt-4 text-sm text-gray-500">All posts loaded</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Right Column (Endorsements & Contributions) -->
+        <div class="flex flex-col space-y-6">
+            <!-- Create Endorsement (Only for Other Profiles) -->
+            {% if not is_own_profile %}
+                {% if user.organization and user_profile.organization %}
+                {% else %}
+                    <div class="bg-white p-4 rounded-lg shadow-md">
+                        <h2 class="text-lg font-bold mb-2">Endorse This User</h2>
+                        <form id="endorsement-form" 
+                            hx-post="{% url 'volunteers_organizations:create_endorsement' user_profile.account.account_uuid %}" 
+                            hx-trigger="submit"
+                            hx-target="#endorsements-container"
+                            class="space-y-3">
+                            <textarea name="endorsement" class="w-full p-2 border rounded" placeholder="Write an endorsement..." required></textarea>
+                            <div class="flex justify-end">
+                                <button type="submit" class="bg-green-600 text-white px-4 py-1 text-sm rounded-md">Endorse</button>
+                            </div>
+                        </form>
+                    </div>
+                {% endif %}
+            {% endif %}
+
             <!-- Endorsements -->
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h1 class="text-lg text-center font-bold mb-2">Endorsements</h1>
-                <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
+                <div id="endorsements-container" class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6 space-y-4">
+                    <!-- Container to dynamically load endorsements -->
+                    {% for endorsement in endorsements %}
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <p class="text-gray-700"><strong>{{ endorsement.giver }}</strong></p>
+                        <p class="text-gray-700">"{{ endorsement.endorsement }}"</p>
+                        <p class="text-sm text-gray-500">{{ endorsement.created_at|timesince }} ago</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center">No endorsements yet.</p>
+                    {% endfor %}
+                </div>
+                <!--REMOVE WHEN DONE-->
                 <div class="space-y-4">
                     <div class="flex items-center space-x-4">
                         <img class="w-10 h-10 rounded-full" src="https://i.pravatar.cc/100?img=3" alt="">
@@ -216,17 +276,10 @@
                             <p class="text-gray-700">Sarah has been an exceptional volunteer, showing great dedication and leadership in our conservation projects.</p>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <img class="w-10 h-10 rounded-full" src="https://i.pravatar.cc/100?img=5" alt="">
-                        <div>
-                            <h3 class="font-semibold">Maria Rodriguez</h3>
-                            <p class="text-sm text-gray-500">Volunteer Coordinator, Local Food Bank</p>
-                            <p class="text-gray-700">Always reliable and brings positive energy to every project. A true asset to our organization.</p>
-                        </div>
-                    </div>
                 </div>
+                <!--REMOVE WHEN DONE-->
             </div>
-    
+
             <!-- Latest Contributions -->
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h2 class="text-lg text-center font-bold mb-2">Latest Contributions</h2>
@@ -248,4 +301,6 @@
             </div>
         </div>
     </div>
+    <!-- Modal -->
+    {% include 'base/partials/loading_modal.html' %}
 {% endblock %}
