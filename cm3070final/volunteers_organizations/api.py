@@ -199,7 +199,7 @@ def delete_endorsement(request, id):
 @permission_classes([IsAuthenticated])
 def get_status_posts(request, account_uuid):
     status_posts = StatusPost.objects.filter(author__account_uuid=account_uuid).order_by("-created_at")
-    serializer = StatusPostSerializer(status_posts, many=True)
+    serializer = StatusPostSerializer(status_posts, many=True, context={"request": request})
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 #Create a Status Post
