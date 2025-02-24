@@ -17,7 +17,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
         fields = ["organization_name", "organization_description", "organization_address", "organization_website", "organization_profile_img", "followers"]
 
 # Serializer to get volunteer and organization data along with account data
-class AccountLiteSerializer(serializers.ModelSerializer):
+class UserDataSerializer(serializers.ModelSerializer):
     user_type = serializers.SerializerMethodField()
     volunteer = VolunteerSerializer(read_only=True)
     organization = OrganizationSerializer(read_only=True)
@@ -99,7 +99,7 @@ class EndorsementSerializer(serializers.ModelSerializer):
 
 class StatusPostSerializer(serializers.ModelSerializer):
     created_at = serializers.SerializerMethodField()
-    author = AccountLiteSerializer(read_only=True)
+    author = UserDataSerializer(read_only=True)
 
     # Convert string to datetime object
     def get_created_at(self, obj):
