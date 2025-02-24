@@ -76,11 +76,19 @@ class FollowingCreateSerializer(serializers.ModelSerializer):
             return Following.objects.create(follower=follower, followed_organization=validated_data['followed_organization'])
         
 class EndorsementSerializer(serializers.ModelSerializer):
+    created_at = serializers.SerializerMethodField()
+    giver = UserDataSerializer(read_only=True)
+
     class Meta:
         model = Endorsement
         fields = ["id", "giver", "receiver", "endorsement", "created_at"]
         read_only_fields = ["id", "giver", "created_at"]
 
+    def get_created_at(self, obj):
+        if isinstance(obj.created_at, str):
+            return parse_datetime(obj.created_at)
+        return obj.created_at
+    
     def validate(self, data):
         giver = self.context["request"].user
 

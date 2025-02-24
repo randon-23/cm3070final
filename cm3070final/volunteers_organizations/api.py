@@ -162,7 +162,7 @@ def delete_following(request, account_uuid):
 @permission_classes([IsAuthenticated])
 def get_endorsements(request, account_uuid):
     endorsements = Endorsement.objects.filter(receiver__account_uuid=account_uuid).order_by("-created_at")
-    serializer = EndorsementSerializer(endorsements, many=True)
+    serializer = EndorsementSerializer(endorsements, many=True, context={"request": request})
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 #Create an Endorsement
