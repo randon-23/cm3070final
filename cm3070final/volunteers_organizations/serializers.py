@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import Volunteer, Organization, Following, Endorsement, StatusPost
-from accounts_notifs.serializers import AccountSerializer
 from django.contrib.auth import get_user_model
+from django.utils.dateparse import parse_datetime
+from datetime import datetime
 
 Account = get_user_model()
 
@@ -14,6 +15,23 @@ class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
         fields = ["organization_name", "organization_description", "organization_address", "organization_website", "organization_profile_img", "followers"]
+
+# Serializer to get volunteer and organization data along with account data
+class AccountLiteSerializer(serializers.ModelSerializer):
+    user_type = serializers.SerializerMethodField()
+    volunteer = VolunteerSerializer(read_only=True)
+    organization = OrganizationSerializer(read_only=True)
+
+    class Meta:
+        model = Account
+        fields = ["account_uuid", "user_type", "volunteer", "organization"]
+
+    def get_user_type(self, obj):
+        if hasattr(obj, "volunteer"):
+            return "Volunteer"
+        elif hasattr(obj, "organization"):
+            return "Organization"
+        return "Unknown"
 
 class FollowingCreateSerializer(serializers.ModelSerializer):
     followed_volunteer = serializers.PrimaryKeyRelatedField(
@@ -80,6 +98,15 @@ class EndorsementSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class StatusPostSerializer(serializers.ModelSerializer):
+    created_at = serializers.SerializerMethodField()
+    author = AccountLiteSerializer(read_only=True)
+
+    # Convert string to datetime object
+    def get_created_at(self, obj):
+        if isinstance(obj.created_at, str):
+            return parse_datetime(obj.created_at)
+        return obj.created_at
+    
     class Meta:
         model = StatusPost
         fields = ["id", "author", "content", "created_at"]
