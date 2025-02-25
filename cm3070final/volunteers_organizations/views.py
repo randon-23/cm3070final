@@ -3,9 +3,10 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .models import Account
-from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements
+from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements, get_search_profiles
 from .forms import VolunteerForm, OrganizationForm
 import json
+from django.core.paginator import Paginator
     
 def signup_final(request):
     account_data=request.session.get('account_data')
@@ -85,3 +86,21 @@ def profile_view(request, account_uuid):
         context['endorsements'] = endorsements.data
     print(context)
     return render(request, 'volunteers_organizations/profile.html', context)
+
+def search_profiles_view(request):
+    search_response = get_search_profiles(request)
+
+    if search_response.status_code != 200:
+        return render(request, 'volunteers_organizations/search_profiles.html', {'message': 'Profiles not found'})
+
+    search_results = search_response.data.get("results", [])
+
+    paginator = Paginator(search_results, 10)
+    page_number = request.GET.get('page')
+    paginated_results = paginator.get_page(page_number)
+
+    return render(request, 'volunteers_organizations/search_profiles.html', {
+        'results': paginated_results,
+        'query': request.GET.get('q')
+    })
+    

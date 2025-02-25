@@ -1,5 +1,4 @@
 document.addEventListener("htmx:afterRequest", function(event) {
-
     let url = event.detail.xhr.responseURL
 
     if (url.includes("logout")){
@@ -14,5 +13,8 @@ document.addEventListener("htmx:afterRequest", function(event) {
     } else if(url.includes("/endorsements/create_endorsement/")){
         console.log("Updating endorsements!", event);
         updateContent(event);
+    } else if(url.includes("/search/get_search_profiles/")){
+        console.log("Updating search results!", event);
+        updateSearchResults(event);
     }
 });

@@ -3,6 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import models
+from django.db.models import F, Q, Value
+from django.db.models.functions import Concat
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.core.mail import send_mail
@@ -225,3 +227,35 @@ def delete_status_post(request, id):
 
     status_post.delete()
     return Response({"message": "Status post deleted"}, status=status.HTTP_204_NO_CONTENT)
+
+### SEARCH RESULTS - volunteers and organizations ###
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_search_profiles(request):
+    if request.method != "GET":
+        return Response({"message": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return Response({"results": []})
+    
+    volunteers = Volunteer.objects.annotate(
+        full_name=Concat(F("first_name"), Value(" "), F("last_name"))
+    ).filter(
+        Q(first_name__icontains=query) | 
+        Q(last_name__icontains=query) | 
+        Q(full_name__icontains=query)
+    ).select_related("account")[:10]
+
+    organizations = Organization.objects.filter(
+        Q(organization_name__icontains=query)
+    ).select_related("account")[:10]
+
+    volunteer_serializer = VolunteerSerializer(volunteers, many=True)
+    organization_serializer = OrganizationSerializer(organizations, many=True)
+
+    results = volunteer_serializer.data + organization_serializer.data
+
+    return Response({
+        "results": results
+    }, status=status.HTTP_200_OK)
