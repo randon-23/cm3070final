@@ -3,21 +3,32 @@ from .models import Volunteer, Organization, Following, Endorsement, StatusPost
 from django.contrib.auth import get_user_model
 from django.utils.dateparse import parse_datetime
 from datetime import datetime
+from django.urls import reverse
 
 Account = get_user_model()
 
 class VolunteerSerializer(serializers.ModelSerializer):
+    profile_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Volunteer
-        fields = ["first_name", "last_name", "dob", "bio", "profile_img", "followers"]
+        fields = ["first_name", "last_name", "dob", "bio", "profile_img", "followers", "profile_url"]
+
+    def get_profile_url(self, obj):
+        return reverse("volunteers_organizations:profile", kwargs={"account_uuid": obj.account.account_uuid})
 
 class OrganizationSerializer(serializers.ModelSerializer):
+    profile_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Organization
-        fields = ["organization_name", "organization_description", "organization_address", "organization_website", "organization_profile_img", "followers"]
+        fields = ["organization_name", "organization_description", "organization_address", "organization_website", "organization_profile_img", "followers", "profile_url"]
 
+    def get_profile_url(self, obj):
+        return reverse("volunteers_organizations:profile", kwargs={"account_uuid": obj.account.account_uuid})
+    
 # Serializer to get volunteer and organization data along with account data
-class UserDataSerializer(serializers.ModelSerializer):
+class UserDataSerializer(serializers.HyperlinkedModelSerializer):
     user_type = serializers.SerializerMethodField()
     volunteer = VolunteerSerializer(read_only=True)
     organization = OrganizationSerializer(read_only=True)
@@ -25,6 +36,9 @@ class UserDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ["account_uuid", "user_type", "volunteer", "organization"]
+        extra_kwargs = {
+            "url": {"view_name": "volunteers_organizations:profile", "lookup_field": "account_uuid"}
+        }
 
     def get_user_type(self, obj):
         if hasattr(obj, "volunteer"):

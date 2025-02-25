@@ -2,9 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from ..models import Volunteer, Organization, Following, Endorsement, StatusPost
-from ..serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer
 from accounts_notifs.models import Account
-from accounts_notifs.serializers import AccountSerializer
 from django.urls import reverse
 
 Account = get_user_model()
@@ -246,3 +244,78 @@ class TestStatusPostAPI(APITestCase):
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(StatusPost.objects.filter(id=status_post.id).exists())
+
+class TestSearchProfilesAPI(APITestCase):
+    def setUp(self):
+        # Set up test data
+        self.user = Account.objects.create_user(
+            email_address="testuser@example.com", 
+            password="testpassword", 
+            user_type="Volunteer",
+            contact_number="+35612345678"
+        )
+        self.client.force_authenticate(user=self.user)
+
+        # Create a volunteer
+        self.volunteer = Volunteer.objects.create(
+            account=self.user,
+            first_name="Adam",
+            last_name="Randon",
+            bio="I love volunteering!",
+            dob="1995-06-15"
+        )
+
+        # Create an organization
+        self.organization = Organization.objects.create(
+            account=Account.objects.create_user(
+                email_address="org@example.com", 
+                password="testpassword", 
+                user_type="Organization"
+            ),
+            organization_name="Helping Hands",
+            organization_description="A non-profit org",
+        )
+
+        # URL for search API
+        self.search_url = reverse("volunteers_organizations:get_search_profiles")
+
+    # Test searching a volunteer by first name
+    def test_search_volunteer_by_first_name(self):
+        response = self.client.get(self.search_url, {"q": "Adam"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(any(v["first_name"] == "Adam" for v in response.data["results"]))
+
+    # Test searching a volunteer by last name
+    def test_search_volunteer_by_last_name(self):
+        response = self.client.get(self.search_url, {"q": "Randon"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(any(v["last_name"] == "Randon" for v in response.data["results"]))
+    
+    # Test searching a volunteer by full name
+    def test_search_volunteer_by_full_name(self):
+        response = self.client.get(self.search_url, {"q": "Adam Randon"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(any(v["first_name"] == "Adam" and v["last_name"] == "Randon" for v in response.data["results"]))
+
+    # Test searching an organization by name
+    def test_search_organization_by_name(self):
+        response = self.client.get(self.search_url, {"q": "Helping Hands"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(any(org["organization_name"] == "Helping Hands" for org in response.data["results"]))
+
+    # Test that an empty search query returns an empty list
+    def test_empty_search_returns_empty_list(self):
+        response = self.client.get(self.search_url, {"q": ""})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["results"], [])
+
+    # Test that the search endpoint requires authentication
+    def test_search_requires_authentication(self):
+        self.client.logout()
+        response = self.client.get(self.search_url, {"q": "Adam"})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # Test that wrong method returns 405
+    def test_wrong_method_returns_405(self):
+        response = self.client.post(self.search_url, {"q": "Adam"})
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
