@@ -3,8 +3,10 @@ from django.contrib.auth.decorators import login_required
 from .models import Account
 from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements, get_search_profiles
 from .forms import VolunteerForm, OrganizationForm
+from .models import Volunteer, Organization
 import json
 from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404
     
 def signup_final(request):
     account_data=request.session.get('account_data')
@@ -85,6 +87,7 @@ def profile_view(request, account_uuid):
     print(context)
     return render(request, 'volunteers_organizations/profile.html', context)
 
+@login_required
 def search_profiles_view(request):
     search_response = get_search_profiles(request)
 
@@ -101,4 +104,29 @@ def search_profiles_view(request):
         'results': paginated_results,
         'query': request.GET.get('q')
     })
+
+@login_required
+def update_profile_view(request):
+    account = request.user
+
+    if account.is_volunteer():
+        instance = get_object_or_404(Volunteer, account=account)
+        form_class = VolunteerForm
+    elif account.is_organization():
+        instance = get_object_or_404(Organization, account=account)
+        form_class = OrganizationForm
+    else:
+        return redirect("volunteers_organizations:profile", account_uuid=account.account_uuid)
     
+    if request.method == "POST":
+        form = form_class(request.POST, request.FILES, instance=instance)
+        if form.is_valid():
+            form.save()
+            return redirect("volunteers_organizations:profile", account_uuid=account.account_uuid)
+    else:
+        form = form_class(instance=instance)
+    
+    return render(request, "volunteers_organizations/update_profile.html", {
+        "form": form,
+        "user_type": account.user_type
+    })

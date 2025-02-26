@@ -29,7 +29,6 @@ class VolunteerForm(forms.ModelForm):
                 'class': 'w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600',
                 'placeholder': field.label + ' (Required)' if field.required else field.label
             })
-            field.label = ''
         
     def save(self, account=None, commit=True):
         volunteer = super().save(commit=False)
@@ -62,7 +61,6 @@ class OrganizationForm(forms.ModelForm):
                 'class': 'w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600',
                 'placeholder': field.label + ' (Required)' if field.required else field.label
             })
-            field.label = ''
     
     def clean(self):
         super().clean()
