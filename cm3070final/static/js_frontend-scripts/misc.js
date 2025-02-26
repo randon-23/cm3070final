@@ -1,7 +1,3 @@
-function toggleSidebar() {
-    document.getElementById("sidebar").classList.toggle('-translate-x-full');
-}
-
 function updateSearchResults(event) {
     let response = event.detail.xhr.responseText;
     try{

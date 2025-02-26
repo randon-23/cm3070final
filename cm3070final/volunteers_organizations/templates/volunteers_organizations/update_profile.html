@@ -20,14 +20,37 @@
             {% csrf_token %}
             
             {% for field in form %}
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-semibold mb-1">{{ field.label }}</label>
+            <div class="mb-4">
+                <label class="block text-gray-700 font-semibold mb-1">{{ field.label }}</label>
+                
+                {% if field.name == "profile_img" or field.name == "organization_profile_img" %}
+                    <div class="flex flex-col space-y-2">
+                        {% if field.value %}
+                            <!-- Show the current profile picture file name -->
+                            <p class="text-sm text-gray-500">Currently: 
+                                <span class="font-semibold">{{ field.value }}</span>
+                            </p>
+                            
+                            <!-- Clear Checkbox -->
+                            <div class="flex items-center space-x-2 text-sm text-gray-600">
+                                <input type="checkbox" name="{{ field.name }}-clear" id="{{ field.id_for_label }}_clear">
+                                <label for="{{ field.id_for_label }}_clear">Clear</label>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- File input -->
+                        <input type="file" name="{{ field.name }}" id="{{ field.id_for_label }}" class="w-full text-gray-800 border rounded-md p-2">
+                    </div>
+                {% else %}
+                    <!-- Normal Fields -->
                     {{ field }}
-                    {% if field.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ field.errors.0 }}</p>
-                    {% endif %}
-                </div>
-            {% endfor %}
+                {% endif %}
+                
+                {% if field.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
 
             <!-- Buttons Container -->
             <div class="flex justify-center">
