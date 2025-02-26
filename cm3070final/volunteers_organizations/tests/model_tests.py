@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group
-from ..models import Volunteer, VolunteerMatchingPreferences, Organization, Following, Membership, Endorsement, StatusPost
+from ..models import Volunteer, VolunteerMatchingPreferences, Organization, OrganizationPreferences, Following, Membership, Endorsement, StatusPost
 from accounts_notifs.models import Account
 from uuid import UUID
 from datetime import date
@@ -266,6 +266,71 @@ class TestOrganizationModel(TestCase):
 
         self.assertEqual(self.organization.organization_address['raw'], new_address)
 
+class TestOrganizationPreferencesModel(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        _, cls.organization_account= create_common_objects()
+        cls.organization=Organization.objects.create(
+            account=cls.organization_account,
+            organization_name="Save the Earth",
+            organization_description="A non-profit dedicated to environmental conservation.",
+            organization_address={
+                'raw': '1 Somewhere Ave, Northcote, VIC 3070, AU',
+                'street_number': '1',
+                'route': 'Somewhere Ave',
+                'locality': 'Northcote',
+                'postal_code': '3070',
+                'state': 'Victoria',
+                'state_code': 'VIC',
+                'country': 'Australia',
+                'country_code': 'AU'
+            }
+        )
+
+    # Test saving a valid OrganizationPreferences instance.
+    def test_valid_organization_preferences(self):
+        preferences = OrganizationPreferences.objects.create(
+            organization=self.organization,
+            enable_volontera_point_opportunities=True,
+            volontera_points_rate=1.5
+        )
+        self.assertEqual(preferences.organization, self.organization)
+        self.assertEqual(preferences.enable_volontera_point_opportunities, True)
+        self.assertEqual(preferences.volontera_points_rate, 1.5)
+
+    # Test that enabling point opportunities without a rate raises ValidationError
+    def test_volontera_point_opportunities_enabled_without_rate(self):
+        preferences = OrganizationPreferences(
+            organization=self.organization,
+            enable_volontera_point_opportunities=True,
+            volontera_points_rate=None
+        )
+        with self.assertRaises(ValidationError) as context:
+            preferences.full_clean()
+
+        self.assertIn("If volontera point opportunities are enabled, the rate must be set.", str(context.exception))
+
+    # Test that setting a negative or zero volontera points rate raises ValidationError.
+    def test_negative_volontera_points_rate(self):
+        preferences = OrganizationPreferences(
+            organization=self.organization,
+            enable_volontera_point_opportunities=True,
+            volontera_points_rate=0
+        )
+        with self.assertRaises(ValidationError) as context:
+            preferences.full_clean()
+
+        self.assertIn("Volontera points rate must be positive.", str(context.exception))
+
+    # Test that preferences can be saved properly.
+    def test_save_organization_preferences(self):
+        preferences = OrganizationPreferences(
+            organization=self.organization,
+            enable_volontera_point_opportunities=False,
+            volontera_points_rate=2.0
+        )
+        preferences.save()
+        self.assertEqual(preferences.volontera_points_rate, 2.0)
 
 class TestFollowingModel(TestCase):
     @classmethod

@@ -108,6 +108,8 @@ class VolunteerMatchingPreferences(models.Model):
     preferred_duration = models.JSONField(default=list, blank=True)
     fields_of_interest = models.JSONField(default=list, blank=True)
     skills = models.JSONField(default=list, blank=True)
+    languages = models.JSONField(default=list, blank=True)
+    smart_matching_enabled = models.BooleanField(default=True, null=True, blank=True)
 
     def clean(self):
         super().clean()
@@ -165,6 +167,20 @@ class Organization(models.Model):
         if self.followers < 0:
             raise ValidationError("Followers cannot be negative.")
             
+class OrganizationPreferences(models.Model):
+    organization_preference_id = models.AutoField(primary_key=True)
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE)
+    enable_volontera_point_opportunities = models.BooleanField(null=True, blank=True)
+    volontera_points_rate = models.FloatField(null=True, blank=True, default=1.0)
+
+    def clean(self):
+        if self.enable_volontera_point_opportunities is not None and self.volontera_points_rate is None:
+            raise ValidationError("If volontera point opportunities are enabled, the rate must be set.")
+        if self.volontera_points_rate is not None and self.volontera_points_rate <= 0:
+            raise ValidationError("Volontera points rate must be positive.")
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
 class Following(models.Model):
     follower = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='account_following')

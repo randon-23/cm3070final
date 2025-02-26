@@ -87,19 +87,13 @@ class Account(AbstractUser):
 class AccountPreferences(models.Model):
     account = models.OneToOneField(Account, on_delete=models.CASCADE, primary_key=True)
     dark_mode = models.BooleanField(default=False)
-    smart_matching_enabled = models.BooleanField(default=True, null=True, blank=True)
-    enable_volontera_point_opportunities = models.BooleanField(null=True, blank=True)
-    volontera_points_rate = models.FloatField(null=True, blank=True, default=1.0)
+    location = models.JSONField(default=dict, blank=True)
 
+    def clean(self):
+        if not isinstance(self.location, dict):
+            raise ValidationError("Location must be a dictionary.")
+        
     def save(self, *args, **kwargs):
-        # Ensure volunteer accounts do not have point opportunities or point rates enabled these are for organizations only
-        if self.account.user_type == 'volunteer':
-            self.enable_volontera_point_opportunities = None
-            self.volontera_points_rate = None
-        # Ensure organization accounts do not have smart matching enabled as this is for volunteers only
-        if self.account.user_type == 'organization':
-            self.smart_matching_enabled = None
-            self.enable_volontera_point_opportunities = True
         super().save(*args, **kwargs)
 
 class Notification(models.Model):
