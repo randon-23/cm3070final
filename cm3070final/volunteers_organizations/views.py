@@ -67,17 +67,30 @@ def profile_view(request, account_uuid):
         else:
             context['followers_count'] = followers.data
     else:
-        # If the user is viewing their own profile, check if they are a volunteer and have not set their matching preferences
-        show_preferences_modal = False
-        if request.user.is_volunteer() and not VolunteerMatchingPreferences.objects.filter(volunteer=request.user.volunteer).exists():
-            show_preferences_modal = True
-            context['show_preferences_modal'] = show_preferences_modal
-    
         followers = get_all_followers(request, account_uuid)
         if followers.status_code==404:
             context['message'] = 'Followers not found'
         else:
             context['followers_count'] = followers.data
+        
+        # If the user is viewing their own profile, check if they are a volunteer and have not set their matching preferences
+        show_preferences_modal = False
+        if request.user.is_volunteer() and not VolunteerMatchingPreferences.objects.filter(volunteer=request.user.volunteer).exists():
+            show_preferences_modal = True
+            context['show_preferences_modal'] = show_preferences_modal
+
+            # Dynamically pass the choices to the modal preferences template
+            context["days_of_week"] = [choice[0] for choice in VolunteerMatchingPreferences.DAYS_OF_WEEK_CHOICES]
+            context["work_types"] = [choice[0] for choice in VolunteerMatchingPreferences.WORK_TYPE_CHOICES]
+            context["durations"] = [choice[0] for choice in VolunteerMatchingPreferences.DURATION_CHOICES]
+            context["fields_of_interest"] = [choice[0] for choice in VolunteerMatchingPreferences.FIELDS_OF_INTEREST_CHOICES]
+            context["skills"] = [choice[0] for choice in VolunteerMatchingPreferences.SKILLS_CHOICES]
+
+        else:
+            if request.session.get('show_preferences_modal'):
+                request.session.pop('show_preferences_modal', None)
+
+        
     
     status_posts = get_status_posts(request, account_uuid)
     if status_posts.status_code==404:

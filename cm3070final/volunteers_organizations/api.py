@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError
 from accounts_notifs.models import Account
 from .models import Volunteer, Organization, Following, Endorsement, StatusPost
 from accounts_notifs.serializers import AccountSerializer
-from .serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer
+from .serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer, VolunteerMatchingPreferencesSerializer
 
 
 # Designed to get both Account and related Volunteer/Organization model data
@@ -259,3 +259,19 @@ def get_search_profiles(request):
     return Response({
         "results": results
     }, status=status.HTTP_200_OK)
+
+### VOLUNTEER MATCHING PREFERENCES ###
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_preferences(request):
+    try:
+        volunteer = request.user.volunteer
+    except AttributeError:
+        return Response({'error': 'Only volunteers can set preferences'}, status=403)
+
+    serializer = VolunteerMatchingPreferencesSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(volunteer=volunteer)
+        request.session.pop('show_preferences_modal', None)  # Hide modal after submission
+        return Response(serializer.data, status=201)
+    return Response(serializer.errors, status=400)

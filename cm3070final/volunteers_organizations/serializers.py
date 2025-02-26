@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Volunteer, Organization, Following, Endorsement, StatusPost
+from .models import Volunteer, Organization, Following, Endorsement, StatusPost, VolunteerMatchingPreferences
 from django.contrib.auth import get_user_model
 from django.utils.dateparse import parse_datetime
 from datetime import datetime
@@ -143,3 +143,8 @@ class StatusPostSerializer(serializers.ModelSerializer):
         author = self.context["request"].user
         validated_data["author"] = author
         return super().create(validated_data)
+    
+class VolunteerMatchingPreferencesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VolunteerMatchingPreferences
+        fields = '__all__'
