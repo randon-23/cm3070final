@@ -1,0 +1,93 @@
+<!-- Event listener included here and not in event-listeners.js because event-listeners is loaded on every page, whislt this evetn listener is exclusively for profile.html page-->
+<script> 
+    document.addEventListener("DOMContentLoaded", function() {
+        setTimeout(function() {
+            document.getElementById("preferences-modal").classList.remove("hidden");
+            document.getElementById("preferences-modal").classList.add("flex");
+        }, 1500);
+    });
+</script>
+
+<div id="preferences-modal" class="fixed inset-0 items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-3/4 max-w-lg">
+        <h2 class="text-2xl font-bold">Set Your Preferences</h2>
+        <form id="preferences-form" 
+            hx-post="{% url 'volunteers_organizations:create_preferences' %}" 
+            hx-target="#modal-container" 
+            hx-swap="innerHTML"
+            class="space-y-4">
+
+            <!-- Availability -->
+            <label class="block text-gray-700 font-semibold">Availability (Days of the Week)</label>
+            <div class="grid grid-cols-3 gap-2">
+                {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="availability" value="{{ day }}" class="rounded">
+                        <span>{{ day|capfirst }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+
+            <!-- Work Type -->
+            <label class="block text-gray-700 font-semibold">Preferred Work Type</label>
+            <select name="preferred_work_types" class="w-full border rounded p-2">
+                <option value="online">Online</option>
+                <option value="in-person">In-Person</option>
+                <option value="both">Both</option>
+            </select>
+
+            <!-- Preferred Duration -->
+            <label class="block text-gray-700 font-semibold">Preferred Duration</label>
+            <div class="grid grid-cols-3 gap-2">
+                {% for duration in ['short-term', 'medium-term', 'long-term'] %}
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="preferred_duration" value="{{ duration }}" class="rounded">
+                        <span>{{ duration|capfirst }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+
+            <!-- Fields of Interest -->
+            <label class="block text-gray-700 font-semibold">Fields of Interest (Max 5)</label>
+            <div class="grid grid-cols-3 gap-2">
+                {% for field in ['education', 'health', 'environment', 'animals', 'arts', 'community', 'sports', 'technology', 'other'] %}
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="fields_of_interest" value="{{ field }}" class="rounded">
+                        <span>{{ field|capfirst }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+
+            <!-- Skills -->
+            <label class="block text-gray-700 font-semibold">Skills (Max 10)</label>
+            <div class="grid grid-cols-3 gap-2">
+                {% for skill in [
+                    'volunteer coordination', 'community outreach', 'environmental conservation', 'fundraising', 
+                    'advocacy', 'mentoring', 'counseling', 'crisis management', 'conflict resolution', 'first aid', 
+                    'teaching', 'coaching', 'event planning', 'public speaking', 'communication', 
+                    'organization', 'leadership', 'problem solving', 'teamwork', 'time management', 
+                    'writing', 'editing', 'photography', 'videography', 'social media management', 'marketing', 
+                    'research', 'translation', 'budget management', 'project management', 'food preparation', 
+                    'medical assistance', 'legal assistance', 'accounting', 'language proficiency', 
+                    'graphic design', 'web development', 'coding', 'it support', 'data analysis'
+                ] %}
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="skills" value="{{ skill }}" class="rounded">
+                        <span>{{ skill|capfirst }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-between mt-4">
+                <button type="button" class="text-gray-500 hover:text-gray-700" onclick="document.getElementById('preferences-modal').classList.add('hidden');">
+                    Skip for now
+                </button>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md">
+                    Save Preferences
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>

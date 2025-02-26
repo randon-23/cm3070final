@@ -304,6 +304,12 @@
             </div>
         </div>
     </div>
+    <!--Preferences modal-->
+    {% if show_preferences_modal %}
+        {% include 'volunteers_organizations/partials/preferences_modal.html' %}
+    {% endif %}
+    <!-- Modal Container for responses for hx-target-->
+    <div id="modal-container"></div>
     <!-- Modal -->
     {% include 'base/partials/loading_modal.html' %}
 {% endblock %}

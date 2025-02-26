@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Account
 from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements, get_search_profiles
 from .forms import VolunteerForm, OrganizationForm
-from .models import Volunteer, Organization
+from .models import Volunteer, Organization, VolunteerMatchingPreferences
 import json
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
@@ -67,6 +67,12 @@ def profile_view(request, account_uuid):
         else:
             context['followers_count'] = followers.data
     else:
+        # If the user is viewing their own profile, check if they are a volunteer and have not set their matching preferences
+        show_preferences_modal = False
+        if request.user.is_volunteer() and not VolunteerMatchingPreferences.objects.filter(volunteer=request.user.volunteer).exists():
+            show_preferences_modal = True
+            context['show_preferences_modal'] = show_preferences_modal
+    
         followers = get_all_followers(request, account_uuid)
         if followers.status_code==404:
             context['message'] = 'Followers not found'
