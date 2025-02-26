@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import signup_final, profile_view, search_profiles_view
+from .views import signup_final, profile_view, search_profiles_view#, update_profile_view
 from .api import get_user_profile, get_all_followers, get_following, create_following, delete_following, get_endorsements, create_endorsement, delete_endorsement, get_status_posts, create_status_post, delete_status_post, get_search_profiles
 
 app_name = 'volunteers_organizations'
@@ -9,6 +9,7 @@ urlpatterns = [
     path('signup_final/', signup_final, name='signup_final'),
     path('profile/<uuid:account_uuid>', profile_view, name='profile'),
     path('search_profiles/', search_profiles_view, name='search_profiles'),
+    #path('update_profile/', update_profile_view, name='update_profile'),
 
     ### REST API Endpoints ###
     # Account profile endpoints

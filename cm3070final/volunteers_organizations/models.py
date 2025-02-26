@@ -10,7 +10,7 @@ class Volunteer(models.Model):
     last_name = models.CharField(max_length=50)
     dob = models.DateField()
     bio = models.CharField(max_length=500, default='', blank=True)
-    profile_img = models.ImageField(blank=True, null=True)
+    profile_img = models.ImageField(upload_to='profile_pics/',blank=True, null=True)
     volontera_points = models.IntegerField(default=0)
     followers = models.IntegerField(default=0)
     
@@ -158,7 +158,7 @@ class Organization(models.Model):
     organization_description = models.CharField(max_length=500)
     organization_address = models.JSONField(default=dict)
     organization_website=models.URLField(blank=True, null=True)
-    organization_profile_img = models.ImageField(blank=True, null=True)
+    organization_profile_img = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     followers = models.IntegerField(default=0)
 
     def clean(self):

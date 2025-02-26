@@ -1,6 +1,4 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect
-from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .models import Account
 from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements, get_search_profiles
@@ -18,9 +16,9 @@ def signup_final(request):
     form=None
 
     if user_type=='volunteer':
-        form=VolunteerForm(request.POST or None)
+        form=VolunteerForm(request.POST, request.FILES)
     elif user_type=='organization':
-        form=OrganizationForm(request.POST or None)
+        form=OrganizationForm(request.POST, request.FILES)
 
     if request.method=='POST' and form.is_valid():
         account = Account(**account_data)
