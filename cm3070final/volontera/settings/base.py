@@ -64,6 +64,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'volunteers_organizations.context_processors.google_places_api_key'
             ],
         },
     },
@@ -161,6 +162,7 @@ USE_I18N = True
 USE_TZ = True
 
 GOOGLE_API_KEY=env('GOOGLE_API_KEY')
+GOOGLE_PLACES_API_KEY=env('GOOGLE_PLACES_API_KEY')
 
 # Logging - Console logging for development and production environment
 LOGGING = {

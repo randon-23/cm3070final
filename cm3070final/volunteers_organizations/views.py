@@ -5,6 +5,7 @@ from .api import get_user_profile, get_following, get_all_followers, get_status_
 from .forms import VolunteerForm, OrganizationForm
 from .models import Volunteer, Organization, VolunteerMatchingPreferences
 import json
+import pycountry
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
     
@@ -86,12 +87,9 @@ def profile_view(request, account_uuid):
             context["fields_of_interest"] = [choice[0] for choice in VolunteerMatchingPreferences.FIELDS_OF_INTEREST_CHOICES]
             context["skills"] = [choice[0] for choice in VolunteerMatchingPreferences.SKILLS_CHOICES]
 
-        else:
-            if request.session.get('show_preferences_modal'):
-                request.session.pop('show_preferences_modal', None)
+            languages = [(lang.alpha_2, lang.name) for lang in pycountry.languages if hasattr(lang, 'alpha_2')]
+            context["languages"] = languages
 
-        
-    
     status_posts = get_status_posts(request, account_uuid)
     if status_posts.status_code==404:
         context['message'] = 'Status posts not found'
