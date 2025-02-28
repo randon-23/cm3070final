@@ -308,6 +308,7 @@ class TestVolunteerMatchingPreferencesSerializer(TestCase):
 
     # Ensure duplicate preferences creation fails
     def test_duplicate_preferences_creation(self):
+        self.mock_request.method = "POST"
         VolunteerMatchingPreferences.objects.create(
             volunteer=self.volunteer,
             availability=["monday", "tuesday"],
@@ -375,6 +376,7 @@ class TestVolunteerMatchingPreferencesSerializer(TestCase):
 
     # Ensure duplicate volunteer preferences creation fails (with location)
     def test_duplicate_volunteer_preferences_creation_with_location(self):
+        self.mock_request.method = "POST"
         VolunteerMatchingPreferences.objects.create(
             volunteer=self.volunteer,
             availability=["monday", "tuesday"],
@@ -490,6 +492,7 @@ class TestOrganizationPreferencesSerializer(TestCase):
 
     # Ensure duplicate organization preferences creation fails
     def test_duplicate_preferences_creation(self):
+        self.mock_request.method = "POST"
         OrganizationPreferences.objects.create(
             organization=self.organization,
             enable_volontera_point_opportunities=True,

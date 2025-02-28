@@ -338,7 +338,9 @@ class TestVolunteerPreferencesAPI(APITestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.volunteer_account)
 
-        self.volunteer_preferences_url = reverse("volunteers_organizations:create_volunteer_preferences")
+        self.create_volunteer_preferences_url = reverse("volunteers_organizations:create_volunteer_preferences")
+        self.get_volunteer_preferences_url = reverse("volunteers_organizations:get_volunteer_preferences")
+        self.update_volunteer_preferences_url = reverse("volunteers_organizations:update_volunteer_preferences")
 
     # Successfully create volunteer preferences
     def test_create_volunteer_preferences_success(self):
@@ -350,7 +352,7 @@ class TestVolunteerPreferencesAPI(APITestCase):
             "skills": ["public speaking", "leadership"],
             "languages": ["English", "Spanish"]
         }
-        response = self.client.post(self.volunteer_preferences_url, data, format="json")
+        response = self.client.post(self.create_volunteer_preferences_url, data, format="json")
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(VolunteerMatchingPreferences.objects.count(), 1)
@@ -359,13 +361,13 @@ class TestVolunteerPreferencesAPI(APITestCase):
     # Attempt to create duplicate preferences (should return 409 Conflict)
     def test_create_duplicate_volunteer_preferences(self):
         VolunteerMatchingPreferences.objects.create(volunteer=self.volunteer)
-        response = self.client.post(self.volunteer_preferences_url, {}, format="json")
+        response = self.client.post(self.create_volunteer_preferences_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     # Unauthorized access should return 403 Forbidden
     def test_create_volunteer_preferences_unauthorized(self):
         self.client.logout()
-        response = self.client.post(self.volunteer_preferences_url, {}, format="json")
+        response = self.client.post(self.create_volunteer_preferences_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     # Sending invalid data should return 400 Bad Request
@@ -374,7 +376,7 @@ class TestVolunteerPreferencesAPI(APITestCase):
             "availability": "invalid_format",  # Should be a list
             "preferred_work_types": "invalid_choice"  # Should be a valid choice
         }
-        response = self.client.post(self.volunteer_preferences_url, data, format="json")
+        response = self.client.post(self.create_volunteer_preferences_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
     
     # Non-volunteer accounts should not be able to create preferences
@@ -386,12 +388,12 @@ class TestVolunteerPreferencesAPI(APITestCase):
             contact_number="+35687654321"
         )
         self.client.force_authenticate(user=regular_account)
-        response = self.client.post(self.volunteer_preferences_url, {}, format="json")
+        response = self.client.post(self.create_volunteer_preferences_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     # Sending a GET request should return 405 Method Not Allowed
     def test_wrong_method_returns_405(self):
-        response = self.client.get(self.volunteer_preferences_url)
+        response = self.client.get(self.create_volunteer_preferences_url)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     # Successfully create volunteer preferences with location
@@ -410,7 +412,7 @@ class TestVolunteerPreferencesAPI(APITestCase):
                 "formatted_address": "New York, NY, USA"
             }
         }
-        response = self.client.post(self.volunteer_preferences_url, data, format="json")
+        response = self.client.post(self.create_volunteer_preferences_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(VolunteerMatchingPreferences.objects.count(), 1)
         self.assertEqual(response.data["data"]["volunteer"], self.volunteer.pk)
@@ -421,14 +423,69 @@ class TestVolunteerPreferencesAPI(APITestCase):
         data = {
             "location": "invalid_location_format"  # Should be a dict
         }
-        response = self.client.post(self.volunteer_preferences_url, data, format="json")
+        response = self.client.post(self.create_volunteer_preferences_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # Attempt to create duplicate preferences (should return 409 Conflict)
     def test_create_duplicate_volunteer_preferences_with_location(self):
         VolunteerMatchingPreferences.objects.create(volunteer=self.volunteer, location={})
-        response = self.client.post(self.volunteer_preferences_url, {}, format="json")
+        response = self.client.post(self.create_volunteer_preferences_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+    # Test retrieving volunteer preferences (successful)
+    def test_get_volunteer_preferences_success(self):
+        VolunteerMatchingPreferences.objects.create(
+            volunteer=self.volunteer,
+            preferred_work_types="online",
+            location={"city": "New York"}
+        )
+        response = self.client.get(self.get_volunteer_preferences_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['preferred_work_types'], "online")
+
+    # Test retrieving preferences when they don't exist
+    def test_get_volunteer_preferences_not_found(self):
+        response = self.client.get(self.get_volunteer_preferences_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # Test non-volunteers cannot retrieve preferences
+    def test_non_volunteer_cannot_get_preferences(self):
+        org_account = Account.objects.create_user(email_address="org@example.com", password="testpass", user_type="organization", contact_number="+35612345679")
+        self.client.force_authenticate(user=org_account)
+        response = self.client.get(self.get_volunteer_preferences_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # Test updating volunteer preferences (successful)
+    def test_update_volunteer_preferences_success(self):
+        prefs = VolunteerMatchingPreferences.objects.create(
+            volunteer=self.volunteer,
+            preferred_work_types="online",
+            location={"city": "New York"}
+        )
+        data = {
+            "preferred_work_types": "in-person",
+            "skills": ["coding", "leadership"]
+        }
+        response = self.client.patch(self.update_volunteer_preferences_url, data, format="json")
+        prefs.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(prefs.preferred_work_types, "in-person")
+        self.assertEqual(prefs.skills, ["coding", "leadership"])
+
+    # Test updating preferences when they don't exist
+    def test_update_volunteer_preferences_not_found(self):
+        data = {
+            "preferred_work_types": "in-person"
+        }
+        response = self.client.patch(self.update_volunteer_preferences_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # Test invalid data when updating preferences
+    def test_update_volunteer_preferences_invalid_data(self):
+        VolunteerMatchingPreferences.objects.create(volunteer=self.volunteer)
+        data = {"skills": "invalid_json"}
+        response = self.client.patch(self.update_volunteer_preferences_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 class TestOrganizationPreferencesAPI(APITestCase):
     def setUp(self):
@@ -448,7 +505,9 @@ class TestOrganizationPreferencesAPI(APITestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.organization_account)
 
-        self.organization_preferences_url = reverse("volunteers_organizations:create_organization_preferences")
+        self.create_organization_preferences_url = reverse("volunteers_organizations:create_organization_preferences")
+        self.get_organization_preferences_url = reverse("volunteers_organizations:get_organization_preferences")
+        self.update_organization_preferences_url = reverse("volunteers_organizations:update_organization_preferences")
 
     # Successfully create organization preferences
     def test_create_organization_preferences_success(self):
@@ -462,7 +521,7 @@ class TestOrganizationPreferencesAPI(APITestCase):
                 "formatted_address": "New York, NY, USA"
             }
         }
-        response = self.client.post(self.organization_preferences_url, data, format="json")
+        response = self.client.post(self.create_organization_preferences_url, data, format="json")
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(OrganizationPreferences.objects.count(), 1)
@@ -471,13 +530,13 @@ class TestOrganizationPreferencesAPI(APITestCase):
     # Attempt to create duplicate preferences (should return 409 Conflict)
     def test_create_duplicate_organization_preferences(self):
         OrganizationPreferences.objects.create(organization=self.organization)
-        response = self.client.post(self.organization_preferences_url, {}, format="json")
+        response = self.client.post(self.create_organization_preferences_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     # Unauthorized access should return 403 Forbidden
     def test_create_organization_preferences_unauthorized(self):
         self.client.logout()
-        response = self.client.post(self.organization_preferences_url, {}, format="json")
+        response = self.client.post(self.create_organization_preferences_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     # Sending invalid data should return 400 Bad Request
@@ -486,19 +545,19 @@ class TestOrganizationPreferencesAPI(APITestCase):
             "volontera_points_rate": -1,  # Should be positive
             "location": "invalid_location_format"  # Should be a dict
         }
-        response = self.client.post(self.organization_preferences_url, data, format="json")
+        response = self.client.post(self.create_organization_preferences_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # Sending a GET request should return 405 Method Not Allowed
     def test_wrong_method_returns_405(self):
-        response = self.client.get(self.organization_preferences_url)
+        response = self.client.get(self.create_organization_preferences_url)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     # Successfully create organization preferences with location
     def test_create_organization_preferences_with_location_success(self):
         data = {
             "enable_volontera_point_opportunities": True,
-            "volontera_points_rate": 2.0,
+            "volontera_points_rate": 1.2,
             "location": {
                 "lat": 40.7128,
                 "lon": -74.0060,
@@ -506,7 +565,7 @@ class TestOrganizationPreferencesAPI(APITestCase):
                 "formatted_address": "New York, NY, USA"
             }
         }
-        response = self.client.post(self.organization_preferences_url, data, format="json")
+        response = self.client.post(self.create_organization_preferences_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(OrganizationPreferences.objects.count(), 1)
         self.assertEqual(response.data["data"]["organization"], self.organization.pk)
@@ -517,11 +576,60 @@ class TestOrganizationPreferencesAPI(APITestCase):
         data = {
             "location": "invalid_location_format"  # Should be a dict
         }
-        response = self.client.post(self.organization_preferences_url, data, format="json")
+        response = self.client.post(self.create_organization_preferences_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # Attempt to create duplicate preferences (should return 409 Conflict)
     def test_create_duplicate_organization_preferences_with_location(self):
         OrganizationPreferences.objects.create(organization=self.organization, location={})
-        response = self.client.post(self.organization_preferences_url, {}, format="json")
+        response = self.client.post(self.create_organization_preferences_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+    # Test retrieving organization preferences (successful)
+    def test_get_organization_preferences_success(self):
+        OrganizationPreferences.objects.create(
+            organization=self.organization,
+            enable_volontera_point_opportunities=True,
+            volontera_points_rate=1.2
+        )
+        response = self.client.get(self.get_organization_preferences_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["volontera_points_rate"], 1.2)
+
+    # Test retrieving preferences when they don't exist
+    def test_get_organization_preferences_not_found(self):
+        response = self.client.get(self.get_organization_preferences_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # Test non-organization users cannot retrieve preferences
+    def test_non_organization_cannot_get_preferences(self):
+        vol_account = Account.objects.create_user(email_address="vol@example.com", password="testpass", user_type="volunteer")
+        self.client.force_authenticate(user=vol_account)
+        response = self.client.get(self.get_organization_preferences_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # Test updating organization preferences (successful)
+    def test_update_organization_preferences_success(self):
+        prefs = OrganizationPreferences.objects.create(
+            organization=self.organization,
+            enable_volontera_point_opportunities=True,
+            volontera_points_rate=1.1
+        )
+        data = {"volontera_points_rate": 1.2}
+        response = self.client.patch(self.update_organization_preferences_url, data, format="json")
+        prefs.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(prefs.volontera_points_rate, 1.2)
+
+    # Test updating preferences when they don't exist
+    def test_update_organization_preferences_not_found(self):
+        data = {"volontera_points_rate": 3.0}
+        response = self.client.patch(self.update_organization_preferences_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # Test invalid data when updating preferences
+    def test_update_organization_preferences_invalid_data(self):
+        OrganizationPreferences.objects.create(organization=self.organization)
+        data = {"volontera_points_rate": "invalid_number"}
+        response = self.client.patch(self.update_organization_preferences_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

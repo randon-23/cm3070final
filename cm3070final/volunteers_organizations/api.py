@@ -326,12 +326,52 @@ def get_volunteer_preferences(request):
         if request.user.is_volunteer():
             preferences = VolunteerMatchingPreferences.objects.filter(volunteer__account=request.user).first()
             if preferences:
-                serializer = VolunteerMatchingPreferencesSerializer(preferences)
-                return Response({"message": "Successfully returned current volunteer preferences", "data": serializer.data}, status=status.HTTP_200_OK)
+                serializer = VolunteerMatchingPreferencesSerializer(preferences, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response({'error': 'Volunteer preferences not found'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'message': 'Volunteer preferences not found'}, status=status.HTTP_404_NOT_FOUND)
         else:
-            return Response({'error': 'Only volunteers can view volunteer preferences'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Only volunteers can view volunteer preferences'}, status=status.HTTP_403_FORBIDDEN)
+    else:
+        return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_volunteer_preferences(request):
+    if request.method == 'PATCH':
+        try:
+            volunteer = Volunteer.objects.get(account=request.user)
+        except Volunteer.DoesNotExist:
+            return Response({'error': 'Only volunteers can update preferences'}, status=status.HTTP_403_FORBIDDEN)
+        
+        preferences = VolunteerMatchingPreferences.objects.filter(volunteer=volunteer).first()
+        if not preferences:
+            return Response({'error': 'Volunteer preferences not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Convert QueryDict to JSON-compatible dictionary
+        if isinstance(request.data, QueryDict):
+            data = request.data.copy()
+            formatted_data = {}
+
+            for key, value in data.lists():
+                if key == "preferred_work_types":
+                    formatted_data[key] = value[0] if value else None
+                elif key == "location":
+                    try:
+                        formatted_data[key] = json.loads(value[0]) if isinstance(value[0], str) else value[0]
+                    except json.JSONDecodeError:
+                        return Response({'error': 'Invalid JSON for location field'}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    formatted_data[key] = value
+        else:
+            formatted_data = request.data
+        
+        serializer = VolunteerMatchingPreferencesSerializer(preferences, data=formatted_data, context={'request': request}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Successfully updated volunteer preferences", "data": serializer.data}, status=status.HTTP_200_OK)
+        
+        return Response({"message": "An error occurred updating volunteer preferences", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -387,11 +427,53 @@ def get_organization_preferences(request):
         if request.user.is_organization():
             preferences = OrganizationPreferences.objects.filter(organization__account=request.user).first()
             if preferences:
-                serializer = OrganizationPreferencesSerializer(preferences)
-                return Response({"message": "Successfully returned current organization preferences", "data": serializer.data}, status=status.HTTP_200_OK)
+                serializer = OrganizationPreferencesSerializer(preferences, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response({'error': 'Organization preferences not found'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'message': 'Organization preferences not found'}, status=status.HTTP_404_NOT_FOUND)
         else:
-            return Response({'error': 'Only organizations can view organization preferences'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Only organizations can view organization preferences'}, status=status.HTTP_403_FORBIDDEN)
+    else:
+        return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_organization_preferences(request):
+    if request.method == 'PATCH':
+        try:
+            organization = Organization.objects.get(account=request.user)
+        except Organization.DoesNotExist:
+            return Response({'error': 'Only organizations can update preferences'}, status=status.HTTP_403_FORBIDDEN)
+
+        preferences = OrganizationPreferences.objects.filter(organization=organization).first()
+        if not preferences:
+            return Response({'error': 'Organization preferences not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Convert QueryDict to JSON-compatible dictionary
+        if isinstance(request.data, QueryDict):
+            data = request.data.copy()
+            formatted_data = {}
+
+            for key, value in data.lists():
+                if key == "enable_volontera_point_opportunities":
+                    formatted_data[key] = value[0].lower() == "true"
+                elif key == "volontera_points_rate":
+                    formatted_data[key] = float(value[0]) if value else None
+                elif key == "location":
+                    try:
+                        formatted_data[key] = json.loads(value[0]) if isinstance(value[0], str) else value[0]
+                    except json.JSONDecodeError:
+                        return Response({'error': 'Invalid JSON for location field'}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    formatted_data[key] = value[0] if value else None
+        else:
+            formatted_data = request.data
+
+        serializer = OrganizationPreferencesSerializer(preferences, data=formatted_data, context={'request': request}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Successfully updated organization preferences", "data": serializer.data}, status=status.HTTP_200_OK)
+
+        return Response({"message": "An error occurred updating organization preferences", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

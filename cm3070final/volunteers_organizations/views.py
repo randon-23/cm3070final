@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Account
-from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements, get_search_profiles
+from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements, get_search_profiles, get_volunteer_preferences, get_organization_preferences
 from .forms import VolunteerForm, OrganizationForm
 from .models import Volunteer, Organization, VolunteerMatchingPreferences, OrganizationPreferences
 import json
@@ -153,5 +153,31 @@ def update_profile_view(request):
     })
 
 @login_required
-def preferences_view(request, account_uuid):
-    return render(request, "volunteers_organizations/preferences.html")
+def preferences_view(request):
+    account = request.user
+    context = {}
+    if account.is_volunteer():
+        # Dynamically pass the choices to preferences template
+        context["days_of_week"] = [choice[0] for choice in VolunteerMatchingPreferences.DAYS_OF_WEEK_CHOICES]
+        context["work_types"] = [choice[0] for choice in VolunteerMatchingPreferences.WORK_TYPE_CHOICES]
+        context["durations"] = [choice[0] for choice in VolunteerMatchingPreferences.DURATION_CHOICES]
+        context["fields_of_interest"] = [choice[0] for choice in VolunteerMatchingPreferences.FIELDS_OF_INTEREST_CHOICES]
+        context["skills"] = [choice[0] for choice in VolunteerMatchingPreferences.SKILLS_CHOICES]
+        languages = [(lang.alpha_2, lang.name) for lang in pycountry.languages if hasattr(lang, 'alpha_2')]
+        context["languages"] = languages
+
+        # Get the volunteer's preferences
+        preferences = get_volunteer_preferences(request)
+        if preferences.status_code != 200:
+            context["message"] = "Preferences not found"
+        else:
+            context['preferences'] = preferences.data
+    elif account.is_organization():
+        # Get the organization's preferences
+        preferences = get_organization_preferences(request)
+        if preferences.status_code != 200:
+            context["message"] = "Preferences not found"
+        else:
+            context['preferences'] = preferences.data
+    print(context)
+    return render(request, "volunteers_organizations/preferences.html", context)

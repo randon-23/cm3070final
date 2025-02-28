@@ -152,8 +152,10 @@ class VolunteerMatchingPreferencesSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate(self, data):
+        request = self.context['request']
         volunteer = Volunteer.objects.get(account=self.context['request'].user)  # Get account from request
-        if VolunteerMatchingPreferences.objects.filter(volunteer=volunteer).exists():
+
+        if VolunteerMatchingPreferences.objects.filter(volunteer=volunteer).exists() and request.method == 'POST':
             raise serializers.ValidationError("Volunteer Matching Preferences already exist for this volunteer.")
 
         data['volunteer'] = volunteer
@@ -201,8 +203,10 @@ class OrganizationPreferencesSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate(self, data):
+        request = self.context['request']
         organization = Organization.objects.get(account=self.context['request'].user)
-        if OrganizationPreferences.objects.filter(organization=organization).exists():
+        
+        if OrganizationPreferences.objects.filter(organization=organization).exists() and request.method == 'POST':
             raise serializers.ValidationError("Organization Preferences already exist for this organization.")
 
         data['organization'] = organization
