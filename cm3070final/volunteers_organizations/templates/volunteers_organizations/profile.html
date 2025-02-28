@@ -26,13 +26,13 @@
                 {% else %}
                     {% if user_profile.volunteer %}
                         {% if user_profile.volunteer.profile_img %}
-                            <img class="w-64 h-64 rounded-full object-cover" src="{{ user_profile.volunteer.profile_img.url }}" alt="Profile Picture">
+                            <img class="w-64 h-64 rounded-full object-cover" src="{{ user_profile.volunteer.profile_img }}" alt="Profile Picture">
                         {% else %}
                             <img class="w-64 h-64 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
                         {% endif %}
                     {% elif user_profile.organization %}
                         {% if user_profile.organization.organization_profile_img %}
-                            <img class="w-64 h-64 rounded-full object-cover" src="{{ user_profile.organization.organization_profile_img.url }}" alt="Profile Picture">
+                            <img class="w-64 h-64 rounded-full object-cover" src="{{ user_profile.organization.organization_profile_img }}" alt="Profile Picture">
                         {% else %}
                             <img class="w-64 h-64 rounded-full object-contain bg-white p-2" src="{% static 'images/default_organization.svg' %}" alt="Profile Picture">
                         {% endif %}
@@ -47,7 +47,7 @@
                         <h1 class="text-4xl font-bold">{{ user.volunteer.first_name }}</h1>
                         <h1 class="text-4xl font-bold">{{ user.volunteer.last_name }}</h1>
                     {% elif user.organization %}
-                        <h1 class="text-4xl font-bold">{{ user.organization.name }}</h1>
+                        <h1 class="text-4xl font-bold">{{ user.organization.organization_name }}</h1>
                     {% endif %}
                 {% else %}
                     {% if user_profile.volunteer %}
@@ -71,6 +71,16 @@
                         <p class="text-gray-700">User Type: <strong>{{ user.user_type }}</strong></p>
                         <p class="text-gray-700">Email: <strong>{{ user.email_address }}</strong></p>
                         <p class="text-gray-700">Contact Number: <strong>{{ user.contact_number }}</strong></p>
+                        <p class="text-gray-700">
+                            Main Location: 
+                            <strong>
+                                {% if user.organization.organizationpreferences.location.formatted_address %}
+                                    {{ user.organization.organizationpreferences.location.formatted_address }}
+                                {% else %}
+                                    Not Specified Yet
+                                {% endif %}
+                            </strong>
+                        </p>
                     {% endif %}
                 {% else %}
                     {% if user_profile.volunteer %}
@@ -81,6 +91,16 @@
                         <p class="text-gray-700">User Type: <strong>{{ user_profile.account.user_type }}</strong></p>
                         <p class="text-gray-700">Email: <strong>{{ user_profile.account.email_address }}</strong></p>
                         <p class="text-gray-700">Contact Number: <strong>{{ user_profile.account.contact_number }}</strong></p>
+                        <p class="text-gray-700">
+                            Main Location: 
+                            <strong>
+                                {% if user_profile.preferences.location.formatted_address %}
+                                    {{ user_profile.preferences.location.formatted_address }}
+                                {% else %}
+                                    Not Specified Yet
+                                {% endif %}
+                            </strong>
+                        </p>
                     {% endif %}
                 {% endif %}
             </div>
@@ -113,8 +133,8 @@
                         <p class="text-gray-700">
                             Location: 
                             <strong>
-                                {% if user_profile.volunteer.volunteermatchingpreferences.location.formatted_address %}
-                                    {{ user_profile.volunteer.volunteermatchingpreferences.location.formatted_address }}
+                                {% if user_profile.preferences.location.formatted_address %}
+                                    {{ user_profile.preferences.location.formatted_address }}
                                 {% else %}
                                     Not Specified Yet
                                 {% endif %}
@@ -329,6 +349,4 @@
     {% endif %}
     <!-- Modal Container for responses for hx-target-->
     <div id="modal-container"></div>
-    <!-- Modal -->
-    {% include 'base/partials/loading_modal.html' %}
 {% endblock %}

@@ -11,11 +11,11 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from accounts_notifs.models import Account
-from .models import Volunteer, Organization, Following, Endorsement, StatusPost, VolunteerMatchingPreferences
+from .models import Volunteer, Organization, Following, Endorsement, StatusPost, VolunteerMatchingPreferences, OrganizationPreferences
 from accounts_notifs.serializers import AccountSerializer
-from .serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer, VolunteerMatchingPreferencesSerializer
-from django.http import QueryDict
+from .serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer, VolunteerMatchingPreferencesSerializer, OrganizationPreferencesSerializer
 import json
+from django.http import QueryDict
 
 # Designed to get both Account and related Volunteer/Organization model data
 @api_view(['GET'])
@@ -32,20 +32,36 @@ def get_user_profile(request, account_uuid):
             try:
                 volunteer = Volunteer.objects.get(account=account)
                 volunteer_serializer = VolunteerSerializer(volunteer)
-                return JsonResponse({
-                    'account': account_serializer.data,
-                    'volunteer': volunteer_serializer.data
-                }, safe=False)
+                if VolunteerMatchingPreferences.objects.filter(volunteer=volunteer).exists():
+                    volunteer_preferences = VolunteerMatchingPreferencesSerializer(volunteer.volunteermatchingpreferences)
+                    return JsonResponse({
+                        'account': account_serializer.data,
+                        'volunteer': volunteer_serializer.data,
+                        'preferences': volunteer_preferences.data
+                    }, safe=False)
+                else:
+                    return JsonResponse({
+                        'account': account_serializer.data,
+                        'volunteer': volunteer_serializer.data
+                    }, safe=False)
             except Volunteer.DoesNotExist:
                 return Response({'message': 'Volunteer profile not found'},status=status.HTTP_404_NOT_FOUND)
         elif account.is_organization():
             try:
                 organization = Organization.objects.get(account=account)
                 organization_serializer = OrganizationSerializer(organization)
-                return JsonResponse({
-                    'account': account_serializer.data,
-                    'organization': organization_serializer.data
-                }, safe=False)
+                if OrganizationPreferences.objects.filter(organization=organization).exists():
+                    organization_preferences = OrganizationPreferencesSerializer(organization.organizationpreferences)
+                    return JsonResponse({
+                        'account': account_serializer.data,
+                        'organization': organization_serializer.data,
+                        'preferences': organization_preferences.data
+                    }, safe=False)
+                else:
+                    return JsonResponse({
+                        'account': account_serializer.data,
+                        'organization': organization_serializer.data
+                    }, safe=False)
             except Organization.DoesNotExist:
                 return Response({'message': 'Organization profile not found'},status=status.HTTP_404_NOT_FOUND)
         else:
@@ -268,7 +284,6 @@ def get_search_profiles(request):
 @permission_classes([IsAuthenticated])
 def create_volunteer_preferences(request):
     if request.method == 'POST':
-        print("Received Data: ", request.data)
         try:
             volunteer = Volunteer.objects.get(account=request.user)
         except Volunteer.DoesNotExist:
@@ -278,21 +293,23 @@ def create_volunteer_preferences(request):
             return Response({'error': 'Preferences already set'}, status=status.HTTP_409_CONFLICT)
         
         # Convert QueryDict to JSON-compatible dictionary
-        data = request.data.copy()
-        formatted_data = {}
+        if isinstance(request.data, QueryDict):
+            data = request.data.copy()
+            formatted_data = {}
 
-        for key, value in data.lists():
-            if key == "preferred_work_types":
-                formatted_data[key] = value[0] if value else None
-            elif key == "location":
-                try:
-                    formatted_data[key] = json.loads(value[0]) if isinstance(value[0], str) else value[0]
-                except json.JSONDecodeError:
-                    return Response({'error': 'Invalid JSON for location field'}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                formatted_data[key] = value
+            for key, value in data.lists():
+                if key == "preferred_work_types":
+                    formatted_data[key] = value[0] if value else None
+                elif key == "location":
+                    try:
+                        formatted_data[key] = json.loads(value[0]) if isinstance(value[0], str) else value[0]
+                    except json.JSONDecodeError:
+                        return Response({'error': 'Invalid JSON for location field'}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    formatted_data[key] = value
+        else:
+            formatted_data = request.data
         
-        print("Parsed Data: ", data)
         serializer = VolunteerMatchingPreferencesSerializer(data=formatted_data, context={'request': request})
         if serializer.is_valid():
             serializer.save(volunteer=volunteer)
@@ -301,3 +318,48 @@ def create_volunteer_preferences(request):
         return Response({"message": "An error occurred creating volunteer matching preferences", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+### ORGANIZATION PREFERENCES ###
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_organization_preferences(request):
+    if request.method == 'POST':
+        try:
+            organization = Organization.objects.get(account=request.user)
+        except Organization.DoesNotExist:
+            return Response({'error': 'Only organizations can set preferences'}, status=status.HTTP_403_FORBIDDEN)
+
+        if OrganizationPreferences.objects.filter(organization=organization).exists():
+            return Response({'error': 'Preferences already set'}, status=status.HTTP_409_CONFLICT)
+
+        # Convert QueryDict to JSON-compatible dictionary
+        if isinstance(request.data, QueryDict):
+            data = request.data.copy()
+            formatted_data = {}
+
+            for key, value in data.lists():
+                if key == "enable_volontera_point_opportunities":
+                    formatted_data[key] = value[0].lower() == "true"
+                elif key == "volontera_points_rate":
+                    formatted_data[key] = float(value[0]) if value else None
+                elif key == "location":
+                    try:
+                        formatted_data[key] = json.loads(value[0]) if isinstance(value[0], str) else value[0]
+                    except json.JSONDecodeError:
+                        return Response({'error': 'Invalid JSON for location field'}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    formatted_data[key] = value[0] if value else None
+        else:
+            formatted_data = request.data
+
+        serializer = OrganizationPreferencesSerializer(data=formatted_data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(organization=organization)
+            return Response({"message": "Successfully created organization preferences", "data": serializer.data}, status=status.HTTP_201_CREATED)
+
+        print("Serializer Errors:", serializer.errors)
+        return Response({"message": "An error occurred creating organization preferences", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    else:
+        return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Volunteer, Organization, Following, Endorsement, StatusPost, VolunteerMatchingPreferences
+from .models import Volunteer, Organization, Following, Endorsement, StatusPost, VolunteerMatchingPreferences, OrganizationPreferences
 from django.contrib.auth import get_user_model
 from django.utils.dateparse import parse_datetime
 from datetime import datetime
@@ -188,6 +188,39 @@ class VolunteerMatchingPreferencesSerializer(serializers.ModelSerializer):
     def validate_languages(self, value):
         if not isinstance(value, list):
             raise serializers.ValidationError("Languages must be a list.")
+        return value
+
+    def create(self, validated_data):
+        return super().create(validated_data)
+    
+class OrganizationPreferencesSerializer(serializers.ModelSerializer):
+    organization = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = OrganizationPreferences
+        fields = '__all__'
+
+    def validate(self, data):
+        organization = Organization.objects.get(account=self.context['request'].user)
+        if OrganizationPreferences.objects.filter(organization=organization).exists():
+            raise serializers.ValidationError("Organization Preferences already exist for this organization.")
+
+        data['organization'] = organization
+        return data
+
+    def validate_location(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Location must be a dictionary.")
+        required_keys = {'lat', 'lon', 'city', 'formatted_address'}
+        if not required_keys.issubset(value.keys()):
+            raise serializers.ValidationError(f"Location must contain: {required_keys}.")
+        return value
+
+    def validate_volontera_points_rate(self, value):
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("Volontera points rate must be positive.")
+        if value > 1.5:
+            raise serializers.ValidationError("Volontera points rate cannot exceed 1.5.")
         return value
 
     def create(self, validated_data):

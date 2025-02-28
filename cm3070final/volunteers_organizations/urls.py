@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import signup_final, profile_view, search_profiles_view, update_profile_view, preferences_view
-from .api import get_user_profile, get_all_followers, get_following, create_following, delete_following, get_endorsements, create_endorsement, delete_endorsement, get_status_posts, create_status_post, delete_status_post, get_search_profiles, create_volunteer_preferences
+from .api import get_user_profile, get_all_followers, get_following, create_following, delete_following, get_endorsements, create_endorsement, delete_endorsement, get_status_posts, create_status_post, delete_status_post, get_search_profiles, create_volunteer_preferences, create_organization_preferences
 
 app_name = 'volunteers_organizations'
 
@@ -30,6 +30,7 @@ urlpatterns = [
     path("api/status/delete_status_post/<uuid:id>/", delete_status_post, name="delete_status_post"),
     # Search profiles endpoints
     path("api/search/get_search_profiles/", get_search_profiles, name="get_search_profiles"),
-    #Volunteer Matching Preferences
+    #Volunteer Matching/Organization Preferences
     path('api/volunteer_matching_preferences/create_volunteer_preferences/', create_volunteer_preferences, name='create_volunteer_preferences'),
+    path('api/organization_preferences/create_organization_preferences/', create_organization_preferences, name='create_organization_preferences'),
 ]

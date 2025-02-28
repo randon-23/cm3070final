@@ -177,12 +177,16 @@ class OrganizationPreferences(models.Model):
     organization = models.OneToOneField(Organization, on_delete=models.CASCADE)
     enable_volontera_point_opportunities = models.BooleanField(null=True, blank=True)
     volontera_points_rate = models.FloatField(null=True, blank=True, default=1.0)
+    location = models.JSONField(default=dict, blank=True)
 
     def clean(self):
         if self.enable_volontera_point_opportunities is not None and self.volontera_points_rate is None:
             raise ValidationError("If volontera point opportunities are enabled, the rate must be set.")
         if self.volontera_points_rate is not None and self.volontera_points_rate <= 0:
             raise ValidationError("Volontera points rate must be positive.")
+        # Validate location
+        if not isinstance(self.location, dict):
+            raise ValidationError("Location must be a dictionary.")
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

@@ -1,7 +1,7 @@
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
-from ..serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer, VolunteerMatchingPreferencesSerializer
-from ..models import Volunteer, Organization, Following, VolunteerMatchingPreferences
+from ..serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer, VolunteerMatchingPreferencesSerializer, OrganizationPreferencesSerializer
+from ..models import Volunteer, Organization, Following, VolunteerMatchingPreferences, OrganizationPreferences
 from accounts_notifs.models import Account
 from datetime import date
 from unittest.mock import Mock
@@ -410,3 +410,125 @@ class TestVolunteerMatchingPreferencesSerializer(TestCase):
         with self.assertRaises(ValidationError) as error:
             serializer.is_valid(raise_exception=True)
         self.assertIn("Volunteer Matching Preferences already exist for this volunteer.", str(error.exception))
+
+class TestOrganizationPreferencesSerializer(TestCase):
+    def setUp(self):
+        self.organization_account = Account.objects.create_user(
+            email_address="organization@example.com",
+            password="SecurePass123!",
+            user_type="organization",
+            contact_number="+35699998888"
+        )
+        self.organization = Organization.objects.create(
+            account=self.organization_account,
+            organization_name="Helping Hands",
+            organization_address="123 Volunteer St.",
+            organization_website="https://helpinghands.org"
+        )
+
+        self.mock_request = Mock()
+        self.mock_request.user = self.organization_account
+
+    # Ensure valid data is saved correctly
+    def test_create_valid_organization_preferences(self):
+        data = {
+            "enable_volontera_point_opportunities": True,
+            "volontera_points_rate": 1.5,
+            "location": {
+                "lat": 40.7128,
+                "lon": -74.0060,
+                "city": "New York",
+                "formatted_address": "New York, NY, USA"
+            }
+        }
+        serializer = OrganizationPreferencesSerializer(data=data, context={"request": self.mock_request})
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        preferences = serializer.save()
+        self.assertEqual(preferences.organization, self.organization)
+        self.assertEqual(preferences.enable_volontera_point_opportunities, True)
+        self.assertEqual(preferences.volontera_points_rate, 1.5)
+        self.assertEqual(preferences.location["city"], "New York")
+
+    # Ensure invalid location data is rejected
+    def test_invalid_location_data(self):
+        data = {
+            "location": "invalid_location_format"  # Should be a dictionary
+        }
+        serializer = OrganizationPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Location must be a dictionary.", str(error.exception))
+
+    # Ensure missing required location fields fail validation
+    def test_missing_required_location_fields(self):
+        data = {
+            "location": {"lat": 40.7128, "lon": -74.0060}  # Missing 'city' and 'formatted_address'
+        }
+        serializer = OrganizationPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Location must contain", str(error.exception))
+
+    # Ensure invalid volontera points rate fails validation
+    def test_invalid_volontera_points_rate_negative(self):
+        data = {
+            "volontera_points_rate": -5  # Should be positive
+        }
+        serializer = OrganizationPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Volontera points rate must be positive.", str(error.exception))
+
+    def test_invalid_volontera_points_rate_too_large(self):
+        data = {
+            "volontera_points_rate": 2.0  # Should be max 1.5
+        }
+        serializer = OrganizationPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Volontera points rate cannot exceed 1.5.", str(error.exception))
+
+    # Ensure duplicate organization preferences creation fails
+    def test_duplicate_preferences_creation(self):
+        OrganizationPreferences.objects.create(
+            organization=self.organization,
+            enable_volontera_point_opportunities=True,
+            volontera_points_rate=1.5,
+            location={"lat": 40.7128, "lon": -74.0060, "city": "New York", "formatted_address": "New York, NY, USA"}
+        )
+
+        data = {
+            "enable_volontera_point_opportunities": False,
+            "volontera_points_rate": 1.2,
+            "location": {
+                "lat": 36.9000,
+                "lon": 15.5151,
+                "city": "Mdina",
+                "formatted_address": "Mdina, Malta"
+            }
+        }
+        serializer = OrganizationPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Organization Preferences already exist for this organization.", str(error.exception))
+
+    # Ensure organization preferences can be created with location
+    def test_create_organization_preferences_with_location(self):
+        data = {
+            "enable_volontera_point_opportunities": True,
+            "volontera_points_rate": 1.2,
+            "location": {
+                "lat": 36.9000,
+                "lon": 15.5151,
+                "city": "Mdina",
+                "formatted_address": "Mdina, Malta"
+            }
+        }
+        serializer = OrganizationPreferencesSerializer(data=data, context={"request": self.mock_request})
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        preferences = serializer.save()
+        self.assertEqual(preferences.organization, self.organization)
+        self.assertEqual(preferences.location["city"], "Mdina")
+        self.assertEqual(preferences.enable_volontera_point_opportunities, True)
+        self.assertEqual(preferences.volontera_points_rate, 1.2)

@@ -55,14 +55,26 @@ function updateFollowerCount(event) {
     }
 }
 
-// Used for responsiveness in the application when submitting so that user knows that the request is being processed and this then tirggers refresh to show the changes
+// Used for responsiveness in the application when submitting so that user knows that the request is being processed and this then triggers refresh to show the changes
 function updateContent(event){
     let response = event.detail.xhr.responseText;
     try{
         let data = JSON.parse(response);
         console.log(data);
-        document.getElementById("loading-modal-content").innerHTML = `<p>${data.message}</p>`;
+        let modalContent = `<p>${data.message}</p>`;
         
+        if (event.detail.xhr.status === 400 && typeof data.data === 'object') {
+            modalContent += `<ul>`;
+            for (let field in data.data) {
+                if (data.data.hasOwnProperty(field)) {
+                    modalContent += `<li><strong>${field}:</strong> ${data.data[field].join(', ')}</li>`;
+                }
+            }
+            modalContent += `</ul>`;
+        }
+
+        document.getElementById("loading-modal-content").innerHTML = modalContent
+
         let modal = document.getElementById("loading-modal");
         modal.classList.remove("hidden");
         modal.classList.add("flex");

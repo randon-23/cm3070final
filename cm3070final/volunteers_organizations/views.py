@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Account
 from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements, get_search_profiles
 from .forms import VolunteerForm, OrganizationForm
-from .models import Volunteer, Organization, VolunteerMatchingPreferences
+from .models import Volunteer, Organization, VolunteerMatchingPreferences, OrganizationPreferences
 import json
 import pycountry
 from django.core.paginator import Paginator
@@ -74,7 +74,7 @@ def profile_view(request, account_uuid):
         else:
             context['followers_count'] = followers.data
         
-        # If the user is viewing their own profile, check if they are a volunteer and have not set their matching preferences
+        # If the user is viewing their own profile, check if they are a volunteer and have not set their matching preferences, or if they are an organization and have not set their preferences
         show_preferences_modal = False
         if request.user.is_volunteer() and not VolunteerMatchingPreferences.objects.filter(volunteer=request.user.volunteer).exists():
             show_preferences_modal = True
@@ -89,6 +89,10 @@ def profile_view(request, account_uuid):
 
             languages = [(lang.alpha_2, lang.name) for lang in pycountry.languages if hasattr(lang, 'alpha_2')]
             context["languages"] = languages
+
+        elif request.user.is_organization() and not OrganizationPreferences.objects.filter(organization=request.user.organization).exists():
+            show_preferences_modal = True
+            context['show_preferences_modal'] = show_preferences_modal
 
     status_posts = get_status_posts(request, account_uuid)
     if status_posts.status_code==404:

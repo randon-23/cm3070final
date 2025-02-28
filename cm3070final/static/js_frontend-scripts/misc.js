@@ -41,3 +41,20 @@ function closeLoadingModal() {
     modal.classList.add("hidden");
     modal.classList.remove("flex");
 }
+
+// Used when users have not set their preferences yet, as a redirect to the profile page this modal is shown to inform the user on what is happening
+function redirectToProfileForPreferences(event, url) {
+    event.preventDefault();
+
+    let modal = document.getElementById("loading-modal");
+    let modalContent = document.getElementById("loading-modal-content");
+
+    modalContent.innerHTML = `<p>Redirecting to profile page to set preferences...</p>`;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+    setTimeout(() => {
+        window.location.href = url;
+    }, 1500);
+
+}

@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from ..models import Volunteer, Organization, Following, Endorsement, StatusPost, VolunteerMatchingPreferences
+from ..models import Volunteer, Organization, Following, Endorsement, StatusPost, VolunteerMatchingPreferences, OrganizationPreferences
 from accounts_notifs.models import Account
 from django.urls import reverse
 
@@ -428,4 +428,100 @@ class TestVolunteerPreferencesAPI(APITestCase):
     def test_create_duplicate_volunteer_preferences_with_location(self):
         VolunteerMatchingPreferences.objects.create(volunteer=self.volunteer, location={})
         response = self.client.post(self.volunteer_preferences_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+class TestOrganizationPreferencesAPI(APITestCase):
+    def setUp(self):
+        self.organization_account = Account.objects.create_user(
+            email_address="organization@example.com",
+            password="testpass",
+            user_type="organization",
+            contact_number="+35612345678"
+        )
+        self.organization = Organization.objects.create(
+            account=self.organization_account,
+            organization_name="Helping Hands",
+            organization_address="123 Volunteer St.",
+            organization_website="https://helpinghands.org"
+        )
+
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.organization_account)
+
+        self.organization_preferences_url = reverse("volunteers_organizations:create_organization_preferences")
+
+    # Successfully create organization preferences
+    def test_create_organization_preferences_success(self):
+        data = {
+            "enable_volontera_point_opportunities": True,
+            "volontera_points_rate": 1.5,
+            "location": {
+                "lat": 40.7128,
+                "lon": -74.0060,
+                "city": "New York",
+                "formatted_address": "New York, NY, USA"
+            }
+        }
+        response = self.client.post(self.organization_preferences_url, data, format="json")
+        print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(OrganizationPreferences.objects.count(), 1)
+        self.assertEqual(response.data["data"]["organization"], self.organization.pk)
+
+    # Attempt to create duplicate preferences (should return 409 Conflict)
+    def test_create_duplicate_organization_preferences(self):
+        OrganizationPreferences.objects.create(organization=self.organization)
+        response = self.client.post(self.organization_preferences_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+    # Unauthorized access should return 403 Forbidden
+    def test_create_organization_preferences_unauthorized(self):
+        self.client.logout()
+        response = self.client.post(self.organization_preferences_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # Sending invalid data should return 400 Bad Request
+    def test_create_organization_preferences_invalid_data(self):
+        data = {
+            "volontera_points_rate": -1,  # Should be positive
+            "location": "invalid_location_format"  # Should be a dict
+        }
+        response = self.client.post(self.organization_preferences_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # Sending a GET request should return 405 Method Not Allowed
+    def test_wrong_method_returns_405(self):
+        response = self.client.get(self.organization_preferences_url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    # Successfully create organization preferences with location
+    def test_create_organization_preferences_with_location_success(self):
+        data = {
+            "enable_volontera_point_opportunities": True,
+            "volontera_points_rate": 2.0,
+            "location": {
+                "lat": 40.7128,
+                "lon": -74.0060,
+                "city": "New York",
+                "formatted_address": "New York, NY, USA"
+            }
+        }
+        response = self.client.post(self.organization_preferences_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(OrganizationPreferences.objects.count(), 1)
+        self.assertEqual(response.data["data"]["organization"], self.organization.pk)
+        self.assertEqual(response.data["data"]["location"]["city"], "New York")
+
+    # Sending invalid location data should return 400 Bad Request
+    def test_create_organization_preferences_invalid_location(self):
+        data = {
+            "location": "invalid_location_format"  # Should be a dict
+        }
+        response = self.client.post(self.organization_preferences_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # Attempt to create duplicate preferences (should return 409 Conflict)
+    def test_create_duplicate_organization_preferences_with_location(self):
+        OrganizationPreferences.objects.create(organization=self.organization, location={})
+        response = self.client.post(self.organization_preferences_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
