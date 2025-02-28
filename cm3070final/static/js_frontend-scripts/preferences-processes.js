@@ -1,4 +1,11 @@
+//Displays the preferences modal after 1.5 seconds of page load depending on whether the preferences_modal.html is present in the template or not, which is dependent on show_preferences_modal being true or not
+//A wait is added to ensure that the Google Places API is loaded before initializing the autocomplete for the location input field and so taht it does not immediately show the modal to the user
 document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(function() {
+        document.getElementById("preferences-modal").classList.remove("hidden");
+        document.getElementById("preferences-modal").classList.add("flex");
+    }, 1500);
+
     new TomSelect("#language-select", {
         plugins: ['remove_button'],  // Adds 'X' button for removing selections
         create: false,
