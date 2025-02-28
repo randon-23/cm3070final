@@ -3,7 +3,7 @@
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 
 <!-- Event listener included here and not in event-listeners.js because event-listeners is loaded on every page, whislt this evetn listener is exclusively for profile.html page-->
-<script src="{% static 'js_frontend-scripts/preferences-processes.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/preferences-modal-processes.js' %}"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
 
 <div id="preferences-modal" class="fixed inset-0 items-center justify-center bg-black bg-opacity-50 hidden">
@@ -16,30 +16,36 @@
             </button>
         </div>
 
-        <!-- Separator -->
-        <div class="w-3/4 mx-auto h-[1px] bg-gray-700 my-4"></div>
-            {% if user.volunteer %}
-                <form id="preferences-form" 
-                    method="post"
-                    hx-post="{% url 'volunteers_organizations:create_volunteer_preferences' %}"
-                    hx-trigger="submit"
-                    hx-target="#loading-modal-content"
-                    hx-swap="innerHTML"
-                    class="space-y-6">
-                    <!-- Location -->
-                    <div class="mb-4">
-                        <label for="location-input" class="block text-gray-700 font-semibold">Preferred Location</label>
-                        <input id="location-input" required="true" name="location_input" type="text" placeholder="Enter your preferred location"
-                            class="w-full border rounded p-2">
-                        <!-- Hidden input to store location data -->
-                        <input type="hidden" id="location-hidden" name="location">
-                    </div>
+        {% if user.volunteer %}
+            <form id="preferences-form" 
+                method="post"
+                hx-post="{% url 'volunteers_organizations:create_volunteer_preferences' %}"
+                hx-trigger="submit"
+                hx-target="#loading-modal-content"
+                hx-swap="innerHTML"
+                class="space-y-6">
+                <!-- Location -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <label for="location-input" class="block text-gray-700 font-semibold mb-2">Preferred Location</label>
+                    <input id="location-input" required="true" name="location_input" type="text" placeholder="Enter your preferred location"
+                        class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
+                    <!-- Hidden input to store location data -->
+                    <input type="hidden" id="location-hidden" name="location">
+                </div>
 
-                    <!-- Separator -->
-                    <div class="w-3/4 mx-auto h-[1px] bg-gray-300 my-4"></div>
+                <!-- Languages -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <label for="language-select" class="block text-gray-700 font-semibold mb-2">Languages</label>
+                    <select id="language-select" name="languages" multiple class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 rounded-md outline-blue-600">
+                        {% for code, lang in languages %}
+                            <option value="{{ lang }}">{{ lang }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                    <!-- Availability -->
-                    <label class="block text-gray-700 font-semibold">Availability (Days of the Week)</label>
+                <!-- Availability -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <label class="block text-gray-700 font-semibold mb-4">Availability (Days of the Week)</label>
                     <div class="grid grid-cols-4 gap-4">
                         {% for day in days_of_week %}
                             <label class="flex items-center space-x-2">
@@ -48,24 +54,23 @@
                             </label>
                         {% endfor %}
                     </div>
+                </div>
 
-                    <!-- Separator -->
-                    <div class="w-3/4 mx-auto h-[1px] bg-gray-300 my-4"></div>
-
-                    <!-- Preferred Work Type -->
-                    <label class="block text-gray-700 font-semibold">Preferred Work Type</label>
-                    <select name="preferred_work_types" class="w-full border rounded p-2">
+                <!-- Preferred Work Type -->
+                <div class="bg-gray-100 p-4 rounded-lg">                       
+                    <label class="block text-gray-700 font-semibold mb-2">Preferred Work Type</label>
+                    <select name="preferred_work_types" class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md 
+                    focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
                         {% for type in work_types %}
                             <option value="{{ type }}">{{ type|title }}</option>
                         {% endfor %}
                     </select>
+                </div>
 
-                    <!-- Separator -->
-                    <div class="w-3/4 mx-auto h-[1px] bg-gray-300 my-4"></div>
-
-                    <!-- Preferred Duration -->
-                    <label class="block text-gray-700 font-semibold">Preferred Duration</label>
-                    <div class="grid grid-cols-3 gap-4">
+                <!-- Preferred Duration -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <label class="block text-gray-700 font-semibold mb-4">Preferred Duration</label>
+                    <div class="grid grid-cols-3 gap-4 mt-2">
                         {% for duration in durations %}
                             <label class="flex items-center space-x-2">
                                 <input type="checkbox" name="preferred_duration" value="{{ duration }}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
@@ -73,12 +78,11 @@
                             </label>
                         {% endfor %}
                     </div>
+                </div>
 
-                    <!-- Separator -->
-                    <div class="w-3/4 mx-auto h-[1px] bg-gray-300 my-4"></div>
-
-                    <!-- Fields of Interest -->
-                    <label class="block text-gray-700 font-semibold">Fields of Interest (Max 5)</label>
+                <!-- Fields of Interest -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <label class="block text-gray-700 font-semibold mb-4">Fields of Interest (Max 5)</label>
                     <div class="grid grid-cols-3 gap-4">
                         {% for field in fields_of_interest %}
                             <label class="flex items-center space-x-2">
@@ -87,12 +91,11 @@
                             </label>
                         {% endfor %}
                     </div>
+                </div>
 
-                    <!-- Separator -->
-                    <div class="w-3/4 mx-auto h-[1px] bg-gray-300 my-4"></div>
-
-                    <!-- Skills -->
-                    <label class="block text-gray-700 font-semibold">Skills (Max 10)</label>
+                <!-- Skills -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <label class="block text-gray-700 font-semibold mb-4">Skills (Max 10)</label>
                     <div class="grid grid-cols-4 gap-4">
                         {% for skill in skills %}
                             <label class="flex items-center space-x-2">
@@ -101,86 +104,70 @@
                             </label>
                         {% endfor %}
                     </div>
-                    
-                    <div class="w-3/4 mx-auto h-[1px] bg-gray-300 my-4"></div>
-                    
-                    <!-- Languages -->
-                    <div class="mb-4">
-                        <label for="language-select" class="block text-gray-700 font-semibold">Languages</label>
-                        <select id="language-select" name="languages" multiple class="w-full border rounded p-2">
-                            {% for code, lang in languages %}
-                                <option value="{{ lang }}">{{ lang }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div class="w-3/4 mx-auto h-[1px] bg-gray-700 my-4"></div>
-                    
-                    <!-- Buttons -->
-                    <div class="flex justify-between mt-6">
-                        <button type="button" onclick="document.getElementById('preferences-modal').classList.add('hidden')" class="bg-gray-700 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-gray-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061A1.125 1.125 0 0 1 3 16.811V8.69ZM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061a1.125 1.125 0 0 1-1.683-.977V8.69Z" />
-                            </svg>
-                            <span class="font-bold">Skip for now</span>          
-                        </button>
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-blue-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
-                            </svg>
-                            <span class="font-bold">Save Preferences</span>
-                        </button>
-                    </div>
-                </form>
-            {% elif user.organization %}
-                <form id="preferences-form"
-                    method="post"
-                    hx-post="{% url 'volunteers_organizations:create_organization_preferences' %}"
-                    hx-trigger="submit"
-                    hx-target="#loading-modal-content"
-                    hx-swap="innerHTML"
-                    class="space-y-6">
-                    <!-- Enable Volontera Point Opportunities -->
-                    <div class="mb-4">
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" name="enable_volontera_point_opportunities" value="true" checked class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm">
-                            <span class="text-gray-800">Enable Volontera Point Opportunities</span>
-                        </label>
-                    </div>
+                </div>
+                
+                <!-- Buttons -->
+                <div class="flex justify-between mt-10">
+                    <button type="button" onclick="document.getElementById('preferences-modal').classList.add('hidden')" class="bg-gray-700 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061A1.125 1.125 0 0 1 3 16.811V8.69ZM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061a1.125 1.125 0 0 1-1.683-.977V8.69Z" />
+                        </svg>
+                        <span class="font-bold">Skip for now</span>          
+                    </button>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-blue-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                        </svg>
+                        <span class="font-bold">Save Preferences</span>
+                    </button>
+                </div>
+            </form>
+        {% elif user.organization %}
+            <form id="preferences-form"
+                method="post"
+                hx-post="{% url 'volunteers_organizations:create_organization_preferences' %}"
+                hx-trigger="submit"
+                hx-target="#loading-modal-content"
+                hx-swap="innerHTML"
+                class="space-y-6">
+                <!-- Location -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <label for="location-input" class="block text-gray-700 font-semibold mb-2">Main Location</label>
+                    <input id="location-input" required="true" name="location_input" type="text" placeholder="Enter your preferred location"
+                        class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
+                    <input type="hidden" id="location-hidden" name="location">
+                </div>
 
-                    <!-- Volontera Points Rate -->
-                    <div class="mb-4">
-                        <label for="volontera_points_rate" class="block text-gray-700 font-semibold">Volontera Points Rate</label>
-                        <input type="number" name="volontera_points_rate" value="1.0" step="0.1" min="0.1" class="w-full border rounded p-2">
-                    </div>
+                <!-- Enable Volontera Point Opportunities -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="enable_volontera_point_opportunities" value="true" checked class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm">
+                        <span class="text-gray-800">Enable Volontera Point Opportunities</span>
+                    </label>
+                </div>
 
-                    <!-- Location -->
-                    <div class="mb-4">
-                        <label for="location-input" class="block text-gray-700 font-semibold">Preferred Location</label>
-                        <input id="location-input" required="true" name="location_input" type="text" placeholder="Enter your preferred location"
-                            class="w-full border rounded p-2">
-                        <input type="hidden" id="location-hidden" name="location">
-                    </div>
-                    
-                    <div class="w-3/4 mx-auto h-[1px] bg-gray-700 my-4"></div>
-                    
-                    <!-- Buttons -->
-                    <div class="flex justify-between mt-6">
-                        <button type="button" onclick="document.getElementById('preferences-modal').classList.add('hidden')" class="bg-gray-700 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-gray-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061A1.125 1.125 0 0 1 3 16.811V8.69ZM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061a1.125 1.125 0 0 1-1.683-.977V8.69Z" />
-                            </svg>
-                            <span class="font-bold">Skip for now</span>          
-                        </button>
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-blue-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
-                            </svg>
-                            <span class="font-bold">Save Preferences</span>
-                        </button>
-                    </div>
-                </form>
-            {% endif %}
-        </div>
+                <!-- Volontera Points Rate -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <label for="volontera_points_rate" class="block text-gray-700 font-semibold">Volontera Points Rate</label>
+                    <input type="number" name="volontera_points_rate" value="1.0" step="0.1" min="0.1" class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
+                </div>
+                
+                <!-- Buttons -->
+                <div class="flex justify-between mt-10">
+                    <button type="button" onclick="document.getElementById('preferences-modal').classList.add('hidden')" class="bg-gray-700 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061A1.125 1.125 0 0 1 3 16.811V8.69ZM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061a1.125 1.125 0 0 1-1.683-.977V8.69Z" />
+                        </svg>
+                        <span class="font-bold">Skip for now</span>          
+                    </button>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-blue-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                        </svg>
+                        <span class="font-bold">Save Preferences</span>
+                    </button>
+                </div>
+            </form>
+        {% endif %}
     </div>
 </div>

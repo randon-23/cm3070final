@@ -14,7 +14,7 @@
                         {% if user.volunteer.profile_img %}
                             <img class="w-64 h-64 rounded-full object-cover" src="{{ user.volunteer.profile_img.url }}" alt="Profile Picture">
                         {% else %}
-                            <img class="w-64 h-64 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
+                            <img class="w-64 h-64 rounded-full object-cover bg-white" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
                         {% endif %}
                     {% elif user.organization %}
                         {% if user.organization.organization_profile_img %}
@@ -28,7 +28,7 @@
                         {% if user_profile.volunteer.profile_img %}
                             <img class="w-64 h-64 rounded-full object-cover" src="{{ user_profile.volunteer.profile_img }}" alt="Profile Picture">
                         {% else %}
-                            <img class="w-64 h-64 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
+                            <img class="w-64 h-64 rounded-full object-cover bg-white" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
                         {% endif %}
                     {% elif user_profile.organization %}
                         {% if user_profile.organization.organization_profile_img %}

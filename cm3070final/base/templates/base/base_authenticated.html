@@ -20,13 +20,13 @@
                         {% if user.volunteer.profile_img %}
                             <img class="w-32 h-32 rounded-full object-cover" src="{{ user.volunteer.profile_img.url }}" alt="Profile Picture">
                         {% else %}
-                            <img class="w-32 h-32 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
+                            <img class="w-32 h-32 rounded-full object-cover bg-white" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
                         {% endif %}
                     {% elif user.organization %}
                         {% if user.organization.organization_profile_img %}
                             <img class="w-32 h-32 rounded-full object-cover" src="{{ user.organization.organization_profile_img.url }}" alt="Profile Picture">
                         {% else %}
-                            <img class="w-32 h-32 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
+                            <img class="w-32 h-32 rounded-full object-contain bg-white p-2" src="{% static 'images/default_organization.svg' %}" alt="Profile Picture">
                         {% endif %}
                     {% endif %}
                     <h2 class="text-white mt-4 font-semibold">{% if user.volunteer %}{{ user.volunteer.first_name }} {{ user.volunteer.last_name }}{% else %}{{ user.organization.organization_name }}{% endif %}</h2>

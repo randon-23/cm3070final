@@ -318,7 +318,24 @@ def create_volunteer_preferences(request):
         return Response({"message": "An error occurred creating volunteer matching preferences", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_volunteer_preferences(request):
+    if request.method == 'GET':
+        if request.user.is_volunteer():
+            preferences = VolunteerMatchingPreferences.objects.filter(volunteer__account=request.user).first()
+            if preferences:
+                serializer = VolunteerMatchingPreferencesSerializer(preferences)
+                return Response({"message": "Successfully returned current volunteer preferences", "data": serializer.data}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Volunteer preferences not found'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Only volunteers can view volunteer preferences'}, status=status.HTTP_403_FORBIDDEN)
+    else:
+        return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
 ### ORGANIZATION PREFERENCES ###
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -363,3 +380,18 @@ def create_organization_preferences(request):
     else:
         return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
         
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_organization_preferences(request):
+    if request.method == 'GET':
+        if request.user.is_organization():
+            preferences = OrganizationPreferences.objects.filter(organization__account=request.user).first()
+            if preferences:
+                serializer = OrganizationPreferencesSerializer(preferences)
+                return Response({"message": "Successfully returned current organization preferences", "data": serializer.data}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Organization preferences not found'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Only organizations can view organization preferences'}, status=status.HTTP_403_FORBIDDEN)
+    else:
+        return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
