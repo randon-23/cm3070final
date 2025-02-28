@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group
-from ..models import Account, AccountPreferences, Notification
+from ..models import Account, Notification
 from uuid import UUID
 
 def create_common_objects():
@@ -72,34 +72,6 @@ class TestAccountModel(TestCase):
                     password='testerpassword',
                     user_type='volunteer'
                 )
-
-class TestAccountPreferencesModel(TestCase):
-    #Setting up groups and accounts
-    @classmethod
-    def setUpTestData(cls):
-        cls.volunteer_account, _, _ = create_common_objects()
-    
-    def test_create_account_preferences(self):
-        account_prefs = AccountPreferences.objects.create(
-            account=self.volunteer_account,
-            dark_mode=True,
-            location={"latitude": 40.7128, "longitude": -74.0060, "radius": 10}
-        )
-
-        self.assertEqual(account_prefs.account, self.volunteer_account)
-        self.assertTrue(account_prefs.dark_mode)
-        self.assertEqual(account_prefs.location, {"latitude": 40.7128, "longitude": -74.0060, "radius": 10})
-
-    def test_default_account_preferences(self):
-        account_prefs = AccountPreferences.objects.create(account=self.volunteer_account)
-        self.assertFalse(account_prefs.dark_mode)
-        self.assertEqual(account_prefs.location, {})
-
-    def test_invalid_location_data(self):
-        account_prefs = AccountPreferences(account=self.volunteer_account, location="New York")  # Invalid
-        with self.assertRaises(ValidationError):  # Django JSONField auto-validates
-            account_prefs.full_clean()
-
 
 class TestNotificationModel(TestCase):
     #Setting up groups and accounts

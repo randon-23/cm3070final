@@ -9,10 +9,4 @@ class Migration(migrations.Migration):
         ('accounts_notifs', '0005_remove_account_username'),
     ]
 
-    operations = [
-        migrations.AlterField(
-            model_name='accountpreferences',
-            name='smart_matching_enabled',
-            field=models.BooleanField(blank=True, default=True, null=True),
-        ),
-    ]
+    operations = []

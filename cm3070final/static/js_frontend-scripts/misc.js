@@ -35,3 +35,9 @@ function updateSearchResults(event) {
         console.error("Invalid JSON response:", response);
     }
 }
+
+function closeLoadingModal() {
+    let modal = document.getElementById("loading-modal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}

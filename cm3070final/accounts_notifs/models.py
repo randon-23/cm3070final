@@ -83,18 +83,6 @@ class Account(AbstractUser):
         elif self.user_type == 'admin':
             admins = Group.objects.get(name='Admin')
             self.groups.add(admins)
-        
-class AccountPreferences(models.Model):
-    account = models.OneToOneField(Account, on_delete=models.CASCADE, primary_key=True)
-    dark_mode = models.BooleanField(default=False)
-    location = models.JSONField(default=dict, blank=True)
-
-    def clean(self):
-        if not isinstance(self.location, dict):
-            raise ValidationError("Location must be a dictionary.")
-        
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
 
 class Notification(models.Model):
     NOTIFICATION_TYPE_CHOICES = (

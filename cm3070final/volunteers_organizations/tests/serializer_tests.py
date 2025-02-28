@@ -1,7 +1,7 @@
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
-from ..serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer
-from ..models import Volunteer, Organization, Following
+from ..serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer, VolunteerMatchingPreferencesSerializer
+from ..models import Volunteer, Organization, Following, VolunteerMatchingPreferences
 from accounts_notifs.models import Account
 from datetime import date
 from unittest.mock import Mock
@@ -54,8 +54,9 @@ class TestOrganizationSerializer(TestCase):
             followers=50
         )
 
+    # Ensure the serializer outputs correct data
     def test_serialize_organization(self):
-        """Ensure the serializer outputs correct data"""
+        
         serializer = OrganizationSerializer(self.organization)
         expected_data = {
             "organization_name": "Helping Hands",
@@ -237,3 +238,175 @@ class TestStatusPostSerializer(TestCase):
         with self.assertRaises(ValidationError) as error:
             serializer.is_valid(raise_exception=True)
         self.assertIn("This field may not be blank.", str(error.exception))
+
+class TestVolunteerMatchingPreferencesSerializer(TestCase):
+    def setUp(self):
+        self.volunteer_account = Account.objects.create_user(
+            email_address="volunteer@example.com",
+            password="SecurePass123!",
+            user_type="volunteer",
+            contact_number="+35699998888"
+        )
+        self.volunteer = Volunteer.objects.create(
+            account=self.volunteer_account,
+            first_name="John",
+            last_name="Doe",
+            dob=date(1995, 4, 12)
+        )
+
+        self.mock_request = Mock()
+        self.mock_request.user = self.volunteer_account
+
+    # Ensure valid data is saved correctly
+    def test_create_valid_volunteer_preferences(self):
+        data = {
+            "availability": ["monday", "wednesday", "friday"],
+            "preferred_work_types": "both",
+            "preferred_duration": ["short-term", "medium-term"],
+            "fields_of_interest": ["education", "health"],
+            "skills": ["communication", "leadership"],
+            "languages": ["English", "French"],
+            "smart_matching_enabled": True
+        }
+        serializer = VolunteerMatchingPreferencesSerializer(data=data, context={"request": self.mock_request})
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        preferences = serializer.save()
+        self.assertEqual(preferences.volunteer, self.volunteer)
+        self.assertEqual(preferences.availability, ["monday", "wednesday", "friday"])
+        self.assertEqual(preferences.preferred_work_types, "both")
+
+    # Ensure invalid availability values are rejected
+    def test_invalid_availability(self):
+        data = {
+            "availability": ["monday", "invalid_day"]
+        }
+        serializer = VolunteerMatchingPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Invalid availability day(s) provided.", str(error.exception))
+
+    # Ensure more than 5 fields of interest are rejected
+    def test_too_many_fields_of_interest(self):
+        data = {
+            "fields_of_interest": ["education", "health", "sports", "arts", "community", "technology"]
+        }
+        serializer = VolunteerMatchingPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("You can select up to 5 fields of interest.", str(error.exception))
+
+    # Ensure more than 10 skills are rejected
+    def test_too_many_skills(self):
+        data = {
+            "skills": ["communication", "leadership", "teamwork", "writing", "marketing", "teaching",
+                       "public speaking", "photography", "videography", "coding", "event planning"]
+        }
+        serializer = VolunteerMatchingPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("You can select up to 10 skills.", str(error.exception))
+
+    # Ensure duplicate preferences creation fails
+    def test_duplicate_preferences_creation(self):
+        VolunteerMatchingPreferences.objects.create(
+            volunteer=self.volunteer,
+            availability=["monday", "tuesday"],
+            preferred_work_types="online",
+            preferred_duration=["short-term"],
+            fields_of_interest=["health"],
+            skills=["teamwork"],
+            languages=["Spanish"],
+            smart_matching_enabled=True
+        )
+
+        data = {
+            "availability": ["monday", "wednesday"],
+            "preferred_work_types": "both",
+            "preferred_duration": ["short-term", "medium-term"],
+            "fields_of_interest": ["education"],
+            "skills": ["communication"],
+            "languages": ["English"]
+        }
+        serializer = VolunteerMatchingPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Volunteer Matching Preferences already exist for this volunteer.", str(error.exception))
+
+    def test_create_valid_volunteer_preferences_with_location(self):
+        data = {
+            "availability": ["monday", "wednesday"],
+            "preferred_work_types": "both",
+            "preferred_duration": ["short-term"],
+            "fields_of_interest": ["education"],
+            "skills": ["communication"],
+            "languages": ["English"],
+            "location": {
+                "lat": 35.8995,
+                "lon": 14.5146,
+                "city": "Valletta",
+                "formatted_address": "Valletta, Malta"
+            }
+        }
+        serializer = VolunteerMatchingPreferencesSerializer(data=data, context={"request": self.mock_request})
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        preferences = serializer.save()
+        self.assertEqual(preferences.volunteer, self.volunteer)
+        self.assertEqual(preferences.location["city"], "Valletta")
+
+    # Ensure invalid location data is rejected
+    def test_invalid_location_data(self):
+        data = {
+            "location": "invalid_location_format"  # Should be a dict
+        }
+        serializer = VolunteerMatchingPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Location must be a dictionary.", str(error.exception))
+
+    # Ensure missing required location fields fail validation
+    def test_missing_required_location_fields(self):
+        data = {
+            "location": {"lat": 35.8995, "lon": 14.5146}  # Missing 'city' and 'formatted_address'
+        }
+        serializer = VolunteerMatchingPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Location must contain", str(error.exception))
+
+    # Ensure duplicate volunteer preferences creation fails (with location)
+    def test_duplicate_volunteer_preferences_creation_with_location(self):
+        VolunteerMatchingPreferences.objects.create(
+            volunteer=self.volunteer,
+            availability=["monday", "tuesday"],
+            preferred_work_types="online",
+            preferred_duration=["short-term"],
+            fields_of_interest=["health"],
+            skills=["teamwork"],
+            languages=["Spanish"],
+            smart_matching_enabled=True,
+            location={
+                "lat": 35.8995,
+                "lon": 14.5146,
+                "city": "Valletta",
+                "formatted_address": "Valletta, Malta"
+            }
+        )
+
+        data = {
+            "availability": ["monday", "wednesday"],
+            "preferred_work_types": "both",
+            "preferred_duration": ["short-term", "medium-term"],
+            "fields_of_interest": ["education"],
+            "skills": ["communication"],
+            "languages": ["English"],
+            "location": {
+                "lat": 36.9000,
+                "lon": 15.5151,
+                "city": "Mdina",
+                "formatted_address": "Mdina, Malta"
+            }
+        }
+        serializer = VolunteerMatchingPreferencesSerializer(data=data, context={"request": self.mock_request})
+        with self.assertRaises(ValidationError) as error:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Volunteer Matching Preferences already exist for this volunteer.", str(error.exception))

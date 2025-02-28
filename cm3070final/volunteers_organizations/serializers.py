@@ -145,6 +145,50 @@ class StatusPostSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
     
 class VolunteerMatchingPreferencesSerializer(serializers.ModelSerializer):
+    volunteer = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = VolunteerMatchingPreferences
         fields = '__all__'
+
+    def validate(self, data):
+        volunteer = Volunteer.objects.get(account=self.context['request'].user)  # Get account from request
+        if VolunteerMatchingPreferences.objects.filter(volunteer=volunteer).exists():
+            raise serializers.ValidationError("Volunteer Matching Preferences already exist for this volunteer.")
+
+        data['volunteer'] = volunteer
+        return data
+
+    def validate_location(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Location must be a dictionary.")
+        required_keys = {'lat', 'lon', 'city', 'formatted_address'}
+        if not required_keys.issubset(value.keys()):
+            raise serializers.ValidationError(f"Location must contain: {required_keys}.")
+        return value
+    
+    def validate_availability(self, value):
+        valid_days = {'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'}
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Availability must be a list.")
+        if any(day.lower() not in valid_days for day in value):
+            raise serializers.ValidationError("Invalid availability day(s) provided.")
+        return value
+
+    def validate_fields_of_interest(self, value):
+        if len(value) > 5:
+            raise serializers.ValidationError("You can select up to 5 fields of interest.")
+        return value
+
+    def validate_skills(self, value):
+        if len(value) > 10:
+            raise serializers.ValidationError("You can select up to 10 skills.")
+        return value
+
+    def validate_languages(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Languages must be a list.")
+        return value
+
+    def create(self, validated_data):
+        return super().create(validated_data)

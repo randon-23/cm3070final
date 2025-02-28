@@ -19,18 +19,20 @@
         <!-- Separator -->
         <div class="w-3/4 mx-auto h-[1px] bg-gray-700 my-4"></div>
 
-        <form id="preferences-form" method="post" 
-              hx-post="{% url 'volunteers_organizations:create_preferences' %}" 
-              hx-target="#modal-container" hx-swap="innerHTML"
-              class="space-y-6">
-            
+        <form id="preferences-form" 
+            method="post"
+            hx-post="{% url 'volunteers_organizations:create_volunteer_preferences' %}"
+            hx-trigger="submit"
+            hx-target="#loading-modal-content"
+            hx-swap="innerHTML"
+            class="space-y-6">
             <!-- Location -->
             <div class="mb-4">
                 <label for="location-input" class="block text-gray-700 font-semibold">Preferred Location</label>
-                <input id="location-input" name="location" type="text" placeholder="Enter your preferred location"
+                <input id="location-input" required="true" name="location_input" type="text" placeholder="Enter your preferred location"
                     class="w-full border rounded p-2">
                 <!-- Hidden input to store location data -->
-                <input type="hidden" id="location-hidden" name="location_data">
+                <input type="hidden" id="location-hidden" name="location">
             </div>
 
             <!-- Separator -->

@@ -11,10 +11,11 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from accounts_notifs.models import Account
-from .models import Volunteer, Organization, Following, Endorsement, StatusPost
+from .models import Volunteer, Organization, Following, Endorsement, StatusPost, VolunteerMatchingPreferences
 from accounts_notifs.serializers import AccountSerializer
 from .serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer, VolunteerMatchingPreferencesSerializer
-
+from django.http import QueryDict
+import json
 
 # Designed to get both Account and related Volunteer/Organization model data
 @api_view(['GET'])
@@ -94,6 +95,7 @@ def get_following(request, account_uuid):
     else:
         return Response({'message': 'Method not allowed'},status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+#User follows
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_following(request, account_uuid):
@@ -261,17 +263,41 @@ def get_search_profiles(request):
     }, status=status.HTTP_200_OK)
 
 ### VOLUNTEER MATCHING PREFERENCES ###
+# Creates VolunteerMatchingPreferences for a volunteer. If preferences already exist, return an error.
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def create_preferences(request):
-    try:
-        volunteer = request.user.volunteer
-    except AttributeError:
-        return Response({'error': 'Only volunteers can set preferences'}, status=403)
+def create_volunteer_preferences(request):
+    if request.method == 'POST':
+        print("Received Data: ", request.data)
+        try:
+            volunteer = Volunteer.objects.get(account=request.user)
+        except Volunteer.DoesNotExist:
+            return Response({'error': 'Only volunteers can set preferences'}, status=status.HTTP_403_FORBIDDEN)
+        
+        if VolunteerMatchingPreferences.objects.filter(volunteer=volunteer).exists():
+            return Response({'error': 'Preferences already set'}, status=status.HTTP_409_CONFLICT)
+        
+        # Convert QueryDict to JSON-compatible dictionary
+        data = request.data.copy()
+        formatted_data = {}
 
-    serializer = VolunteerMatchingPreferencesSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(volunteer=volunteer)
-        request.session.pop('show_preferences_modal', None)  # Hide modal after submission
-        return Response(serializer.data, status=201)
-    return Response(serializer.errors, status=400)
+        for key, value in data.lists():
+            if key == "preferred_work_types":
+                formatted_data[key] = value[0] if value else None
+            elif key == "location":
+                try:
+                    formatted_data[key] = json.loads(value[0]) if isinstance(value[0], str) else value[0]
+                except json.JSONDecodeError:
+                    return Response({'error': 'Invalid JSON for location field'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                formatted_data[key] = value
+        
+        print("Parsed Data: ", data)
+        serializer = VolunteerMatchingPreferencesSerializer(data=formatted_data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(volunteer=volunteer)
+            return Response({"message": "Successfully created volunteer matching preferences", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        print("Serializer Errors:", serializer.errors)
+        return Response({"message": "An error occurred creating volunteer matching preferences", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

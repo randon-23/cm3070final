@@ -49,16 +49,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='AccountPreferences',
-            fields=[
-                ('account', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
-                ('dark_mode', models.BooleanField(default=False)),
-                ('smart_matching_enabled', models.BooleanField(default=True)),
-                ('enable_volontera_point_opportunities', models.BooleanField(blank=True, null=True)),
-                ('volontera_points_rate', models.FloatField(blank=True, default=1.0, null=True)),
-            ],
-        ),
-        migrations.CreateModel(
             name='Notification',
             fields=[
                 ('notification_id', models.AutoField(primary_key=True, serialize=False)),

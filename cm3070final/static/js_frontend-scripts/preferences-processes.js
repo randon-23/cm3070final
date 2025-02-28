@@ -1,3 +1,5 @@
+//Displays the preferences modal after 1.5 seconds of page load depending on whether the preferences_modal.html is present in the template or not, which is dependent on show_preferences_modal being true or not
+//A wait is added to ensure that the Google Places API is loaded before initializing the autocomplete for the location input field and so taht it does not immediately show the modal to the user
 document.addEventListener("DOMContentLoaded", function() {
     setTimeout(function() {
         document.getElementById("preferences-modal").classList.remove("hidden");
@@ -22,8 +24,18 @@ document.addEventListener("DOMContentLoaded", function() {
     } else {
         console.warn("Google Places API not loaded yet.");
     }
+
+    let locationInput = document.getElementById("location-input");
+
+    // Prevent form submission when pressing Enter inside the location input
+    locationInput.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault(); // Prevent the form from submitting when user click Enter in the location input
+        }
+    });
 });
 
+// Initializes Google Places API autocomplete for location input field
 function initAutocomplete() {
     let input = document.getElementById("location-input");
     let autocomplete = new google.maps.places.Autocomplete(input, { types: ["geocode"] });

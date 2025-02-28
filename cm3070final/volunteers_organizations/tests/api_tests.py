@@ -1,7 +1,7 @@
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from ..models import Volunteer, Organization, Following, Endorsement, StatusPost
+from ..models import Volunteer, Organization, Following, Endorsement, StatusPost, VolunteerMatchingPreferences
 from accounts_notifs.models import Account
 from django.urls import reverse
 
@@ -319,3 +319,113 @@ class TestSearchProfilesAPI(APITestCase):
     def test_wrong_method_returns_405(self):
         response = self.client.post(self.search_url, {"q": "Adam"})
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+class TestVolunteerPreferencesAPI(APITestCase):
+    def setUp(self):
+        self.volunteer_account = Account.objects.create_user(
+            email_address="volunteer@example.com",
+            password="testpass",
+            user_type="volunteer",
+            contact_number="+35612345678"
+        )
+        self.volunteer = Volunteer.objects.create(
+            account=self.volunteer_account,
+            first_name="John",
+            last_name="Doe", 
+            dob="1995-06-15" 
+        )
+
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.volunteer_account)
+
+        self.volunteer_preferences_url = reverse("volunteers_organizations:create_volunteer_preferences")
+
+    # Successfully create volunteer preferences
+    def test_create_volunteer_preferences_success(self):
+        data = {
+            "availability": ["monday", "wednesday"],
+            "preferred_work_types": "online",
+            "preferred_duration": ["short-term"],
+            "fields_of_interest": ["education", "community"],
+            "skills": ["public speaking", "leadership"],
+            "languages": ["English", "Spanish"]
+        }
+        response = self.client.post(self.volunteer_preferences_url, data, format="json")
+        print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(VolunteerMatchingPreferences.objects.count(), 1)
+        self.assertEqual(response.data["data"]["volunteer"], self.volunteer.pk)
+
+    # Attempt to create duplicate preferences (should return 409 Conflict)
+    def test_create_duplicate_volunteer_preferences(self):
+        VolunteerMatchingPreferences.objects.create(volunteer=self.volunteer)
+        response = self.client.post(self.volunteer_preferences_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+    # Unauthorized access should return 403 Forbidden
+    def test_create_volunteer_preferences_unauthorized(self):
+        self.client.logout()
+        response = self.client.post(self.volunteer_preferences_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # Sending invalid data should return 400 Bad Request
+    def test_create_volunteer_preferences_invalid_data(self):
+        data = {
+            "availability": "invalid_format",  # Should be a list
+            "preferred_work_types": "invalid_choice"  # Should be a valid choice
+        }
+        response = self.client.post(self.volunteer_preferences_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    # Non-volunteer accounts should not be able to create preferences
+    def test_non_volunteer_cannot_create_preferences(self):
+        regular_account = Account.objects.create_user(
+            email_address="regular@example.com",
+            password="testpass",
+            user_type="organization",
+            contact_number="+35687654321"
+        )
+        self.client.force_authenticate(user=regular_account)
+        response = self.client.post(self.volunteer_preferences_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # Sending a GET request should return 405 Method Not Allowed
+    def test_wrong_method_returns_405(self):
+        response = self.client.get(self.volunteer_preferences_url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    # Successfully create volunteer preferences with location
+    def test_create_volunteer_preferences_with_location_success(self):
+        data = {
+            "availability": ["monday", "wednesday"],
+            "preferred_work_types": "online",
+            "preferred_duration": ["short-term"],
+            "fields_of_interest": ["education", "community"],
+            "skills": ["public speaking", "leadership"],
+            "languages": ["English", "Spanish"],
+            "location": {
+                "lat": 40.7128,
+                "lon": -74.0060,
+                "city": "New York",
+                "formatted_address": "New York, NY, USA"
+            }
+        }
+        response = self.client.post(self.volunteer_preferences_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(VolunteerMatchingPreferences.objects.count(), 1)
+        self.assertEqual(response.data["data"]["volunteer"], self.volunteer.pk)
+        self.assertEqual(response.data["data"]["location"]["city"], "New York")
+
+    # Sending invalid location data should return 400 Bad Request
+    def test_create_volunteer_preferences_invalid_location(self):
+        data = {
+            "location": "invalid_location_format"  # Should be a dict
+        }
+        response = self.client.post(self.volunteer_preferences_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # Attempt to create duplicate preferences (should return 409 Conflict)
+    def test_create_duplicate_volunteer_preferences_with_location(self):
+        VolunteerMatchingPreferences.objects.create(volunteer=self.volunteer, location={})
+        response = self.client.post(self.volunteer_preferences_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)

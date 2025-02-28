@@ -16,5 +16,8 @@ document.addEventListener("htmx:afterRequest", function(event) {
     } else if(url.includes("/search/get_search_profiles/")){
         console.log("Updating search results!", event);
         updateSearchResults(event);
+    } else if(url.includes("/volunteer_matching_preferences/create_volunteer_preferences/")){
+        console.log("Creating initial preferences!", event);
+        updateContent(event);
     }
 });

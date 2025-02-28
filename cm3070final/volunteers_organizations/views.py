@@ -147,3 +147,7 @@ def update_profile_view(request):
         "form": form,
         "user_type": account.user_type
     })
+
+@login_required
+def preferences_view(request, account_uuid):
+    return render(request, "volunteers_organizations/preferences.html")

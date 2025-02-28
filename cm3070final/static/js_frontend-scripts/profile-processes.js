@@ -55,6 +55,7 @@ function updateFollowerCount(event) {
     }
 }
 
+// Used for responsiveness in the application when submitting so that user knows that the request is being processed and this then tirggers refresh to show the changes
 function updateContent(event){
     let response = event.detail.xhr.responseText;
     try{

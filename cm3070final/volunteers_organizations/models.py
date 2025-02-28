@@ -109,10 +109,15 @@ class VolunteerMatchingPreferences(models.Model):
     fields_of_interest = models.JSONField(default=list, blank=True)
     skills = models.JSONField(default=list, blank=True)
     languages = models.JSONField(default=list, blank=True)
+    location = models.JSONField(default=dict, blank=True)
     smart_matching_enabled = models.BooleanField(default=True, null=True, blank=True)
 
     def clean(self):
         super().clean()
+
+        # Validate location
+        if not isinstance(self.location, dict):
+            raise ValidationError("Location must be a dictionary.")
 
         #Validate 'preferred_duration'
         if not isinstance(self.preferred_duration, list):

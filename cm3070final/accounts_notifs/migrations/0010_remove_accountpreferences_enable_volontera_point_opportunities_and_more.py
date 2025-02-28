@@ -9,22 +9,4 @@ class Migration(migrations.Migration):
         ('accounts_notifs', '0009_alter_account_contact_number'),
     ]
 
-    operations = [
-        migrations.RemoveField(
-            model_name='accountpreferences',
-            name='enable_volontera_point_opportunities',
-        ),
-        migrations.RemoveField(
-            model_name='accountpreferences',
-            name='smart_matching_enabled',
-        ),
-        migrations.RemoveField(
-            model_name='accountpreferences',
-            name='volontera_points_rate',
-        ),
-        migrations.AddField(
-            model_name='accountpreferences',
-            name='location',
-            field=models.JSONField(blank=True, default=dict),
-        ),
-    ]
+    operations = []

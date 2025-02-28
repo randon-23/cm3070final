@@ -20,7 +20,7 @@
                         {% if user.organization.organization_profile_img %}
                             <img class="w-64 h-64 rounded-full object-cover" src="{{ user.organization.organization_profile_img.url }}" alt="Profile Picture">
                         {% else %}
-                            <img class="w-64 h-64 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
+                            <img class="w-64 h-64 rounded-full object-contain bg-white p-2" src="{% static 'images/default_organization.svg' %}" alt="Profile Picture">
                         {% endif %}
                     {% endif %}
                 {% else %}
@@ -34,7 +34,7 @@
                         {% if user_profile.organization.organization_profile_img %}
                             <img class="w-64 h-64 rounded-full object-cover" src="{{ user_profile.organization.organization_profile_img.url }}" alt="Profile Picture">
                         {% else %}
-                            <img class="w-64 h-64 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
+                            <img class="w-64 h-64 rounded-full object-contain bg-white p-2" src="{% static 'images/default_organization.svg' %}" alt="Profile Picture">
                         {% endif %}
                     {% endif %}
                 {% endif %}
@@ -89,26 +89,44 @@
             <div class="flex flex-col justify-center text-center space-y-2 relative">
                 {% if is_own_profile %}
                     {% if user.volunteer %}
-                        <p class="text-gray-700">Location: <strong>San Francisco, CA</strong></p>
+                        <p class="text-gray-700">
+                            Location: 
+                            <strong>
+                                {% if user.volunteer.volunteermatchingpreferences.location.formatted_address %}
+                                    {{ user.volunteer.volunteermatchingpreferences.location.formatted_address }}
+                                {% else %}
+                                    Not Specified Yet
+                                {% endif %}
+                            </strong>
+                        </p>
                         <p class="text-gray-700">Bio: <strong>{{ user.volunteer.bio }}</strong></p>
                         <p class="text-gray-700">Date of Birth: <strong>{{ user.volunteer.dob }}</strong></p>
                         <p class="text-gray-700">Followers: <strong id="followers-count">{{ followers_count.followers }}</strong></p>
                     {% elif user.organization %}
                         <p class="text-gray-700">Organization Description: <strong>{{ user.organization.organization_description }}</strong></p>
-                        <p class="text-gray-700">Organization Address: <strong>{{ user.organization.organization_address }}</strong></p>
-                        <p class="text-gray-700">Organization Website: <strong>{{ user.organization.organization_website }}</strong></p>
+                        <p class="text-gray-700">Organization Address: <strong>{{ user.organization.organization_address.raw }}</strong></p>
+                        <p class="text-gray-700">Organization Website: <a href="{{ user.organization.organization_website }}" target="_blank" class="text-blue-600 underline hover:text-blue-800"><strong>{{ user.organization.organization_website }}</strong></a></p>
                         <p class="text-gray-700">Followers: <strong id="followers-count">{{ followers_count.followers }}</strong></p>
                     {% endif %}
                 {% else %}
                     {% if user_profile.volunteer %}
-                        <p class="text-gray-700">Location: <strong>San Francisco, CA</strong></p>
+                        <p class="text-gray-700">
+                            Location: 
+                            <strong>
+                                {% if user_profile.volunteer.volunteermatchingpreferences.location.formatted_address %}
+                                    {{ user_profile.volunteer.volunteermatchingpreferences.location.formatted_address }}
+                                {% else %}
+                                    Not Specified Yet
+                                {% endif %}
+                            </strong>
+                        </p>
                         <p class="text-gray-700">Bio: <strong>{{ user_profile.volunteer.bio }}</strong></p>
                         <p class="text-gray-700">Date of Birth: <strong>{{ user_profile.volunteer.dob }}</strong></p>
                         <p class="text-gray-700">Followers: <strong id="followers-count">{{ followers_count.followers }}</strong></p>
                     {% elif user_profile.organization %}
                         <p class="text-gray-700">Organization Description: <strong>{{ user_profile.organization.organization_description }}</strong></p>
-                        <p class="text-gray-700">Organization Address: <strong>{{ user_profile.organization.organization_address }}</strong></p>
-                        <p class="text-gray-700">Organization Website: <strong>{{ user_profile.organization.organization_website }}</strong></p>
+                        <p class="text-gray-700">Organization Address: <strong>{{ user_profile.organization.organization_address.raw }}</strong></p>
+                        <p class="text-gray-700">Organization Website: <a href="{{ user_profile.organization.organization_website }}" target="_blank" class="text-blue-600 underline hover:text-blue-800"><strong>{{ user_profile.organization.organization_website }}</strong></a></p>
                         <p class="text-gray-700">Followers: <strong id="followers-count">{{ followers_count.followers }}</strong></p>
                     {% endif %}
                 {% endif %}
@@ -231,6 +249,7 @@
         <div class="flex flex-col space-y-6">
             <!-- Create Endorsement (Only for Other Profiles) -->
             {% if not is_own_profile %}
+                <!--If both the user and profile being viewed are organizations, dont give possibility to endorse-->
                 {% if user.organization and user_profile.organization %}
                 {% else %}
                     <div class="bg-white p-4 rounded-lg shadow-md">

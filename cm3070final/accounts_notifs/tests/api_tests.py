@@ -4,6 +4,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from django.core import mail
 from django.contrib.auth.tokens import default_token_generator
+from ..models import Account
 
 Account = get_user_model()
 
