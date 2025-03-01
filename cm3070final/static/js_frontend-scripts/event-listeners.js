@@ -22,5 +22,8 @@ document.addEventListener("htmx:afterRequest", function(event) {
     } else if(url.includes("/organization_preferences/create_organization_preferences/")){
         console.log("Creating initial preferences!", event);
         updateContent(event);
+    } else if(url.includes("update_volunteer_preferences") || url.includes("update_organization_preferences")){
+        console.log("Updating preferences!", event);
+        updateContent(event);
     }
 });

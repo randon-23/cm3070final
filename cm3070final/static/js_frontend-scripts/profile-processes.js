@@ -61,7 +61,12 @@ function updateContent(event){
     try{
         let data = JSON.parse(response);
         console.log(data);
-        let modalContent = `<p>${data.message}</p>`;
+        let modalContent
+        if(data.message){
+            modalContent = `<p>${data.message}</p>`;
+        } else if(data.error){
+            modalContent = `<p>${data.error}</p>`;
+        }
         
         if (event.detail.xhr.status === 400 && typeof data.data === 'object') {
             modalContent += `<ul>`;
@@ -79,9 +84,16 @@ function updateContent(event){
         modal.classList.remove("hidden");
         modal.classList.add("flex");
 
+        // Check if a redirect URL is present
+        let redirectUrl = event.target.getAttribute("data-redirect-url");
+
         setTimeout(() => {
-            if(event.detail.xhr.status === 201){
-                window.location.reload();
+            if(event.detail.xhr.status === 201 || event.detail.xhr.status === 200){
+                if(redirectUrl){
+                    window.location.href = redirectUrl;
+                } else {
+                    window.location.reload();
+                }
             }
         }
         , 1000);

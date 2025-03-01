@@ -15,6 +15,7 @@ from .models import Volunteer, Organization, Following, Endorsement, StatusPost,
 from accounts_notifs.serializers import AccountSerializer
 from .serializers import VolunteerSerializer, OrganizationSerializer, FollowingCreateSerializer, EndorsementSerializer, StatusPostSerializer, VolunteerMatchingPreferencesSerializer, OrganizationPreferencesSerializer
 import json
+import ast
 from django.http import QueryDict
 
 # Designed to get both Account and related Volunteer/Organization model data
@@ -358,8 +359,13 @@ def update_volunteer_preferences(request):
                     formatted_data[key] = value[0] if value else None
                 elif key == "location":
                     try:
-                        formatted_data[key] = json.loads(value[0]) if isinstance(value[0], str) else value[0]
-                    except json.JSONDecodeError:
+                        #Formatting location field to match existing JSON format
+                        location_str = value[0]
+                        if "'" in location_str and not '"' in location_str:
+                            location_str = location_str.replace("'", '"')
+                        parsed_location = ast.literal_eval(location_str)
+                        formatted_data[key] = json.loads(json.dumps(parsed_location))
+                    except (json.JSONDecodeError, ValueError, SyntaxError) as e:
                         return Response({'error': 'Invalid JSON for location field'}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     formatted_data[key] = value
@@ -370,7 +376,6 @@ def update_volunteer_preferences(request):
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "Successfully updated volunteer preferences", "data": serializer.data}, status=status.HTTP_200_OK)
-        
         return Response({"message": "An error occurred updating volunteer preferences", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -413,10 +418,7 @@ def create_organization_preferences(request):
         if serializer.is_valid():
             serializer.save(organization=organization)
             return Response({"message": "Successfully created organization preferences", "data": serializer.data}, status=status.HTTP_201_CREATED)
-
-        print("Serializer Errors:", serializer.errors)
         return Response({"message": "An error occurred creating organization preferences", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
     else:
         return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
         
@@ -461,8 +463,13 @@ def update_organization_preferences(request):
                     formatted_data[key] = float(value[0]) if value else None
                 elif key == "location":
                     try:
-                        formatted_data[key] = json.loads(value[0]) if isinstance(value[0], str) else value[0]
-                    except json.JSONDecodeError:
+                        #Formatting location field to match existing JSON format
+                        location_str = value[0]
+                        if "'" in location_str and not '"' in location_str:
+                            location_str = location_str.replace("'", '"')
+                        parsed_location = ast.literal_eval(location_str)
+                        formatted_data[key] = json.loads(json.dumps(parsed_location))
+                    except (json.JSONDecodeError, ValueError, SyntaxError) as e:
                         return Response({'error': 'Invalid JSON for location field'}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     formatted_data[key] = value[0] if value else None
