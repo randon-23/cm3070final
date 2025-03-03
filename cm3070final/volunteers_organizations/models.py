@@ -40,6 +40,8 @@ class VolunteerMatchingPreferences(models.Model):
         ('public speaking', 'Public Speaking'),
         ('leadership', 'Leadership'),
         ('teamwork', 'Teamwork'),
+        ('physical fitness', 'Physical Fitness'),
+        ('able to work outdoors', 'Able to Work Outdoors'),
         ('time management', 'Time Management'),
         ('problem solving', 'Problem Solving'),
         ('organization', 'Organization'),
