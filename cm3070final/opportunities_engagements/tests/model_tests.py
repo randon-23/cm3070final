@@ -755,6 +755,49 @@ class TestVolunteerOpportunitySessionModel(TestCase):
             session.full_clean()
         self.assertIn("opportunity", str(context.exception))  # Checking for missing opportunity error
 
+    def test_default_status_upcoming(self):
+        session = VolunteerOpportunitySession.objects.create(
+            opportunity=self.opportunity,
+            title="Python Workshop",
+            description="Learn Python Basics",
+            session_date=date.today() + relativedelta(days=7),
+            session_start_time=time(10, 0),
+            session_end_time=time(12, 0),
+            slots=20
+        )
+        self.assertEqual(session.status, "upcoming")
+
+    def test_mark_session_as_completed(self):
+        session = VolunteerOpportunitySession.objects.create(
+            opportunity=self.opportunity,
+            title="Python Workshop",
+            description="Learn Python Basics",
+            session_date=date.today() + relativedelta(days=7),
+            session_start_time=time(10, 0),
+            session_end_time=time(12, 0),
+            slots=20
+        )
+
+        session.status = "completed"
+        session.save()
+
+        self.assertEqual(session.status, "completed")
+
+    def test_invalid_status_choice(self):
+        session = VolunteerOpportunitySession.objects.create(
+            opportunity=self.opportunity,
+            title="Python Workshop",
+            description="Learn Python Basics",
+            session_date=date.today() + relativedelta(days=7),
+            session_start_time=time(10, 0),
+            session_end_time=time(12, 0),
+            slots=20
+        )
+
+        session.status = "invalid_status"
+
+        with self.assertRaises(ValidationError):
+            session.full_clean()
 class TestVolunteerSessionEngagementModel(TestCase):
     @classmethod
     def setUpTestData(cls):

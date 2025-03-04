@@ -208,6 +208,12 @@ class VolunteerOpportunityApplication(models.Model):
         super().save(*args, **kwargs)
 
 class VolunteerOpportunitySession(models.Model):
+    STATUS_CHOICES = [
+        ('upcoming', 'Upcoming'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled')
+    ]
+
     session_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     opportunity = models.ForeignKey(VolunteerOpportunity, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
@@ -215,6 +221,7 @@ class VolunteerOpportunitySession(models.Model):
     session_date = models.DateField()
     session_start_time = models.TimeField()
     session_end_time = models.TimeField()
+    status = models.CharField(max_length=20, default='upcoming', choices=STATUS_CHOICES)
     slots = models.PositiveIntegerField(null=True, blank=True)  # Optional limitation on slots
 
     class Meta:
@@ -337,7 +344,7 @@ class VolunteerEngagementLog(models.Model):
     # The volunteer engagement that this log is associated with, and if ongoing, the associated session
     volunteer_engagement = models.ForeignKey(VolunteerEngagement, on_delete=models.CASCADE)
     session = models.ForeignKey(VolunteerSessionEngagement, null=True, blank=True, on_delete=models.CASCADE)
-    no_of_hours = models.FloatField(default=0.5)
+    no_of_hours = models.FloatField(default=0.5) # Calculate from api endpoint and validate in serializer
     status = models.CharField(max_length=20, default='pending', choices=ENGAGEMENT_STATUS_LOG_CHOICES)
     log_notes = models.TextField(max_length=500, default='')
     created_at = models.DateTimeField(auto_now_add=True)
