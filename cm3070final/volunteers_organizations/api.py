@@ -5,10 +5,7 @@ from rest_framework import status
 from django.db import models
 from django.db.models import F, Q, Value
 from django.db.models.functions import Concat
-from rest_framework.views import APIView
 from django.http import JsonResponse
-from django.core.mail import send_mail
-from django.urls import reverse
 from django.core.exceptions import ValidationError
 from accounts_notifs.models import Account
 from .models import Volunteer, Organization, Following, Endorsement, StatusPost, VolunteerMatchingPreferences, OrganizationPreferences

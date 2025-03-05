@@ -115,6 +115,7 @@ class VolunteerOpportunity(models.Model):
     can_apply_as_group = models.BooleanField(default=False)
     # Location field (set to organization location by default in serializer)
     required_location = models.JSONField(default=dict)
+    languages = models.JSONField(default=list)
      # Contribution hours are calculated dynamically in the serializer
     status = models.CharField(max_length=20, default='upcoming', choices=STATUS_CHOICES)
     # Slots are only used for one-time opportunities

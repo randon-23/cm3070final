@@ -1,0 +1,20 @@
+{% extends 'base/base_authenticated.html' %}
+{% load static %}
+
+{% block auth_content %}
+<div class="w-full flex flex-col items-center mt-10">
+    <div class="text-center bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold">Unauthorized</h1>
+        <p class="font-bold">You are not authorized to view this page.</p>
+        <p class="text-danger font-bold">Error: {{ status_code }}</p>
+
+        <!-- Centered Button within the Div -->
+        <div class="flex justify-center mt-4">
+            <a href="{% url 'volunteers_organizations:profile' account_uuid=user.account_uuid %}"
+               class="w-fit shadow-xl flex items-center justify-center space-x-2 py-3 px-4 text-sm tracking-wide rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
+                Return to Profile
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
