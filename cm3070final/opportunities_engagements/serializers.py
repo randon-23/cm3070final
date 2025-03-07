@@ -155,9 +155,16 @@ class VolunteerEngagementSerializer(serializers.ModelSerializer):
     # Automatically set end_date when engagement is marked 'completed' or 'cancelled'.
     def update(self, instance, validated_data):
         new_status = validated_data.get("engagement_status", instance.engagement_status)
+        opportunity = instance.volunteer_opportunity_application.volunteer_opportunity
 
         if new_status in ["completed", "cancelled"] and instance.engagement_status != new_status:
             validated_data["end_date"] = now().date()
+
+            # Re-increment slots when engagement is canceled
+            if new_status == "cancelled" and not opportunity.ongoing and opportunity.slots is not None:
+                total_slots_to_restore = 1 + instance.volunteer_opportunity_application.no_of_additional_volunteers
+                opportunity.slots += total_slots_to_restore
+                opportunity.save()
 
         return super().update(instance, validated_data)
     
@@ -232,10 +239,21 @@ class VolunteerSessionEngagementSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         new_status = validated_data.get("status", instance.status)
+        old_status = instance.status
 
         # Prevent cancelling last minute
         if new_status == "cant_go" and instance.session.session_date <= now().date():
             raise serializers.ValidationError("You cannot cancel your attendance on the day of the session.")
+        
+        # Handle slot updates if session has limited slots
+        session = instance.session
+        if session.slots is not None:
+            if old_status == "cant_go" and new_status == "can_go":
+                session.slots -= 1  # Decrement slots
+            elif old_status == "can_go" and new_status == "cant_go":
+                session.slots += 1  # Increment slots
+            
+            session.save()  # Save the updated slot count
 
         return super().update(instance, validated_data)
     
@@ -246,7 +264,7 @@ class VolunteerEngagementLogSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         volunteer_engagement = data.get("volunteer_engagement") if "volunteer_engagement" in data else self.instance.volunteer_engagement
-        session_engagement = data.get("session", None) if "session" in data else self.instance.session
+        session_engagement = data.get("session", None) if "session" in data else None
         no_of_hours = data.get("no_of_hours", self.instance.no_of_hours if self.instance else 0)
         new_status = data.get("status", self.instance.status if self.instance else "pending")
         opportunity = volunteer_engagement.volunteer_opportunity_application.volunteer_opportunity
@@ -265,6 +283,7 @@ class VolunteerEngagementLogSerializer(serializers.ModelSerializer):
             volunteer_engagement=volunteer_engagement,
             session=session_engagement  # Ensuring we're filtering by session_engagement
         ).exclude(pk=self.instance.pk if self.instance else None).exists()
+
         if existing_log:
             raise serializers.ValidationError("You have already logged hours for this engagement.")
 

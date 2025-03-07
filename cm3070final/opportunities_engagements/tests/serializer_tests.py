@@ -943,7 +943,7 @@ class TestVolunteerEngagementLogSerializer(TestCase):
         }
         serializer = VolunteerEngagementLogSerializer(data=data, context={"request": self.volunteer_request})
         self.assertFalse(serializer.is_valid())
-        self.assertIn("The fields volunteer_engagement, session must make a unique set.", serializer.errors["non_field_errors"])
+        self.assertIn("You have already logged hours for this engagement.", serializer.errors["non_field_errors"])
 
     # Organizations can approve logs
     def test_organization_can_approve_log(self):

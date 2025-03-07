@@ -112,7 +112,6 @@ class VolunteerMatchingPreferences(models.Model):
     skills = models.JSONField(default=list, blank=True)
     languages = models.JSONField(default=list, blank=True)
     location = models.JSONField(default=dict, blank=True)
-    smart_matching_enabled = models.BooleanField(default=True, null=True, blank=True)
 
     def clean(self):
         super().clean()

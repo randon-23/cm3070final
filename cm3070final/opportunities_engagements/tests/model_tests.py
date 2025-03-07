@@ -598,28 +598,13 @@ class TestVolunteerEngagementLogModel(TestCase):
                 volunteer_engagement=self.engagement,
                 session=None,  # No session engagement
                 no_of_hours=2.0,
-                log_notes="Should be linked to a session engagement."
+                log_notes="Should be linked to a session engagement.",
+                status="approved" # If pending does not need to be linked to a session
             )
             log.full_clean()
         self.assertIn("Ongoing opportunities require logs to be linked to a session.", str(context.exception))
 
-    # Ensure duplicate logs for the same engagement & session are not allowed
-    def test_prevent_duplicate_logs_for_same_engagement_and_session(self):
-        
-        log1 = VolunteerEngagementLog.objects.create(
-            volunteer_engagement=self.engagement,
-            session=self.session_engagement,
-            no_of_hours=1.5,
-            log_notes="First log."
-        )
-
-        with self.assertRaises(IntegrityError):
-            VolunteerEngagementLog.objects.create(
-                volunteer_engagement=self.engagement,
-                session=self.session_engagement,  # Same session engagement
-                no_of_hours=1.0,
-                log_notes="Duplicate log."
-            )
+    # Ensure duplicate logs for the same engagement & session are not allowed ### OLD TEST logic moved to serializer
 
 class TestVolunteerOpportunitySessionModel(TestCase):
     @classmethod
@@ -798,6 +783,7 @@ class TestVolunteerOpportunitySessionModel(TestCase):
 
         with self.assertRaises(ValidationError):
             session.full_clean()
+
 class TestVolunteerSessionEngagementModel(TestCase):
     @classmethod
     def setUpTestData(cls):

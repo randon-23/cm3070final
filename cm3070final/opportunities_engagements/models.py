@@ -3,6 +3,7 @@ from volunteers_organizations.models import Organization, Volunteer
 import uuid
 from django.utils.timezone import now
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 class VolunteerOpportunity(models.Model):
     WORK_BASIS_TYPES = (
@@ -172,7 +173,8 @@ class VolunteerOpportunityApplication(models.Model):
     APPLICATION_STATUS_CHOICES = (
         ('pending', 'Pending'),
         ('accepted', 'Accepted'),
-        ('rejected', 'Rejected')
+        ('rejected', 'Rejected'),
+        ('cancelled', 'Cancelled')
     )
 
     volunteer_opportunity_application_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -251,7 +253,7 @@ class VolunteerEngagement(models.Model):
         ('cancelled', 'Cancelled')
     )
 
-    volunteer_engagement_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False),
+    volunteer_engagement_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     volunteer_opportunity_application = models.OneToOneField(VolunteerOpportunityApplication, on_delete=models.CASCADE)
     volunteer = models.ForeignKey(Volunteer, on_delete=models.CASCADE)  # Redundant FK for easier queries
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)  # Redundant FK for easier queries
@@ -349,14 +351,9 @@ class VolunteerEngagementLog(models.Model):
     status = models.CharField(max_length=20, default='pending', choices=ENGAGEMENT_STATUS_LOG_CHOICES)
     log_notes = models.TextField(max_length=500, default='')
     created_at = models.DateTimeField(auto_now_add=True)
+    is_volunteer_request = models.BooleanField(default=False)
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['volunteer_engagement', 'session'],
-                name='unique_volunteer_log_per_session'
-            )
-        ]
+    ### Removed unique constraint on volunteer_engagement and session to allow multiple logs per session if volunteer submitted - enforced in serializer ###
 
     def clean(self):
         # Data integrity:
@@ -370,8 +367,8 @@ class VolunteerEngagementLog(models.Model):
         if self.no_of_hours <= 0:
             raise ValidationError("Number of hours must be greater than zero.")
 
-        # Ensure log is linked to a session **only if the opportunity is ongoing**
-        if not self.session and self.volunteer_engagement.volunteer_opportunity_application.volunteer_opportunity.ongoing:
+        # Ensure log is linked to a session **only if the opportunity is ongoing** and only if the status is not pending i.e. organization-triggered
+        if not self.session and self.volunteer_engagement.volunteer_opportunity_application.volunteer_opportunity.ongoing and not self.is_volunteer_request:
             raise ValidationError("Ongoing opportunities require logs to be linked to a session.")
 
         super().clean()
