@@ -17,6 +17,24 @@ from django.utils import timezone
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def get_opportunity(request, opportunity_id):
+    if request.method == "GET":
+        try:
+            opportunity = VolunteerOpportunity.objects.get(volunteer_opportunity_id=opportunity_id)
+        except VolunteerOpportunity.DoesNotExist:
+            return Response({"error": "Opportunity not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if request.user.is_organization():
+            if opportunity.organization.account != request.user:
+                return Response({"error": "You can only view your own opportunities."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = VolunteerOpportunitySerializer(opportunity)
+        return Response(serializer.data, status=status.HTTP_200_OK)    
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_opportunities(request):
     if request.method == "GET":
         account = request.user
@@ -774,150 +792,165 @@ def get_session_engagements(request, session_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_opportunity_engagement_logs(request, opportunity_id):
-    if not request.user.is_organization():
-        return Response({"error": "Only organizations can create engagement logs."}, status=status.HTTP_403_FORBIDDEN)
+    if request.method == "POST":
+        if not request.user.is_organization():
+            return Response({"error": "Only organizations can create engagement logs."}, status=status.HTTP_403_FORBIDDEN)
 
-    try:
-        opportunity = VolunteerOpportunity.objects.get(volunteer_opportunity_id=opportunity_id)
-    except VolunteerOpportunity.DoesNotExist:
-        return Response({"error": "Opportunity not found."}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            opportunity = VolunteerOpportunity.objects.get(volunteer_opportunity_id=opportunity_id)
+        except VolunteerOpportunity.DoesNotExist:
+            return Response({"error": "Opportunity not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    if opportunity.organization.account != request.user:
-        return Response({"error": "Unauthorized to create logs for this opportunity."}, status=status.HTTP_403_FORBIDDEN)
+        if opportunity.organization.account != request.user:
+            return Response({"error": "Unauthorized to create logs for this opportunity."}, status=status.HTTP_403_FORBIDDEN)
 
-    if opportunity.ongoing:
-        return Response({"error": "Logs for ongoing opportunities must be session-based."}, status=status.HTTP_400_BAD_REQUEST)
+        if opportunity.ongoing:
+            return Response({"error": "Logs for ongoing opportunities must be session-based."}, status=status.HTTP_400_BAD_REQUEST)
 
-    engagements = VolunteerEngagement.objects.filter(volunteer_opportunity_application__volunteer_opportunity=opportunity, engagement_status="ongoing")
+        engagements = VolunteerEngagement.objects.filter(volunteer_opportunity_application__volunteer_opportunity=opportunity, engagement_status="ongoing")
 
-    created_logs = []
-    for engagement in engagements:
-        data = {
-            "volunteer_engagement": engagement.pk,
-            "no_of_hours": (opportunity.opportunity_time_to.hour - opportunity.opportunity_time_from.hour),
-            "status": "approved",
-            "log_notes": f"Contributed to {opportunity.organization.organization_name} at {opportunity.title}"
-        }
-        serializer = VolunteerEngagementLogSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            created_logs.append(serializer.data)
+        created_logs = []
+        for engagement in engagements:
+            data = {
+                "volunteer_engagement": engagement.pk,
+                "no_of_hours": (opportunity.opportunity_time_to.hour - opportunity.opportunity_time_from.hour),
+                "status": "approved",
+                "log_notes": f"Contributed to {opportunity.organization.organization_name} at {opportunity.title}"
+            }
+            serializer = VolunteerEngagementLogSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                created_logs.append(serializer.data)
 
-    return Response({"message": "Engagement logs created successfully.", "data": created_logs}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Engagement logs created successfully.", "data": created_logs}, status=status.HTTP_201_CREATED)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 # Creates engagement logs when an organization completes a session for an ongoing opportunity.
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_session_engagement_logs(request, session_id):
-    if not request.user.is_organization():
-        return Response({"error": "Only organizations can create session engagement logs."}, status=status.HTTP_403_FORBIDDEN)
+    if request.method == "POST":
+        if not request.user.is_organization():
+            return Response({"error": "Only organizations can create session engagement logs."}, status=status.HTTP_403_FORBIDDEN)
 
-    try:
-        session = VolunteerOpportunitySession.objects.get(session_id=session_id)
-    except VolunteerOpportunitySession.DoesNotExist:
-        return Response({"error": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            session = VolunteerOpportunitySession.objects.get(session_id=session_id)
+        except VolunteerOpportunitySession.DoesNotExist:
+            return Response({"error": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    if session.opportunity.organization.account != request.user:
-        return Response({"error": "Unauthorized to create logs for this session."}, status=status.HTTP_403_FORBIDDEN)
+        if session.opportunity.organization.account != request.user:
+            return Response({"error": "Unauthorized to create logs for this session."}, status=status.HTTP_403_FORBIDDEN)
 
-    # Ensure it's an ongoing opportunity
-    if not session.opportunity.ongoing:
-        return Response({"error": "Only ongoing opportunities have session-based engagement logs."}, status=status.HTTP_400_BAD_REQUEST)
+        # Ensure it's an ongoing opportunity
+        if not session.opportunity.ongoing:
+            return Response({"error": "Only ongoing opportunities have session-based engagement logs."}, status=status.HTTP_400_BAD_REQUEST)
 
-    session_engagements = VolunteerSessionEngagement.objects.filter(session=session, status="can_go")
+        session_engagements = VolunteerSessionEngagement.objects.filter(session=session, status="can_go")
 
-    created_logs = []
-    for session_engagement in session_engagements:
-        engagement = session_engagement.volunteer_engagement
-        data = {
-            "volunteer_engagement": engagement.pk,
-            "session": session_engagement.pk,
-            "no_of_hours": (session.session_end_time.hour - session.session_start_time.hour),
-            "status": "approved",
-            "log_notes": f"Contributed to {session.opportunity.organization.organization_name} at {session.title}"
-        }
-        serializer = VolunteerEngagementLogSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            created_logs.append(serializer.data)
+        created_logs = []
+        for session_engagement in session_engagements:
+            engagement = session_engagement.volunteer_engagement
+            data = {
+                "volunteer_engagement": engagement.pk,
+                "session": session_engagement.pk,
+                "no_of_hours": (session.session_end_time.hour - session.session_start_time.hour),
+                "status": "approved",
+                "log_notes": f"Contributed to {session.opportunity.organization.organization_name} at {session.title}"
+            }
+            serializer = VolunteerEngagementLogSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                created_logs.append(serializer.data)
 
-    return Response({"message": "Session engagement logs created successfully.", "data": created_logs}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Session engagement logs created successfully.", "data": created_logs}, status=status.HTTP_201_CREATED)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 # Allows a volunteer to submit a log for an ongoing opportunity (Manual Log)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_engagement_log_volunteer(request, opportunity_id):
-    if not request.user.is_volunteer():
-        return Response({"error": "Only volunteers can submit engagement logs."}, status=status.HTTP_403_FORBIDDEN)
+    if request.method == "POST":
+        if not request.user.is_volunteer():
+            return Response({"error": "Only volunteers can submit engagement logs."}, status=status.HTTP_403_FORBIDDEN)
 
-    try:
-        engagement = VolunteerEngagement.objects.get(
-            volunteer_opportunity_application__volunteer_opportunity__volunteer_opportunity_id=opportunity_id,
-            volunteer__account=request.user
-        )
-    except VolunteerEngagement.DoesNotExist:
-        return Response({"error": "Engagement not found."}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            engagement = VolunteerEngagement.objects.get(
+                volunteer_opportunity_application__volunteer_opportunity__volunteer_opportunity_id=opportunity_id,
+                volunteer__account=request.user
+            )
+        except VolunteerEngagement.DoesNotExist:
+            return Response({"error": "Engagement not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    if not engagement.volunteer_opportunity_application.volunteer_opportunity.ongoing:
-        return Response({"error": "Logs for one-time opportunities must be system-generated."}, status=status.HTTP_400_BAD_REQUEST)
+        if not engagement.volunteer_opportunity_application.volunteer_opportunity.ongoing:
+            return Response({"error": "Logs for one-time opportunities must be system-generated."}, status=status.HTTP_400_BAD_REQUEST)
 
-    data = request.data.copy()
-    data["volunteer_engagement"] = engagement.pk
-    data["status"] = "pending"  # Logs submitted manually must be approved by an organization
-    data["is_volunteer_request"] = True # Flag to indicate that this log was submitted by the volunteer
+        data = request.data.copy()
+        data["volunteer_engagement"] = engagement.pk
+        data["status"] = "pending"  # Logs submitted manually must be approved by an organization
+        data["is_volunteer_request"] = True # Flag to indicate that this log was submitted by the volunteer
 
-    serializer = VolunteerEngagementLogSerializer(data=data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Engagement log submitted for approval.", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        serializer = VolunteerEngagementLogSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Engagement log submitted for approval.", "data": serializer.data}, status=status.HTTP_201_CREATED)
 
-    return Response({"message": "Failed to submit log.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Failed to submit log.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 # Organization approves a volunteer's engagement log
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def approve_engagement_log(request, volunteer_engagement_log_id):
-    try:
-        log = VolunteerEngagementLog.objects.get(volunteer_engagement_log_id=volunteer_engagement_log_id)
-    except VolunteerEngagementLog.DoesNotExist:
-        return Response({"error": "Engagement log not found."}, status=status.HTTP_404_NOT_FOUND)
+    if request.method == "PATCH":
+        try:
+            log = VolunteerEngagementLog.objects.get(volunteer_engagement_log_id=volunteer_engagement_log_id)
+        except VolunteerEngagementLog.DoesNotExist:
+            return Response({"error": "Engagement log not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    # Ensure only organizations can approve logs
-    if not request.user.is_organization():
-        return Response({"error": "Only organizations can approve engagement logs."}, status=status.HTTP_403_FORBIDDEN)
+        # Ensure only organizations can approve logs
+        if not request.user.is_organization():
+            return Response({"error": "Only organizations can approve engagement logs."}, status=status.HTTP_403_FORBIDDEN)
 
-    serializer = VolunteerEngagementLogSerializer(log, data={"status": "approved"}, partial=True, context={"request": request})
-    if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Engagement log approved.", "data": serializer.data}, status=status.HTTP_200_OK)
+        serializer = VolunteerEngagementLogSerializer(log, data={"status": "approved"}, partial=True, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Engagement log approved.", "data": serializer.data}, status=status.HTTP_200_OK)
 
-    return Response({"message": "Failed to approve engagement log.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Failed to approve engagement log.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 # Organization rejects a volunteer's engagement log
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def reject_engagement_log(request, volunteer_engagement_log_id):
-    if not request.user.is_organization():
-        return Response({"error": "Only organizations can reject engagement logs."}, status=status.HTTP_403_FORBIDDEN)
+    if request.method == "PATCH":
+        if not request.user.is_organization():
+            return Response({"error": "Only organizations can reject engagement logs."}, status=status.HTTP_403_FORBIDDEN)
 
-    try:
-        log = VolunteerEngagementLog.objects.get(volunteer_engagement_log_id=volunteer_engagement_log_id)
-    except VolunteerEngagementLog.DoesNotExist:
-        return Response({"error": "Engagement log not found."}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            log = VolunteerEngagementLog.objects.get(volunteer_engagement_log_id=volunteer_engagement_log_id)
+        except VolunteerEngagementLog.DoesNotExist:
+            return Response({"error": "Engagement log not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    if log.volunteer_engagement.volunteer_opportunity_application.volunteer_opportunity.organization.account != request.user:
-        return Response({"error": "Unauthorized to reject this engagement log."}, status=status.HTTP_403_FORBIDDEN)
+        if log.volunteer_engagement.volunteer_opportunity_application.volunteer_opportunity.organization.account != request.user:
+            return Response({"error": "Unauthorized to reject this engagement log."}, status=status.HTTP_403_FORBIDDEN)
 
-    if log.status != "pending":
-        return Response({"error": "Only pending engagement logs can be rejected."}, status=status.HTTP_400_BAD_REQUEST)
+        if log.status != "pending":
+            return Response({"error": "Only pending engagement logs can be rejected."}, status=status.HTTP_400_BAD_REQUEST)
 
-    serializer = VolunteerEngagementLogSerializer(log, data={"status": "rejected"}, partial=True, context={"request": request})
-    if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Engagement log rejected successfully."}, status=status.HTTP_200_OK)
+        serializer = VolunteerEngagementLogSerializer(log, data={"status": "rejected"}, partial=True, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Engagement log rejected successfully."}, status=status.HTTP_200_OK)
 
-    return Response({"message": "Failed to reject engagement log.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Failed to reject engagement log.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

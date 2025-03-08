@@ -1,15 +1,17 @@
 from django.urls import path
-from .views import opportunities_search_view
-from .api import get_opportunities, get_nearby_opportunities, get_latest_opportunities, create_opportunity, get_organization_opportunities, cancel_opportunity, complete_opportunity, create_application, accept_application, reject_application, cancel_application, get_volunteer_applications, get_organization_applications, create_engagement, get_engagements, complete_engagements_organization, cancel_engagement_volunteer, cancel_engagements_organization, create_session, get_sessions, complete_session, cancel_session, create_session_engagements_for_session, create_session_engagements_for_volunteer, confirm_attendance, cancel_attendance, get_session_engagements, create_opportunity_engagement_logs, create_session_engagement_logs, create_engagement_log_volunteer, approve_engagement_log, reject_engagement_log
+from .views import opportunities_search_view, opportunities_organization_view
+from .api import get_opportunity, get_opportunities, get_nearby_opportunities, get_latest_opportunities, create_opportunity, get_organization_opportunities, cancel_opportunity, complete_opportunity, create_application, accept_application, reject_application, cancel_application, get_volunteer_applications, get_organization_applications, create_engagement, get_engagements, complete_engagements_organization, cancel_engagement_volunteer, cancel_engagements_organization, create_session, get_sessions, complete_session, cancel_session, create_session_engagements_for_session, create_session_engagements_for_volunteer, confirm_attendance, cancel_attendance, get_session_engagements, create_opportunity_engagement_logs, create_session_engagement_logs, create_engagement_log_volunteer, approve_engagement_log, reject_engagement_log
 
 app_name = 'opportunities_engagements'
 
 urlpatterns = [
     ### View endpoints ###
     path('opportunities_search/', opportunities_search_view, name='opportunities_search'),
+    path('opportunities_organization/', opportunities_organization_view, name='opportunities_organization'),
 
     ### REST API Endpoints ###
     ### Opportunities ###
+    path('api/opportunities/get_opportunity<uuid:opportunity_id>/', get_opportunity, name='get_opportunity'),
     path('api/opportunities/get_opportunities', get_opportunities, name='get_opportunities'),
     path('api/opportunities/get_nearby_opportunities', get_nearby_opportunities, name='get_nearby_opportunities'),
     path('api/opportunities/get_latest_opportunities', get_latest_opportunities, name='get_latest_opportunities'),

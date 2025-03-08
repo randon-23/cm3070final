@@ -30,6 +30,115 @@ def create_common_objects():
     )
     return volunteer_account, organization_account
 
+class GetOpportunityAPITest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.client = APIClient()
+
+        # Create common test objects
+        cls.volunteer_account, cls.organization_account = create_common_objects()
+
+        # Create organization & volunteer
+        cls.organization = Organization.objects.create(
+            account=cls.organization_account,
+            organization_name="Helping Hands",
+            organization_description="Non-profit organization.",
+            organization_address={
+                'raw': '123 Help St, Kindness City, US',
+                'street_number': '123',
+                'route': 'Help St',
+                'locality': 'Kindness City',
+                'postal_code': '12345',
+                'state': 'CA',
+                'state_code': 'CA',
+                'country': 'United States',
+                'country_code': 'US'
+            }
+        )
+        cls.volunteer = Volunteer.objects.create(
+            account=cls.volunteer_account, 
+            first_name="John", 
+            last_name="Doe",
+            dob=date(1995, 1, 1)
+        )
+
+        cls.other_organization_account = Account.objects.create(
+            email_address='test_email1_org@tester.com',
+            password='testerpassword',
+            user_type='organization',
+            contact_number="+35612645675"
+        )
+        cls.other_organization = Organization.objects.create(
+            account=cls.other_organization_account,
+            organization_name="Org 2",
+            organization_description="Non-profit organization.",
+            organization_address={
+                'raw': '123 Help St, Kindness City, US',
+                'street_number': '123',
+                'route': 'Help St',
+                'locality': 'Kindness City',
+                'postal_code': '12345',
+                'state': 'CA',
+                'state_code': 'CA',
+                'country': 'United States',
+                'country_code': 'US'
+            }
+        )
+        # Create an opportunity owned by organization
+        cls.opportunity = VolunteerOpportunity.objects.create(
+            organization=cls.organization,
+            title="Online Teaching",
+            description="Teach kids remotely",
+            work_basis="online",
+            duration="short-term",
+            ongoing=True,
+            area_of_work="education",
+            requirements=["teaching", "communication"],
+            required_location={"lat": 35.9, "lon": 14.5},
+            languages=["English", "French"],
+            status="upcoming"
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.organization_account)  # Default: Organization logged in
+
+    # Test organization retrieves its own opportunity
+    def test_get_opportunity_success_organization(self):
+        get_opportunity_url = reverse("opportunities_engagements:get_opportunity", args=[self.opportunity.volunteer_opportunity_id])
+        response = self.client.get(get_opportunity_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["title"], "Online Teaching")
+
+    # Test organization cannot view another organization's opportunity
+    def test_get_opportunity_unauthorized_organization(self):
+        self.client.force_authenticate(user=self.other_organization_account)
+        get_opportunity_url = reverse("opportunities_engagements:get_opportunity", args=[self.opportunity.volunteer_opportunity_id])
+        response = self.client.get(get_opportunity_url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["error"], "You can only view your own opportunities.")
+
+    # Test volunteer can view an opportunity
+    def test_get_opportunity_success_volunteer(self):
+        self.client.force_authenticate(user=self.volunteer_account)
+        get_opportunity_url = reverse("opportunities_engagements:get_opportunity", args=[self.opportunity.volunteer_opportunity_id])
+        response = self.client.get(get_opportunity_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["title"], "Online Teaching")
+
+    # Test unauthenticated user cannot view an opportunity
+    def test_get_opportunity_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        get_opportunity_url = reverse("opportunities_engagements:get_opportunity", args=[self.opportunity.volunteer_opportunity_id])
+        response = self.client.get(get_opportunity_url)
+        self.assertEqual(response.status_code, 403)
+
+    # Test fetching a non-existent opportunity
+    def test_get_opportunity_not_found(self):
+        get_opportunity_url = reverse("opportunities_engagements:get_opportunity", args=[uuid.uuid4()])
+        response = self.client.get(get_opportunity_url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["error"], "Opportunity not found.")
+
 class GetOpportunitiesAPITest(APITestCase):
     # Create test data: user, organization, and opportunities.
     @classmethod
