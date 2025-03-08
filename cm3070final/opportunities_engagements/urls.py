@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import opportunities_search_view, opportunities_organization_view
-from .api import get_opportunity, get_opportunities, get_nearby_opportunities, get_latest_opportunities, create_opportunity, get_organization_opportunities, cancel_opportunity, complete_opportunity, create_application, accept_application, reject_application, cancel_application, get_volunteer_applications, get_organization_applications, create_engagement, get_engagements, complete_engagements_organization, cancel_engagement_volunteer, cancel_engagements_organization, create_session, get_sessions, complete_session, cancel_session, create_session_engagements_for_session, create_session_engagements_for_volunteer, confirm_attendance, cancel_attendance, get_session_engagements, create_opportunity_engagement_logs, create_session_engagement_logs, create_engagement_log_volunteer, approve_engagement_log, reject_engagement_log
+from .api import get_opportunity, get_opportunities, get_nearby_opportunities, get_latest_opportunities, create_opportunity, get_organization_opportunities, cancel_opportunity, complete_opportunity, create_application, accept_application, reject_application, cancel_application, get_volunteer_applications, get_organization_applications, create_engagement, get_engagements, complete_engagements_organization, cancel_engagement_volunteer, cancel_engagements_organization, create_session, get_sessions, complete_session, cancel_session, create_session_engagements_for_session, create_session_engagements_for_volunteer, confirm_attendance, cancel_attendance, get_session_engagements, create_opportunity_engagement_logs, create_session_engagement_logs, create_engagement_log_volunteer, approve_engagement_log, reject_engagement_log, get_organization_log_requests, get_engagement_logs
 
 app_name = 'opportunities_engagements'
 
@@ -54,4 +54,6 @@ urlpatterns = [
     path('api/engagement_logs/create_engagement_log_volunteer/<uuid:opportunity_id>', create_engagement_log_volunteer, name='create_engagement_log_volunteer'),
     path('api/engagement_logs/approve_engagement_log/<uuid:volunteer_engagement_log_id>', approve_engagement_log, name='approve_engagement_log'),
     path('api/engagement_logs/reject_engagement_log/<uuid:volunteer_engagement_log_id>', reject_engagement_log, name='reject_engagement_log'),
+    path('api/engagement_logs/get_organization_log_requests/<uuid:account_uuid>', get_organization_log_requests, name='get_organization_log_requests'),
+    path('api/engagement_logs/get_engagement_logs/<uuid:account_uuid>', get_engagement_logs, name='get_engagement_logs'),
 ]

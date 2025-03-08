@@ -954,3 +954,46 @@ def reject_engagement_log(request, volunteer_engagement_log_id):
         return Response({"message": "Failed to reject engagement log.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+# Fetch pending engagement logs for an organization's opportunities
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_organization_log_requests(request, account_uuid):
+    if request.method == "GET":
+        if not request.user.is_organization():
+            return Response({"error": "Only organizations can view log requests."}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            organization = Organization.objects.get(account__account_uuid=account_uuid)
+        except Organization.DoesNotExist:
+            return Response({"error": "Organization not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        pending_logs = VolunteerEngagementLog.objects.filter(
+            volunteer_engagement__volunteer_opportunity_application__volunteer_opportunity__organization=organization,
+            status="pending"
+        )
+
+        serializer = VolunteerEngagementLogSerializer(pending_logs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+
+# Fetch engagement logs for a volunteer
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_engagement_logs(request, account_uuid):
+    if request.method == "GET":
+        if not request.user.is_volunteer():
+            return Response({"error": "Only volunteers can view their engagement logs."}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            volunteer = Volunteer.objects.get(account__account_uuid=account_uuid)
+        except Volunteer.DoesNotExist:
+            return Response({"error": "Volunteer not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        logs = VolunteerEngagementLog.objects.filter(volunteer_engagement__volunteer=volunteer, status="approved")
+        serializer = VolunteerEngagementLogSerializer(logs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

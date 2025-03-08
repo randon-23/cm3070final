@@ -1718,3 +1718,199 @@ class VolunteerEngagementLogAPITest(APITestCase):
         response = self.client.patch(reject_log_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["message"], "Engagement log rejected successfully.")
+
+class GetPendingOrganizationLogRequestsAPITest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.client = APIClient()
+        cls.volunteer_account, cls.organization_account = create_common_objects()
+
+        cls.volunteer = Volunteer.objects.create(
+            account=cls.volunteer_account,
+            first_name="John",
+            last_name="Doe",
+            dob=date(1995, 1, 1)
+        )
+
+        cls.organization = Organization.objects.create(
+            account=cls.organization_account,
+            organization_name="Helping Hands",
+            organization_description="Non-profit organization."
+        )
+
+        cls.opportunity = VolunteerOpportunity.objects.create(
+            organization=cls.organization,
+            title="Ongoing Teaching",
+            description="Teaching English weekly.",
+            work_basis="in-person",
+            duration="long-term",
+            ongoing=True,
+            slots=None,
+            area_of_work="education",
+            requirements=["teaching"],
+            status="upcoming"
+        )
+
+        cls.application = VolunteerOpportunityApplication.objects.create(
+            volunteer_opportunity=cls.opportunity,
+            volunteer=cls.volunteer,
+            application_status="accepted"
+        )
+
+        cls.engagement = VolunteerEngagement.objects.create(
+            volunteer_opportunity_application=cls.application,
+            volunteer=cls.volunteer,
+            organization=cls.organization,
+            engagement_status="ongoing"
+        )
+
+        cls.session = VolunteerOpportunitySession.objects.create(
+            opportunity=cls.opportunity,
+            title="Teaching Session",
+            description="Weekly session for teaching English.",
+            session_date=date.today() - timedelta(days=1),
+            session_start_time=time(10, 0),
+            session_end_time=time(12, 0),
+            status="completed"
+        )
+
+        cls.session_engagement = VolunteerSessionEngagement.objects.create(
+            volunteer_engagement=cls.engagement,
+            session=cls.session,
+            status="can_go"
+        )
+
+        cls.pending_log = VolunteerEngagementLog.objects.create(
+            volunteer_engagement=cls.engagement,
+            no_of_hours=2,
+            status="pending",
+            log_notes="Tutored students.",
+            is_volunteer_request=True
+        )
+
+        cls.approved_log = VolunteerEngagementLog.objects.create(
+            volunteer_engagement=cls.engagement,
+            session=cls.session_engagement,
+            no_of_hours=3,
+            status="approved",
+            log_notes="Assisted in classroom activities."
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.organization_account)
+
+    # Organization should successfully retrieve pending engagement log requests.
+    def test_get_organization_log_requests_success(self):
+        get_logs_url = reverse("opportunities_engagements:get_organization_log_requests", args=[self.organization.account.account_uuid])
+        response = self.client.get(get_logs_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)  # Only pending logs should be returned
+        self.assertEqual(response.data[0]["status"], "pending")
+
+    # Volunteers should not be able to access organization log requests.
+    def test_get_organization_log_requests_unauthorized(self):
+        self.client.force_authenticate(user=self.volunteer_account)  # Switch to volunteer
+        get_logs_url = reverse("opportunities_engagements:get_organization_log_requests", args=[self.organization.account.account_uuid])
+        response = self.client.get(get_logs_url)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["error"], "Only organizations can view log requests.")
+
+class GetVolunteerEngagementLogsAPITest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.client = APIClient()
+        cls.volunteer_account, cls.organization_account = create_common_objects()
+
+        cls.volunteer = Volunteer.objects.create(
+            account=cls.volunteer_account,
+            first_name="John",
+            last_name="Doe",
+            dob=date(1995, 1, 1)
+        )
+
+        cls.organization = Organization.objects.create(
+            account=cls.organization_account,
+            organization_name="Helping Hands",
+            organization_description="Non-profit organization."
+        )
+
+        cls.opportunity = VolunteerOpportunity.objects.create(
+            organization=cls.organization,
+            title="Ongoing Teaching",
+            description="Teaching English weekly.",
+            work_basis="in-person",
+            duration="long-term",
+            ongoing=True,
+            slots=None,
+            area_of_work="education",
+            requirements=["teaching"],
+            status="upcoming"
+        )
+
+        cls.application = VolunteerOpportunityApplication.objects.create(
+            volunteer_opportunity=cls.opportunity,
+            volunteer=cls.volunteer,
+            application_status="accepted"
+        )
+
+        cls.engagement = VolunteerEngagement.objects.create(
+            volunteer_opportunity_application=cls.application,
+            volunteer=cls.volunteer,
+            organization=cls.organization,
+            engagement_status="ongoing"
+        )
+        
+        cls.session = VolunteerOpportunitySession.objects.create(
+            opportunity=cls.opportunity,
+            title="Teaching Session",
+            description="Weekly session for teaching English.",
+            session_date=date.today() - timedelta(days=1),
+            session_start_time=time(10, 0),
+            session_end_time=time(12, 0),
+            status="completed"
+        )
+
+        cls.session_engagement = VolunteerSessionEngagement.objects.create(
+            volunteer_engagement=cls.engagement,
+            session=cls.session,
+            status="can_go"
+        )
+
+        cls.approved_log = VolunteerEngagementLog.objects.create(
+            volunteer_engagement=cls.engagement,
+            session=cls.session_engagement,
+            no_of_hours=3,
+            status="approved",
+            log_notes="Assisted in classroom activities."
+        )
+
+        cls.rejected_log = VolunteerEngagementLog.objects.create(
+            volunteer_engagement=cls.engagement,
+            no_of_hours=2,
+            status="rejected",
+            log_notes="Tutored students.",
+            is_volunteer_request=True
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.volunteer_account)
+
+    # Volunteers should successfully retrieve only their approved engagement logs.
+    def test_get_engagement_logs_success(self):
+        get_logs_url = reverse("opportunities_engagements:get_engagement_logs", args=[self.volunteer_account.account_uuid])
+        response = self.client.get(get_logs_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)  # Only approved logs should be returned
+        self.assertEqual(response.data[0]["status"], "approved")
+
+    # Organizations should not be able to fetch engagement logs for volunteers.
+    def test_get_engagement_logs_unauthorized(self):
+        self.client.force_authenticate(user=self.organization_account)  # Switch to organization
+        get_logs_url = reverse("opportunities_engagements:get_engagement_logs", args=[self.volunteer_account.account_uuid])
+        response = self.client.get(get_logs_url)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["error"], "Only volunteers can view their engagement logs.")
