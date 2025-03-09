@@ -1,16 +1,19 @@
 from rest_framework import serializers
 from .models import VolunteerOpportunity, VolunteerOpportunityApplication, VolunteerEngagementLog, VolunteerEngagement, VolunteerOpportunitySession, VolunteerSessionEngagement
+from volunteers_organizations.models import Organization
 from django.contrib.auth import get_user_model
 from django.utils.dateparse import parse_datetime
 from datetime import datetime
 from django.urls import reverse
 from django.db import IntegrityError
 from django.utils.timezone import now
+from volunteers_organizations.serializers import OrganizationSerializer
 
 Account = get_user_model()
 
 class VolunteerOpportunitySerializer(serializers.ModelSerializer):
     contribution_hours = serializers.SerializerMethodField()  # Dynamically calculated, not stored
+    organization = OrganizationSerializer(read_only=True)
 
     class Meta:
         model = VolunteerOpportunity
@@ -66,6 +69,20 @@ class VolunteerOpportunitySerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            raise serializers.ValidationError("Authenticated request required.")
+
+        if not request.user.is_organization():
+            raise serializers.ValidationError("Only organizations can create opportunities.")
+
+        try:
+            organization = Organization.objects.get(account=request.user)
+        except Organization.DoesNotExist:
+            raise serializers.ValidationError("Organization not found.")
+
+        validated_data["organization"] = organization
+
         return super().create(validated_data)
     
 class VolunteerOpportunityApplicationSerializer(serializers.ModelSerializer):

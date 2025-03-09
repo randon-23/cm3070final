@@ -1,0 +1,77 @@
+{% load static %}
+
+<div id="apply-opportunity-modal" class="fixed inset-0 items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-4/5 max-w-4xl max-h-[80vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="flex justify-center relative mb-4">
+            <h2 class="text-2xl font-bold mx-auto">Apply for Opportunity</h2>
+            <button onclick="document.getElementById('apply-opportunity-modal').classList.add('hidden')" 
+                class="absolute right-0 text-gray-500 hover:text-gray-700">✕
+            </button>
+        </div>
+
+        <form id="create-application-form" 
+              method="post"
+              hx-post="{% url 'opportunities_engagements:create_application' opportunity.volunteer_opportunity_id %}"
+              hx-trigger="submit"
+              hx-target="#loading-modal-content"
+              hx-swap="innerHTML"
+              class="space-y-6">
+            
+            <!-- Apply as Group? -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="as_group" name="as_group" value="true" onchange="toggleGroupApplication()">
+                    <span class="text-gray-800">Apply as a Group</span>
+                </label>
+            </div>
+
+            <!-- Number of Additional Volunteers (Shown Only if Applying as Group) -->
+            <div id="group-size-container" class="bg-gray-100 p-4 rounded-lg hidden">
+                <label class="block text-gray-700 font-semibold mb-2">Number of Additional Volunteers</label>
+                <input type="number" name="no_of_additional_volunteers" min="1" placeholder="Enter number of additional volunteers"
+                       class="w-full text-sm text-gray-800 bg-white focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
+            </div>
+
+            <!-- Rationale for Applying -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label class="block text-gray-700 font-semibold mb-2">Why do you want to apply?</label>
+                <textarea name="rationale" rows="4" placeholder="Provide a brief explanation (Optional)"
+                          class="w-full text-sm text-gray-800 bg-white focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600"></textarea>
+            </div>
+            
+            <!-- Hidden Fields -->
+            <input type="hidden" name="volunteer_opportunity" value="{{ opportunity.volunteer_opportunity_id }}">
+            
+            <!-- Submit & Cancel Buttons -->
+            <div class="flex justify-between mt-6">
+                <button type="button" onclick="document.getElementById('apply-opportunity-modal').classList.add('hidden')" 
+                        class="bg-gray-700 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                          </svg>
+                    <span class="font-bold">Cancel</span>                           
+                </button>
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                      </svg>                      
+                    <span class="font-bold">Submit Application</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleGroupApplication() {
+        let checkbox = document.getElementById('as_group');
+        let groupSizeContainer = document.getElementById('group-size-container');
+        
+        if (checkbox.checked) {
+            groupSizeContainer.classList.remove('hidden');
+        } else {
+            groupSizeContainer.classList.add('hidden');
+        }
+    }
+</script>

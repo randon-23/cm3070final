@@ -25,5 +25,8 @@ document.addEventListener("htmx:afterRequest", function(event) {
     } else if(url.includes("update_volunteer_preferences") || url.includes("update_organization_preferences")){
         console.log("Updating preferences!", event);
         updateContent(event);
+    } else if(url.includes('/opportunities/create_opportunity/')){
+        console.log("Creating opportunity!", event);
+        updateContent(event);
     }
 });

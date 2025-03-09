@@ -1,0 +1,131 @@
+{% extends 'base/base_authenticated.html' %}
+{% load static %}
+{% block title %}Opportunities{% endblock %}
+{% block auth_content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
+<script src="{% static 'js_frontend-scripts/profile-processes.js.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/opportunities-search-processes.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/opportunities-engagements-processes.js' %}"></script>
+
+<!-- If the user accessing is the organization who created the opportunity, the create session modal is included so that if it is ongoing they can create a session -->
+{% if is_opportunity_owner %}
+    {% include 'opportunities_engagements/partials/create_session_modal.html' %}
+{% endif %}
+
+<!--If the user is engaged, the create engagement log modal is included so that if it is ongoing, the user can create an engagement log-->
+{% if is_engaged %}
+    {% include 'opportunities_engagements/partials/create_engagement_log_modal.html' %}
+{% else %}
+    <!--If the user is not engaged, the apply opportunity modal is included so that the user can apply to the opportunity-->
+    {% include 'opportunities_engagements/partials/apply_opportunity_modal.html' %}
+{% endif %}
+
+<div class="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-lg mt-6">
+    <h1 class="text-3xl font-bold">{{ opportunity.title }}</h1>
+    <p class="text-gray-700 mt-2">{{ opportunity.description }}</p>
+    
+    <!-- Opportunity Details -->
+    <div class="grid grid-cols-2 gap-4 mt-4">
+        <p><strong>Work Type:</strong> {{ opportunity.work_basis|title }}</p>
+        <p><strong>Duration:</strong> {{ opportunity.duration|title }}</p>
+        <p><strong>Location:</strong> {{ opportunity.required_location.formatted_address }}</p>
+        {% if opportunity.ongoing %}
+            <p><strong>Days Available:</strong> {{ opportunity.days_of_week|join:", " }}</p>
+        {% else %}
+            <p><strong>Date:</strong> {{ opportunity.opportunity_date }}</p>
+            <p><strong>Time:</strong> {{ opportunity.opportunity_time_from }} - {{ opportunity.opportunity_time_to }}</p>
+        {% endif %}
+        <p><strong>Field of Interest:</strong> {{ opportunity.area_of_work|title }}</p>
+    </div>
+
+    <!-- Organization View -->
+    {% if is_opportunity_owner %}
+    <div class="mt-6">
+        <h2 class="text-xl font-semibold">Manage Opportunity</h2>
+        <div class="flex space-x-4 mt-2">
+            <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                Complete Opportunity
+            </button>
+            <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
+                Cancel Opportunity
+            </button>
+            {% if opportunity.ongoing and opportunity.status != "completed" %}
+                <button onclick="document.getElementById('create-session-modal').classList.remove('hidden')"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                    Create Session
+                </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Volunteer View -->
+    {% if not is_opportunity_owner %}
+    <div class="mt-6">
+        {% if not has_applied %}
+            <button onclick="document.getElementById('apply-opportunity-modal').classList.remove('hidden')"
+                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                Apply for Opportunity
+            </button>
+        {% elif has_applied and not is_engaged %}
+            <button class="bg-gray-400 text-white px-4 py-2 rounded-md cursor-not-allowed">
+                Applied
+            </button>
+        {% elif is_engaged %}
+            <button class="bg-green-600 text-white px-4 py-2 rounded-md cursor-not-allowed">
+                Engaged
+            </button>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Sessions for Ongoing Opportunities -->
+    {% if opportunity.ongoing %}
+        <h2 class="text-xl font-semibold mt-6">Sessions</h2>
+
+        <!-- Filter Buttons -->
+        <div class="flex space-x-4 mt-2">
+            <button class="bg-blue-500 text-white px-4 py-2 rounded-md" onclick="filterSessions('upcoming')">Upcoming</button>
+            <button class="bg-gray-500 text-white px-4 py-2 rounded-md" onclick="filterSessions('completed')">Completed</button>
+            <button class="bg-red-500 text-white px-4 py-2 rounded-md" onclick="filterSessions('cancelled')">Cancelled</button>
+            <button class="bg-gray-700 text-white px-4 py-2 rounded-md" onclick="filterSessions('all')">All</button>
+        </div>
+
+        <div id="sessions-container" class="grid grid-cols-2 gap-4 mt-4">
+            {% for session in sessions %}
+                <div class="session-card bg-gray-100 p-4 rounded-lg" data-status="{{ session.status }}">
+                    <h3 class="font-bold">{{ session.title }}</h3>
+                    <p class="text-sm text-gray-700">{{ session.description }}</p>
+                    <p><strong>Date:</strong> {{ session.session_date }}</p>
+                    <p><strong>Time:</strong> {{ session.session_start_time }} - {{ session.session_end_time }}</p>
+                    <p><strong>Status:</strong> {{ session.status|title }}</p>
+        
+                    {% if is_opportunity_owner %}
+                        <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 mt-2">
+                            Cancel Session
+                        </button>
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 mt-2">
+                            Complete Session
+                        </button>
+                    {% endif %}
+        
+                    {% if is_engaged %}
+                        <div class="mt-2">
+                            <button class="bg-blue-500 text-white px-4 py-2 rounded-md">
+                                Can Go
+                            </button>
+                            <button class="bg-gray-500 text-white px-4 py-2 rounded-md">
+                                Can't Go
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p class="text-gray-500">No sessions available.</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

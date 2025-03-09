@@ -41,12 +41,11 @@ class TestVolunteerOpportunitySerializer(TestCase):
 
     def setUp(self):
         self.mock_request = Mock()
-        self.mock_request.user = self.organization
+        self.mock_request.user = self.organization_account
 
     # Test successful creation of a one-time volunteer opportunity
     def test_create_one_time_opportunity(self):
         data = {
-            "organization": self.organization.pk,
             "title": "Beach Cleanup",
             "description": "Help clean up the beach!",
             "work_basis": "in-person",
@@ -71,7 +70,6 @@ class TestVolunteerOpportunitySerializer(TestCase):
     # Test successful creation of an ongoing volunteer opportunity
     def test_create_ongoing_opportunity(self):
         data = {
-            "organization": self.organization.pk,
             "title": "Weekly Tree Planting",
             "description": "Plant trees every week.",
             "work_basis": "both",

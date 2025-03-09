@@ -504,7 +504,7 @@ class CreateOpportunityAPITest(APITestCase):
         self.client.force_authenticate(user=self.organization_account)
 
     def test_create_opportunity_success(self):
-        response = self.client.post(self.url, self.opportunity_data, format="json")
+        response = self.client.post(self.url, self.opportunity_data, format="json", context={'request': self.client})
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["message"], "Successfully created opportunity")
         self.assertIn("data", response.data)

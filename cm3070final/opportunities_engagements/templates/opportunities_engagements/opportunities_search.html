@@ -6,6 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
 <script src="{% static 'js_frontend-scripts/opportunities-search-processes.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/profile-processes.js.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/preferences-processes.js' %}"></script>
 
 <form 
@@ -87,7 +88,7 @@ class="grid grid-cols-3 gap-4 bg-white shadow p-6 rounded-lg text-sm w-full mx-a
                 style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px;">
                 {% for day in days_of_week %}
                     <label class="flex items-center space-x-2">
-                        <input type="checkbox" name="aday_of_week" value="{{ day }}">
+                        <input type="checkbox" name="days_of_week" value="{{ day }}">
                         <span>{{ day|title }}</span>
                     </label>
                 {% endfor %}
@@ -184,17 +185,21 @@ class="grid grid-cols-3 gap-4 bg-white shadow p-6 rounded-lg text-sm w-full mx-a
     <div>
         <h2 class="text-lg font-semibold mb-4">Nearby Opportunities</h2>
         <div id="nearby-opportunities">
-            <!-- Sample Opportunity Card -->
-            <div class="bg-white p-4 shadow rounded-lg mb-4">
-                <h3 class="font-bold">Beach Cleanup</h3>
-                <p class="text-sm text-gray-700">Help clean up the local beach.</p>
-                <span class="text-xs text-gray-500">St. Julian's, Malta</span>
-            </div>
-            <div class="bg-white p-4 shadow rounded-lg mb-4">
-                <h3 class="font-bold">Community Garden Project</h3>
-                <p class="text-sm text-gray-700">Help maintain a community garden.</p>
-                <span class="text-xs text-gray-500">Sliema, Malta</span>
-            </div>
+            {% if nearby_opportunities %}
+                {% for opportunity in nearby_opportunities %}
+                    <div class="bg-white p-4 shadow rounded-lg mb-4">
+                        <h3 class="font-bold">{{ opportunity.title }}</h3>
+                        <p class="text-sm text-gray-700">{{ opportunity.description }}</p>
+                        <span class="text-xs text-gray-500">
+                            {{ opportunity.required_location.formatted_address }}
+                        </span>
+                        <a href="{% url 'opportunities_engagements:opportunity' opportunity_id=opportunity.volunteer_opportunity_id %}" 
+                           class="text-blue-500 hover:underline block mt-2">View Details</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-500">No nearby opportunities found.</p>
+            {% endif %}
         </div>
     </div>
 
@@ -202,17 +207,21 @@ class="grid grid-cols-3 gap-4 bg-white shadow p-6 rounded-lg text-sm w-full mx-a
     <div>
         <h2 class="text-lg font-semibold mb-4">Latest Opportunities</h2>
         <div id="latest-opportunities">
-            <!-- Sample Opportunity Card -->
-            <div class="bg-white p-4 shadow rounded-lg mb-4">
-                <h3 class="font-bold">Tech Bootcamp for Kids</h3>
-                <p class="text-sm text-gray-700">Teach kids the basics of coding.</p>
-                <span class="text-xs text-gray-500">Valletta, Malta</span>
-            </div>
-            <div class="bg-white p-4 shadow rounded-lg mb-4">
-                <h3 class="font-bold">Wildlife Conservation</h3>
-                <p class="text-sm text-gray-700">Assist in local wildlife conservation efforts.</p>
-                <span class="text-xs text-gray-500">Gozo, Malta</span>
-            </div>
+            {% if latest_opportunities %}
+                {% for opportunity in latest_opportunities %}
+                    <div class="bg-white p-4 shadow rounded-lg mb-4">
+                        <h3 class="font-bold">{{ opportunity.title }}</h3>
+                        <p class="text-sm text-gray-700">{{ opportunity.description }}</p>
+                        <span class="text-xs text-gray-500">
+                            {{ opportunity.required_location.formatted_address }}
+                        </span>
+                        <a href="{% url 'opportunities_engagements:opportunity' opportunity_id=opportunity.volunteer_opportunity_id %}" 
+                           class="text-blue-500 hover:underline block mt-2">View Details</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-500">No latest opportunities found.</p>
+            {% endif %}
         </div>
     </div>
 </div>

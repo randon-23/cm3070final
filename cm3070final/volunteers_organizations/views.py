@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Account
 from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements, get_search_profiles, get_volunteer_preferences, get_organization_preferences
+from opportunities_engagements.api import get_engagement_logs
 from .forms import VolunteerForm, OrganizationForm
 from .models import Volunteer, Organization, VolunteerMatchingPreferences, OrganizationPreferences
 import json
@@ -105,6 +106,8 @@ def profile_view(request, account_uuid):
         context['message'] = 'Endorsements not found'
     else:
         context['endorsements'] = endorsements.data
+
+    ### NEED TO CALL get_engagement_logs(request, account_uuid) to get the engagement logs of the user
     print(context)
     return render(request, 'volunteers_organizations/profile.html', context)
 

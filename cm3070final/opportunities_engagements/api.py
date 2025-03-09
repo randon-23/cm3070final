@@ -186,7 +186,7 @@ def create_opportunity(request):
         data["organization"] = organization.pk
 
         # Validate and create the opportunity
-        serializer = VolunteerOpportunitySerializer(data=data)
+        serializer = VolunteerOpportunitySerializer(data=data, context={"request": request})
         if serializer.is_valid():
             opportunity = serializer.save()
             return Response({"message": "Successfully created opportunity", "data": serializer.data}, status=status.HTTP_201_CREATED)
@@ -285,6 +285,7 @@ def create_application(request, volunteer_opportunity_id):
         return Response({"message": "Application submission failed.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
 # Allows an organization to accept a volunteer's application.
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
