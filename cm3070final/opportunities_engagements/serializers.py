@@ -2,10 +2,6 @@ from rest_framework import serializers
 from .models import VolunteerOpportunity, VolunteerOpportunityApplication, VolunteerEngagementLog, VolunteerEngagement, VolunteerOpportunitySession, VolunteerSessionEngagement
 from volunteers_organizations.models import Organization
 from django.contrib.auth import get_user_model
-from django.utils.dateparse import parse_datetime
-from datetime import datetime
-from django.urls import reverse
-from django.db import IntegrityError
 from django.utils.timezone import now
 from volunteers_organizations.serializers import OrganizationSerializer
 

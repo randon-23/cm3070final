@@ -2,12 +2,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.db import models
-from django.db.models import F, Q, Value
-from django.db.models.functions import Concat
-from django.http import JsonResponse
-from django.core.exceptions import ValidationError
-from accounts_notifs.models import Account
 from volunteers_organizations.models import VolunteerMatchingPreferences, Organization, Volunteer
 from geopy.distance import geodesic
 from .models import VolunteerOpportunity, VolunteerOpportunityApplication, VolunteerEngagement, VolunteerOpportunitySession, VolunteerSessionEngagement, VolunteerEngagementLog
