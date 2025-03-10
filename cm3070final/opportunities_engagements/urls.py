@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import opportunities_search_view, opportunities_organization_view, opportunity_view, engagements_application_view, applications_log_requests_view
+from .views import opportunities_search_view, opportunities_organization_view, opportunity_view, engagements_applications_log_requests_view, applications_log_requests_view
 from .api import get_opportunity, get_opportunities, get_nearby_opportunities, get_latest_opportunities, create_opportunity, get_organization_opportunities, cancel_opportunity, complete_opportunity, create_application, accept_application, reject_application, cancel_application, get_volunteer_applications, get_organization_applications, create_engagement, get_engagements, complete_engagements_organization, cancel_engagement_volunteer, cancel_engagements_organization, create_session, get_sessions, complete_session, cancel_session, create_session_engagements_for_session, create_session_engagements_for_volunteer, confirm_attendance, cancel_attendance, get_session_engagements, get_volunteer_session_engagements, create_opportunity_engagement_logs, create_session_engagement_logs, create_engagement_log_volunteer, approve_engagement_log, reject_engagement_log, get_organization_log_requests, get_engagement_logs, get_volunteer_log_requests
 
 app_name = 'opportunities_engagements'
@@ -9,7 +9,7 @@ urlpatterns = [
     path('opportunities_search/', opportunities_search_view, name='opportunities_search'),
     path('opportunities_organization/', opportunities_organization_view, name='opportunities_organization'),
     path('opportunity/<uuid:opportunity_id>/', opportunity_view, name='opportunity'),
-    path('engagements_applications_log_requests/', engagements_application_view, name='engagements_applications_log_requests'),
+    path('engagements_applications_log_requests/', engagements_applications_log_requests_view, name='engagements_applications_log_requests'),
     path('applications_log_requests/', applications_log_requests_view, name='applications_log_requests'),
     
     ### REST API Endpoints ###

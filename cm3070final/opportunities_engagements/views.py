@@ -153,7 +153,7 @@ def opportunity_view(request, opportunity_id):
     return render(request, 'opportunities_engagements/opportunity.html', context)
 
 @login_required
-def engagements_application_view(request):
+def engagements_applications_log_requests_view(request):
     account = request.user
     context = {}
 
