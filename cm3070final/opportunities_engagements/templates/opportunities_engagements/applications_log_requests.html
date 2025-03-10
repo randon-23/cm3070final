@@ -1,6 +1,6 @@
 {% extends 'base/base_authenticated.html' %}
 {% load static %}
-{% block title %}Opportunities{% endblock %}
+{% block title %}Engagements & Applications{% endblock %}
 {% block auth_content %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
@@ -9,6 +9,88 @@
 <script src="{% static 'js_frontend-scripts/preferences-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-engagements-processes.js' %}"></script>
 
+<div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg mt-6">
+    <h1 class="text-3xl font-bold">Pending Applications & Log Requests</h1>
 
-{% include 'opportunities_engagements/partials/create_opportunity_modal.html' %}
+    <!-- Tabs for Filtering -->
+    <div class="flex space-x-4 mt-4">
+        <button class="bg-blue-500 text-white px-4 py-2 rounded-md"
+            onclick="filterApplicationsLogRequests('pending-applications')">
+            Pending Applications
+        </button>
+        <button class="bg-green-500 text-white px-4 py-2 rounded-md"
+            onclick="filterApplicationsLogRequests('pending-log-requests')">
+            Pending Log Requests
+        </button>
+    </div>
+
+    <!-- Applications Section -->
+    <div id="pending-applications" class="mt-6">
+        <h2 class="text-xl font-semibold">Volunteer Applications</h2>
+
+        <div class="grid grid-cols-2 gap-6 mt-4">
+            {% for application in applications %}
+                <div class="bg-gray-100 p-4 rounded-lg shadow-md">
+                    <h3 class="font-bold">{{ application.volunteer.first_name }} {{ application.volunteer.last_name }}</h3>
+                    <p><strong>Opportunity:</strong> {{ application.volunteer_opportunity.title }}</p>
+                    <p><strong>Applied as Group:</strong> 
+                        {% if application.as_group %} Yes ({{ application.no_of_additional_volunteers }} additional) 
+                        {% else %} No {% endif %}
+                    </p>
+                    <p class="text-sm text-gray-500"><strong>Submitted:</strong> {{ application.created_at|date:"M d, Y" }}</p>
+
+                    <div class="flex space-x-2 mt-3">
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                            hx-post="{% url 'opportunities_engagements:accept_application' application.volunteer_opportunity_application_id %}"
+                            hx-trigger="click"
+                            hx-target="#loading-modal-content">
+                            Accept
+                        </button>
+                        <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                            hx-post="{% url 'opportunities_engagements:reject_application' application.volunteer_opportunity_application_id %}"
+                            hx-trigger="click"
+                            hx-target="#loading-modal-content">
+                            Reject
+                        </button>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-gray-500">No pending applications.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Log Requests Section -->
+    <div id="pending-log-requests" class="mt-6 hidden">
+        <h2 class="text-xl font-semibold">Engagement Log Requests</h2>
+
+        <div class="grid grid-cols-2 gap-6 mt-4">
+            {% for log in log_requests %}
+                <div class="bg-gray-100 p-4 rounded-lg shadow-md">
+                    <h3 class="font-bold">{{ log.volunteer.first_name }} {{ log.volunteer.last_name }}</h3>
+                    <p><strong>Opportunity:</strong> {{ log.volunteer_engagement.volunteer_opportunity_application.volunteer_opportunity.title }}</p>
+                    <p><strong>Logged Hours:</strong> {{ log.no_of_hours }} hrs</p>
+                    <p class="text-sm text-gray-500"><strong>Submitted:</strong> {{ log.created_at|date:"M d, Y" }}</p>
+
+                    <div class="flex space-x-2 mt-3">
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                            hx-post="{% url 'opportunities_engagements:approve_engagement_log' log.engagement_log_id %}"
+                            hx-trigger="click"
+                            hx-target="#loading-modal-content">
+                            Approve
+                        </button>
+                        <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                            hx-post="{% url 'opportunities_engagements:reject_engagement_log' log.engagement_log_id %}"
+                            hx-trigger="click"
+                            hx-target="#loading-modal-content">
+                            Reject
+                        </button>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-gray-500">No pending log requests.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 {% endblock %}

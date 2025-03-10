@@ -1000,7 +1000,7 @@ def get_organization_log_requests(request, account_uuid):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
 
-# Fetch engagement logs for a volunteer
+# Fetch engagement logs for a volunteer on the profile page
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_engagement_logs(request, account_uuid):
@@ -1018,3 +1018,25 @@ def get_engagement_logs(request, account_uuid):
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+# Fetch engagement logs for a volunteer which they have explicitly requested on engagements and applications page
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_volunteer_log_requests(request, account_uuid):
+    if request.method == "GET":
+        if not request.user.is_volunteer():
+            return Response({"error": "Only volunteers can view their engagement log requests."}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            volunteer = Volunteer.objects.get(account__account_uuid=account_uuid)
+        except Volunteer.DoesNotExist:
+            return Response({"error": "Volunteer not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        log_requests = VolunteerEngagementLog.objects.filter(
+            volunteer_engagement__volunteer=volunteer,
+            is_volunteer_request=True
+        )
+        serializer = VolunteerEngagementLogSerializer(log_requests, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

@@ -1933,3 +1933,105 @@ class GetVolunteerEngagementLogsAPITest(APITestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data["error"], "Only volunteers can view their engagement logs.")
+
+class GetVolunteerLogRequestsAPITest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.client = APIClient()
+        cls.volunteer_account, cls.organization_account = create_common_objects()
+
+        cls.volunteer = Volunteer.objects.create(
+            account=cls.volunteer_account,
+            first_name="John",
+            last_name="Doe",
+            dob=date(1995, 1, 1)
+        )
+
+        cls.organization = Organization.objects.create(
+            account=cls.organization_account,
+            organization_name="Helping Hands",
+            organization_description="Non-profit organization."
+        )
+
+        cls.opportunity = VolunteerOpportunity.objects.create(
+            organization=cls.organization,
+            title="Ongoing Teaching",
+            description="Teaching English weekly.",
+            work_basis="in-person",
+            duration="long-term",
+            ongoing=True,
+            slots=None,
+            area_of_work="education",
+            requirements=["teaching"],
+            status="upcoming"
+        )
+
+        cls.application = VolunteerOpportunityApplication.objects.create(
+            volunteer_opportunity=cls.opportunity,
+            volunteer=cls.volunteer,
+            application_status="accepted"
+        )
+
+        cls.engagement = VolunteerEngagement.objects.create(
+            volunteer_opportunity_application=cls.application,
+            volunteer=cls.volunteer,
+            organization=cls.organization,
+            engagement_status="completed"
+        )
+
+        cls.session = VolunteerOpportunitySession.objects.create(
+            opportunity=cls.opportunity,
+            title="Neighborhood Cleanup",
+            description="Cleaning parks and streets.",
+            session_date=date.today() - timedelta(days=1),
+            session_start_time=time(10, 0),
+            session_end_time=time(14, 0),
+            status="completed"
+        )
+
+        cls.session_engagement = VolunteerSessionEngagement.objects.create(
+            volunteer_engagement=cls.engagement,
+            session=cls.session,
+            status="can_go"
+        )
+
+        # Log request made by volunteer (Pending)
+        cls.pending_log_request = VolunteerEngagementLog.objects.create(
+            volunteer_engagement=cls.engagement,
+            session=cls.session_engagement,
+            no_of_hours=4,
+            status="pending",
+            log_notes="Helped clean the main street.",
+            is_volunteer_request=True
+        )
+
+        # Organization-approved log (should NOT be returned in the request)
+        cls.approved_log = VolunteerEngagementLog.objects.create(
+            volunteer_engagement=cls.engagement,
+            session=cls.session_engagement,
+            no_of_hours=3,
+            status="approved",
+            log_notes="Assisted in park cleanup."
+        )
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.volunteer_account)
+
+    # Volunteers should successfully retrieve only their pending log requests.
+    def test_get_volunteer_log_requests_success(self):
+        get_log_requests_url = reverse("opportunities_engagements:get_volunteer_log_requests", args=[self.volunteer_account.account_uuid])
+        response = self.client.get(get_log_requests_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)  # Only pending volunteer-requested logs should be returned
+        self.assertEqual(response.data[0]["status"], "pending")
+        self.assertTrue(response.data[0]["is_volunteer_request"])
+
+    # Organizations should not be able to fetch volunteer log requests.
+    def test_get_volunteer_log_requests_unauthorized(self):
+        self.client.force_authenticate(user=self.organization_account)  # Switch to organization
+        get_log_requests_url = reverse("opportunities_engagements:get_volunteer_log_requests", args=[self.volunteer_account.account_uuid])
+        response = self.client.get(get_log_requests_url)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["error"], "Only volunteers can view their engagement log requests.")

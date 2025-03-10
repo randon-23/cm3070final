@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from accounts_notifs.models import Account
 from volunteers_organizations.api import get_volunteer_preferences
-from .api import get_organization_opportunities, get_opportunity, get_volunteer_applications, get_engagements, get_sessions, get_organization_applications, get_organization_log_requests
+from .api import get_organization_opportunities, get_opportunity, get_volunteer_applications, get_engagements, get_sessions, get_organization_applications, get_organization_log_requests, get_volunteer_session_engagements
 from volunteers_organizations.api import get_organization_preferences
 import json
 import pycountry
@@ -92,33 +92,61 @@ def opportunity_view(request, opportunity_id):
     
     opportunity = opportunity_response.data
     context["opportunity"] = opportunity
+    context["organization"] = opportunity["organization"]
 
-    if account.is_organization():
-        if opportunity['organization']['account_uuid'] == str(account.account_uuid):
-            context["is_opportunity_owner"] = True
-        else:
-            return render(request, 'base/base_error.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
+    is_owner = account.is_organization() and opportunity['organization']['account_uuid'] == str(account.account_uuid)
+    context["is_opportunity_owner"] = is_owner
+
+    if account.is_organization() and not is_owner:
+        return render(request, 'base/base_error.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
         
     if account.is_volunteer():
         context["is_opportunity_owner"] = False
+        context["has_applied"] = False
+        context["is_engaged"] = False
+        context["is_rejected"] = False
 
-        # Check if volunteer has applied to this opportunity
+        # Check if volunteer has applied to this opportunity, and if they have been rejected
         applications_response = get_volunteer_applications(request, account.account_uuid)
         if applications_response.status_code == 200:
             applications = applications_response.data
-            context["has_applied"] = any(app["volunteer_opportunity"]["volunteer_opportunity_id"] == opportunity_id 
-                                         for app in applications)
-
+            for app in applications:
+                if app["volunteer_opportunity"]["volunteer_opportunity_id"] == opportunity_id:
+                    context["has_applied"] = True
+                    context["is_rejected"] = app["application_status"] == "rejected"
+                    break
+        
+        # Check if volunteer is engaged in this opportunity
         engagements_response = get_engagements(request, account.account_uuid)
         if engagements_response.status_code == 200:
             engagements = engagements_response.data
-            context["is_engaged"] = any(eng["volunteer_opportunity_application"]["volunteer_opportunity"]["volunteer_opportunity_id"] == opportunity_id 
-                                        for eng in engagements)
+            context["is_engaged"] = any(
+                eng["volunteer_opportunity_application"]["volunteer_opportunity"]["volunteer_opportunity_id"] == opportunity_id
+                and eng["engagement_status"] == "accepted"
+                for eng in engagements
+            )
     
     if opportunity["ongoing"]:
         sessions_response = get_sessions(request, opportunity_id)
         if sessions_response.status_code == 200:
-            context["sessions"] = sessions_response.data
+            sessions = sessions_response.data
+
+            session_engagements_response = get_volunteer_session_engagements(request, account.account_uuid)
+            session_engagements = session_engagements_response.data if session_engagements_response.status_code == 200 else []
+
+            # Attach session engagement ID to each session
+            for session in sessions:
+                session["session_engagement_id"] = None
+                for eng in session_engagements:
+                    if eng["session"]["session_id"] == session["session_id"]:
+                        session["session_engagement_id"] = eng["session_engagement_id"]
+                        session["status"] = eng["status"]  # Store engagement status for UI
+                        break
+            
+            if not is_owner:
+                context["sessions"] = [s for s in sessions if s["status"] == "confirmed"]
+            
+            context["sessions"] = sessions
         else:
             context["sessions"] = []
 
@@ -160,7 +188,21 @@ def engagements_application_view(request):
             context["rejected_applications"] = []
             context["cancelled_applications"] = []
         
-        return render(request, 'opportunities_engagements/engagements_applications.html', context)
+        # Fetch log requests (only volunteer-submitted ones)
+        log_requests_response = get_volunteer_log_requests(request, account.account_uuid)
+        if log_requests_response.status_code == 200:
+            log_requests = log_requests_response.data
+            context["log_requests"] = log_requests
+            context["pending_log_requests"] = [l for l in log_requests if l["status"] == "pending"]
+            context["approved_log_requests"] = [l for l in log_requests if l["status"] == "approved"]
+            context["rejected_log_requests"] = [l for l in log_requests if l["status"] == "rejected"]
+        else:
+            context["log_requests"] = []
+            context["pending_log_requests"] = []
+            context["approved_log_requests"] = []
+            context["rejected_log_requests"] = []
+        
+        return render(request, 'opportunities_engagements/engagements_applications_log_requests.html', context)
     
     return render(request, 'base/base_error.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
 
@@ -189,3 +231,4 @@ def applications_log_requests_view(request):
         
         return render(request, 'opportunities_engagements/applications_log_requests.html', context)
     return render(request, 'base/base_error.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
+

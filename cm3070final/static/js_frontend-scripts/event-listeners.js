@@ -28,5 +28,29 @@ document.addEventListener("htmx:afterRequest", function(event) {
     } else if(url.includes('/opportunities/create_opportunity/')){
         console.log("Creating opportunity!", event);
         updateContent(event);
+    } else if(url.includes('/session_engagements/confirm_attendance/')){
+        console.log("Confirming attendance!", event);
+        updateContent(event);
+    } else if(url.includes('/session_engagements/cancel_attendance/')){
+        console.log("Cancelling attendance!", event);
+        updateContent(event);
+    } else if(url.includes('/engagement_logs/create_engagement_log_volunteer/')){
+        console.log("Creating engagement log!", event);
+        updateContent(event);
+    } else if(url.includes('/applications/create_application/')){
+        console.log("Creating application!", event);
+        updateContent(event);
+    } else if(url.includes('/applications/accept/')){
+        console.log("Accepting application!", event);
+        updateContent(event);
+    } else if(url.includes('/applications/reject/')){
+        console.log("Rejecting application!", event);
+        updateContent(event);
+    } else if(url.includes('/applications/cancel/')){
+        console.log("Cancelling application!", event);
+        updateContent(event);
+    } else if(url.includes('/engagements/cancel_engagements_volunteer')){
+        console.log("Cancelling engagement!", event);
+        updateContent(event);
     }
 });

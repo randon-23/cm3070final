@@ -37,10 +37,25 @@ function filterOpportunities(status) {
     }
 }
 
-// Toggles the visibility of the engagement type fields based on the selected radio button
+// Toggles the group application fields based on the selected radio button
+function toggleGroupApplication() {
+    let checkbox = document.getElementById('as_group');
+    let groupSizeContainer = document.getElementById('group-size-container');
+    
+    if (checkbox.checked) {
+        groupSizeContainer.classList.remove('hidden');
+    } else {
+        groupSizeContainer.classList.add('hidden');
+    }
+}
+
+// Toggles the visibility of the session type fields based on the selected radio button
 function filterSessions(status) {
+    let isOwner = document.body.dataset.isOpportunityOwner === "true"; // Passed from Django template
     document.querySelectorAll('.session-card').forEach(card => {
-        if (status === "all" || card.getAttribute('data-status') === status) {
+        if (!isOwner && card.getAttribute('data-status') !== "upcoming") {
+            card.style.display = 'none'; // Volunteers only see upcoming
+        } else if (status === "all" || card.getAttribute('data-status') === status) {
             card.style.display = 'block';
         } else {
             card.style.display = 'none';
@@ -54,4 +69,18 @@ function filterSessions(status) {
     if (visibleSessions.length === 0 && status !== "all") {
         sessionContainer.innerHTML = `<p class="text-center text-gray-500 mt-4">No ${status} sessions available.</p>`;
     }
+}
+
+// Toggles the filter for engagements, applications and log requests
+function filterEngagementsApplicationsLogRequests(type, status) {
+    document.querySelectorAll(`.${type}-card`).forEach(card => {
+        card.style.display = status === "all" || card.getAttribute("data-status") === status ? "block" : "none";
+    });
+}
+
+// Toggle the filter of applications and log requests
+function filterApplicationsLogRequests(filter){
+    document.getElementById("pending-applications").classList.add("hidden");
+    document.getElementById("pending-log-requests").classList.add("hidden");
+    document.getElementById(filter).classList.remove("hidden");
 }
