@@ -86,6 +86,10 @@ class VolunteerOpportunitySerializer(serializers.ModelSerializer):
         return super().create(validated_data)
     
 class VolunteerOpportunityApplicationSerializer(serializers.ModelSerializer):
+    volunteer_opportunity = VolunteerOpportunitySerializer(read_only=True)
+    volunteer_opportunity_id = serializers.PrimaryKeyRelatedField(
+        queryset=VolunteerOpportunity.objects.all(), source='volunteer_opportunity', write_only=True
+    )
     class Meta:
         model = VolunteerOpportunityApplication
         fields = '__all__'
@@ -135,6 +139,10 @@ class VolunteerOpportunityApplicationSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
     
 class VolunteerEngagementSerializer(serializers.ModelSerializer):
+    volunteer_opportunity_application = VolunteerOpportunityApplicationSerializer(read_only=True)
+    volunteer_opportunity_application_id = serializers.PrimaryKeyRelatedField(
+        queryset=VolunteerOpportunityApplication.objects.all(), source='volunteer_opportunity_application', write_only=True
+    )
     class Meta:
         model = VolunteerEngagement
         fields = '__all__'

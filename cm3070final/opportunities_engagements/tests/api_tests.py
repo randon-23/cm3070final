@@ -921,6 +921,7 @@ class VolunteerOpportunityApplicationAPITest(APITestCase):
         get_volunteer_apps_url = reverse("opportunities_engagements:get_volunteer_applications", args=[self.volunteer.account.account_uuid])
         self.client.force_authenticate(user=self.volunteer_account)
         response = self.client.get(get_volunteer_apps_url, format="json")
+        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
 
@@ -1523,6 +1524,24 @@ class VolunteerSessionEngagementAPITest(APITestCase):
         response = self.client.get(get_session_engagements_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
+
+    def test_get_volunteer_session_engagements_success(self):
+        session_engagement = VolunteerSessionEngagement.objects.create(
+            volunteer_engagement=self.engagement,
+            session=self.session,
+            status="can_go"
+        )
+        get_volunteer_session_engagements_url = reverse(
+            "opportunities_engagements:get_volunteer_session_engagements",
+            args=[str(self.volunteer.account.account_uuid)]
+        )
+
+        self.client.force_authenticate(user=self.volunteer_account)
+        response = self.client.get(get_volunteer_session_engagements_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["session_engagement_id"], str(session_engagement.session_engagement_id))
 
 class VolunteerEngagementLogAPITest(APITestCase):
     @classmethod

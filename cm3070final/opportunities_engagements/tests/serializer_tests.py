@@ -249,7 +249,7 @@ class TestVolunteerOpportunityApplicationSerializer(TestCase):
     # Test successful creation of an application.
     def test_create_valid_application(self):
         data = {
-            "volunteer_opportunity": self.opportunity.pk,
+            "volunteer_opportunity_id": self.opportunity.pk,
             "volunteer": self.volunteer.pk,
             "as_group": False,
             "no_of_additional_volunteers": 0
@@ -270,7 +270,7 @@ class TestVolunteerOpportunityApplicationSerializer(TestCase):
         )
 
         data = {
-            "volunteer_opportunity": self.opportunity.pk,
+            "volunteer_opportunity_id": self.opportunity.pk,
             "volunteer": self.volunteer.pk,
             "as_group": False,
             "no_of_additional_volunteers": 0
@@ -278,12 +278,12 @@ class TestVolunteerOpportunityApplicationSerializer(TestCase):
 
         serializer = VolunteerOpportunityApplicationSerializer(data=data, context={'request': self.mock_request})
         self.assertFalse(serializer.is_valid())
-        self.assertIn("The fields volunteer_opportunity, volunteer must make a unique set.", serializer.errors["non_field_errors"][0])
+        self.assertIn("The fields volunteer_opportunity_id, volunteer must make a unique set.", serializer.errors["non_field_errors"][0])
 
     # Test that group applications must have at least one additional volunteer.
     def test_group_application_validations(self):
         data = {
-            "volunteer_opportunity": self.opportunity.pk,
+            "volunteer_opportunity_id": self.opportunity.pk,
             "volunteer": self.volunteer.pk,
             "as_group": True,
             "no_of_additional_volunteers": 0  # Invalid case
@@ -295,7 +295,7 @@ class TestVolunteerOpportunityApplicationSerializer(TestCase):
     # Test that applying alone must not have additional volunteers.
     def test_solo_application_cannot_have_additional_volunteers(self):
         data = {
-            "volunteer_opportunity": self.opportunity.pk,
+            "volunteer_opportunity_id": self.opportunity.pk,
             "volunteer": self.volunteer.pk,
             "as_group": False,
             "no_of_additional_volunteers": 2  # Invalid case
@@ -434,7 +434,7 @@ class TestVolunteerEngagementSerializer(TestCase):
 
     def test_create_engagement_successfully(self):
         data = {
-            "volunteer_opportunity_application": self.application.pk,
+            "volunteer_opportunity_application_id": self.application.pk,
             "engagement_status": "ongoing"
         }
 
@@ -452,7 +452,7 @@ class TestVolunteerEngagementSerializer(TestCase):
         self.application.save()
 
         data = {
-            "volunteer_opportunity_application": self.application.pk,
+            "volunteer_opportunity_application_id": self.application.pk,
             "engagement_status": "ongoing"
         }
 

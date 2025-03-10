@@ -276,7 +276,7 @@ def create_application(request, volunteer_opportunity_id):
             return Response({"error": "Invalid object ID"}, status=status.HTTP_404_NOT_FOUND)
         data = request.data.copy()
         data["volunteer"] = volunteer.pk  # Ensure correct volunteer is set
-        data["volunteer_opportunity"] = volunteer_opportunity.pk  # Ensure correct opportunity is set
+        data["volunteer_opportunity_id"] = volunteer_opportunity.pk  # Ensure correct opportunity is set
 
         serializer = VolunteerOpportunityApplicationSerializer(data=data, context={"request": request})
         if serializer.is_valid():
@@ -430,7 +430,7 @@ def create_engagement(request, application_id):
 
         # Prepare engagement data
         data = {
-            "volunteer_opportunity_application": application.pk,
+            "volunteer_opportunity_application_id": application.pk,
             "engagement_status": "ongoing"
         }
 
@@ -690,6 +690,7 @@ def create_session_engagements_for_session(request, session_id):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
 # Creates session engagements for all upcoming sessions when a volunteer is accepted
+### THE ORGANIZATION IS GONNA TRIGGER THIS
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_session_engagements_for_volunteer(request, account_uuid):
@@ -788,7 +789,27 @@ def get_session_engagements(request, session_id):
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+
+# Get all session engagements for a volunteer
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_volunteer_session_engagements(request, account_uuid):
+    if request.method == "GET":
+        try:
+            volunteer = Volunteer.objects.get(account__account_uuid=account_uuid)
+        except Volunteer.DoesNotExist:
+            return Response({"error": "Volunteer not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get all session engagements related to the volunteer
+        session_engagements = VolunteerSessionEngagement.objects.filter(
+            volunteer_engagement__volunteer=volunteer
+        )
+
+        serializer = VolunteerSessionEngagementSerializer(session_engagements, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 # Creates engagement logs when an organization completes a one-time opportunity.
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -826,7 +847,6 @@ def create_opportunity_engagement_logs(request, opportunity_id):
         return Response({"message": "Engagement logs created successfully.", "data": created_logs}, status=status.HTTP_201_CREATED)
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
 # Creates engagement logs when an organization completes a session for an ongoing opportunity.
 @api_view(['POST'])
