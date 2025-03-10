@@ -194,6 +194,11 @@ class VolunteerEngagementSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
     
 class VolunteerOpportunitySessionSerializer(serializers.ModelSerializer):
+    opportunity = VolunteerOpportunitySerializer(read_only=True)
+    opportunity_id = serializers.PrimaryKeyRelatedField(
+        queryset=VolunteerOpportunity.objects.all(), source='opportunity', write_only=True
+    )
+    
     class Meta:
         model = VolunteerOpportunitySession
         fields = '__all__'
@@ -238,6 +243,14 @@ class VolunteerOpportunitySessionSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
     
 class VolunteerSessionEngagementSerializer(serializers.ModelSerializer):
+    volunteer_engagement = VolunteerEngagementSerializer(read_only=True)
+    volunteer_engagement_id = serializers.PrimaryKeyRelatedField(
+        queryset=VolunteerEngagement.objects.all(), source='volunteer_engagement', write_only=True
+    )
+    session = VolunteerOpportunitySessionSerializer(read_only=True)
+    session_id = serializers.PrimaryKeyRelatedField(
+        queryset=VolunteerOpportunitySession.objects.all(), source='session', write_only=True
+    )
     class Meta:
         model = VolunteerSessionEngagement
         fields = '__all__'
@@ -283,6 +296,14 @@ class VolunteerSessionEngagementSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
     
 class VolunteerEngagementLogSerializer(serializers.ModelSerializer):
+    volunteer_engagement = VolunteerEngagementSerializer(read_only=True)
+    volunteer_engagement_id = serializers.PrimaryKeyRelatedField(
+        queryset=VolunteerEngagement.objects.all(), source='volunteer_engagement', write_only=True
+    )
+    session = VolunteerSessionEngagementSerializer(read_only=True, required=False, allow_null=True)
+    session_id = serializers.PrimaryKeyRelatedField(
+        queryset=VolunteerSessionEngagement.objects.all(), source='session', write_only=True, required=False, allow_null=True
+    )
     class Meta:
         model = VolunteerEngagementLog
         fields = '__all__'

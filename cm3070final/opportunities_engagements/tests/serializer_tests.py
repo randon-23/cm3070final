@@ -528,7 +528,7 @@ class TestVolunteerOpportunitySessionSerializer(TestCase):
     # Ensure a valid session can be created.
     def test_create_valid_session(self):
         data = {
-            "opportunity": self.opportunity.pk,
+            "opportunity_id": self.opportunity.pk,
             "title": "Python Workshop",
             "description": "Learn Python basics.",
             "session_date": date.today() + relativedelta(days=10),
@@ -554,7 +554,7 @@ class TestVolunteerOpportunitySessionSerializer(TestCase):
         self.opportunity.save()
 
         data = {
-            "opportunity": self.opportunity.pk,
+            "opportunity_id": self.opportunity.pk,
             "title": "Invalid Session",
             "description": "This should not be allowed.",
             "session_date": date.today() + relativedelta(days=10),
@@ -570,7 +570,7 @@ class TestVolunteerOpportunitySessionSerializer(TestCase):
     # Ensure session start time cannot be after or equal to end time.
     def test_session_start_must_be_before_end(self):
         data = {
-            "opportunity": self.opportunity.pk,
+            "opportunity_id": self.opportunity.pk,
             "title": "Time Conflict Session",
             "session_date": date.today() + relativedelta(days=5),
             "session_start_time": time(14, 0),
@@ -584,7 +584,7 @@ class TestVolunteerOpportunitySessionSerializer(TestCase):
     # Ensure slots cannot be negative or zero.
     def test_slots_must_be_positive(self):
         data = {
-            "opportunity": self.opportunity.pk,
+            "opportunity_id": self.opportunity.pk,
             "title": "Slots Test",
             "session_date": date.today() + relativedelta(days=3),
             "session_start_time": time(9, 0),
@@ -667,8 +667,8 @@ class TestVolunteerSessionEngagementSerializer(TestCase):
     # Ensure that a valid session engagement can be created
     def test_create_valid_session_engagement(self):
         data = {
-            "volunteer_engagement": self.engagement.pk,
-            "session": self.session.pk,
+            "volunteer_engagement_id": self.engagement.pk,
+            "session_id": self.session.pk,
             "status": "can_go"
         }
         serializer = VolunteerSessionEngagementSerializer(data=data)
@@ -696,8 +696,8 @@ class TestVolunteerSessionEngagementSerializer(TestCase):
         )
 
         data = {
-            "volunteer_engagement": self.engagement.pk,
-            "session": wrong_session.pk,
+            "volunteer_engagement_id": self.engagement.pk,
+            "session_id": wrong_session.pk,
             "status": "can_go"
         }
         serializer = VolunteerSessionEngagementSerializer(data=data)
@@ -739,8 +739,8 @@ class TestVolunteerSessionEngagementSerializer(TestCase):
 
         # This third person should not be able to join the full session
         data = {
-            "volunteer_engagement": third_engagement.pk,
-            "session": self.session.pk,
+            "volunteer_engagement_id": third_engagement.pk,
+            "session_id": self.session.pk,
             "status": "can_go"
         }
         serializer = VolunteerSessionEngagementSerializer(data=data)
@@ -867,8 +867,8 @@ class TestVolunteerEngagementLogSerializer(TestCase):
     # Ensure valid logs can be created for a session
     def test_create_log_for_session(self):
         data = {
-            "volunteer_engagement": self.engagement.pk,
-            "session": self.session_engagement.pk,
+            "volunteer_engagement_id": self.engagement.pk,
+            "session_id": self.session_engagement.pk,
             "no_of_hours": 1.5,
             "log_notes": "Helped teach Python."
         }
@@ -880,8 +880,8 @@ class TestVolunteerEngagementLogSerializer(TestCase):
     # Ensure valid logs can be created for a one-time opportunity
     def test_create_log_for_opportunity(self):
         data = {
-            "volunteer_engagement": self.engagement.pk,
-            "session": None,
+            "volunteer_engagement_id": self.engagement.pk,
+            "session_id": None,
             "no_of_hours": 2.5,
             "log_notes": "Worked on cleanup."
         }
@@ -893,8 +893,8 @@ class TestVolunteerEngagementLogSerializer(TestCase):
     # Ensure valid logs can be created for an **ongoing** opportunity without a session
     def test_create_log_for_ongoing_opportunity_without_session(self):
         data = {
-            "volunteer_engagement": self.engagement.pk,
-            "session": None,  # No session, but allowed for ongoing opps
+            "volunteer_engagement_id": self.engagement.pk,
+            "session_id": None,  # No session, but allowed for ongoing opps
             "no_of_hours": 2.0,
             "log_notes": "Extra tutoring session."
         }
@@ -919,8 +919,8 @@ class TestVolunteerEngagementLogSerializer(TestCase):
             status="can_go"
         )
         data = {
-            "volunteer_engagement": self.engagement.pk,
-            "session": future_session_engagement.pk,
+            "volunteer_engagement_id": self.engagement.pk,
+            "session_id": future_session_engagement.pk,
             "no_of_hours": 2
         }
         serializer = VolunteerEngagementLogSerializer(data=data, context={"request": self.volunteer_request})
@@ -935,8 +935,8 @@ class TestVolunteerEngagementLogSerializer(TestCase):
             no_of_hours=1.5
         )
         data = {
-            "volunteer_engagement": self.engagement.pk,
-            "session": self.session_engagement.pk,
+            "volunteer_engagement_id": self.engagement.pk,
+            "session_id": self.session_engagement.pk,
             "no_of_hours": 1.0
         }
         serializer = VolunteerEngagementLogSerializer(data=data, context={"request": self.volunteer_request})
@@ -1009,8 +1009,8 @@ class TestVolunteerEngagementLogSerializer(TestCase):
     # Ensure `no_of_hours` cannot be zero or negative
     def test_no_of_hours_cannot_be_zero_or_negative(self):
         data = {
-            "volunteer_engagement": self.engagement.pk,
-            "session": self.session_engagement.pk,
+            "volunteer_engagement_id": self.engagement.pk,
+            "session_id": self.session_engagement.pk,
             "no_of_hours": 0,
             "log_notes": "Invalid log."
         }
@@ -1021,8 +1021,8 @@ class TestVolunteerEngagementLogSerializer(TestCase):
     # Ensure logs cannot exceed max duration of session/opportunity
     def test_no_of_hours_exceeds_session_duration(self):
         data = {
-            "volunteer_engagement": self.engagement.pk,
-            "session": self.session_engagement.pk,
+            "volunteer_engagement_id": self.engagement.pk,
+            "session_id": self.session_engagement.pk,
             "no_of_hours": 5,  # Exceeds the 2-hour session
             "log_notes": "Too many hours."
         }

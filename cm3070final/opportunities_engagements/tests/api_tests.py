@@ -295,9 +295,6 @@ class GetOpportunitiesAPITest(APITestCase):
     def test_filter_by_location(self):
         location_json = json.dumps({"lat": 35.91, "lon": 14.50, "city": "Valletta", "formatted_address": "Valletta, Malta"})
         response = self.client.get(self.url, {"location_input": "Valletta, Malta", "location": location_json, "proximity": "2"})
-        print("\nResponse Data (Opportunities Returned):")
-        for opp in response.data:
-            print(f"- {opp['title']} | Location: {opp['required_location']}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 2)  # Should include in-person and tech opportunities
 
@@ -921,7 +918,6 @@ class VolunteerOpportunityApplicationAPITest(APITestCase):
         get_volunteer_apps_url = reverse("opportunities_engagements:get_volunteer_applications", args=[self.volunteer.account.account_uuid])
         self.client.force_authenticate(user=self.volunteer_account)
         response = self.client.get(get_volunteer_apps_url, format="json")
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
 
@@ -1672,7 +1668,7 @@ class VolunteerEngagementLogAPITest(APITestCase):
         create_log_url = reverse("opportunities_engagements:create_engagement_log_volunteer", args=[self.ongoing_opportunity.volunteer_opportunity_id])
 
         data = {
-            "volunteer_engagement": self.engagement_ongoing.pk,
+            "volunteer_engagement_id": self.engagement_ongoing.pk,
             "no_of_hours": 2,
             "log_notes": "Tutored students in English"
         }
@@ -1684,7 +1680,7 @@ class VolunteerEngagementLogAPITest(APITestCase):
         create_log_url = reverse("opportunities_engagements:create_engagement_log_volunteer", args=[self.ongoing_opportunity.volunteer_opportunity_id])
 
         data = {
-            "volunteer_engagement": self.engagement_ongoing.pk,
+            "volunteer_engagement_id": self.engagement_ongoing.pk,
             "no_of_hours": -1,  # Invalid hours
             "log_notes": "Tutored students in English"
         }

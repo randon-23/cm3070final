@@ -575,7 +575,7 @@ def create_session(request, opportunity_id):
             return Response({"error": "Sessions can only be created for ongoing opportunities."}, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data.copy()
-        data["opportunity"] = opportunity.pk  # Ensure correct opportunity is linked
+        data["opportunity_id"] = opportunity.pk  # Ensure correct opportunity is linked
 
         serializer = VolunteerOpportunitySessionSerializer(data=data)
         if serializer.is_valid():
@@ -676,8 +676,8 @@ def create_session_engagements_for_session(request, session_id):
         created_engagements = []
         for engagement in engagements:
             data = {
-                "volunteer_engagement": engagement.pk,
-                "session": session.pk,
+                "volunteer_engagement_id": engagement.pk,
+                "session_id": session.pk,
                 "status": "cant_go"
             }
             serializer = VolunteerSessionEngagementSerializer(data=data)
@@ -713,8 +713,8 @@ def create_session_engagements_for_volunteer(request, account_uuid):
 
             for session in sessions:
                 data = {
-                    "volunteer_engagement": engagement.pk,
-                    "session": session.pk,
+                    "volunteer_engagement_id": engagement.pk,
+                    "session_id": session.pk,
                     "status": "cant_go"
                 }
                 serializer = VolunteerSessionEngagementSerializer(data=data)
@@ -834,7 +834,7 @@ def create_opportunity_engagement_logs(request, opportunity_id):
         created_logs = []
         for engagement in engagements:
             data = {
-                "volunteer_engagement": engagement.pk,
+                "volunteer_engagement_id": engagement.pk,
                 "no_of_hours": (opportunity.opportunity_time_to.hour - opportunity.opportunity_time_from.hour),
                 "status": "approved",
                 "log_notes": f"Contributed to {opportunity.organization.organization_name} at {opportunity.title}"
@@ -874,8 +874,8 @@ def create_session_engagement_logs(request, session_id):
         for session_engagement in session_engagements:
             engagement = session_engagement.volunteer_engagement
             data = {
-                "volunteer_engagement": engagement.pk,
-                "session": session_engagement.pk,
+                "volunteer_engagement_id": engagement.pk,
+                "session_id": session_engagement.pk,
                 "no_of_hours": (session.session_end_time.hour - session.session_start_time.hour),
                 "status": "approved",
                 "log_notes": f"Contributed to {session.opportunity.organization.organization_name} at {session.title}"
@@ -910,7 +910,7 @@ def create_engagement_log_volunteer(request, opportunity_id):
             return Response({"error": "Logs for one-time opportunities must be system-generated."}, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data.copy()
-        data["volunteer_engagement"] = engagement.pk
+        data["volunteer_engagement_id"] = engagement.pk
         data["status"] = "pending"  # Logs submitted manually must be approved by an organization
         data["is_volunteer_request"] = True # Flag to indicate that this log was submitted by the volunteer
 
