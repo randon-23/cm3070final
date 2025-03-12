@@ -1405,10 +1405,6 @@ class VolunteerSessionEngagementAPITest(APITestCase):
             "opportunities_engagements:create_session_engagements_for_session",
             args=[str(cls.session.session_id)]
         )
-        cls.create_session_engagements_for_volunteer_url = reverse(
-            "opportunities_engagements:create_session_engagements_for_volunteer",
-            args=[str(cls.volunteer.account.account_uuid)]
-        )
 
     def setUp(self):
         self.client.force_authenticate(user=self.organization_account)
@@ -1421,9 +1417,26 @@ class VolunteerSessionEngagementAPITest(APITestCase):
 
     # Organization creates session engagements for a volunteer
     def test_create_session_engagements_for_volunteer_success(self):
-        response = self.client.post(self.create_session_engagements_for_volunteer_url)
+        create_session_engagements_for_volunteer_url = reverse(
+            "opportunities_engagements:create_session_engagements_for_volunteer",
+            args=[str(self.volunteer.account.account_uuid), str(self.opportunity.volunteer_opportunity_id)]
+        )
+
+        response = self.client.post(create_session_engagements_for_volunteer_url)
+
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["message"], "Session engagements created successfully.")
+
+        # Ensure session engagements were created for all upcoming sessions in the opportunity
+        created_session_engagements = VolunteerSessionEngagement.objects.filter(
+            volunteer_engagement=self.engagement
+        )
+        self.assertTrue(created_session_engagements.exists())
+        self.assertEqual(created_session_engagements.count(), 1)  # Should match the number of upcoming sessions
+
+        # Ensure the correct status was assigned
+        for session_engagement in created_session_engagements:
+            self.assertEqual(session_engagement.status, "cant_go")
 
     # Volunteer confirms attendance
     def test_confirm_attendance_success(self):

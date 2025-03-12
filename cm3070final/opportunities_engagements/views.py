@@ -131,20 +131,23 @@ def opportunity_view(request, opportunity_id):
         if sessions_response.status_code == 200:
             sessions = sessions_response.data
 
-            session_engagements_response = get_volunteer_session_engagements(request, account.account_uuid)
-            session_engagements = session_engagements_response.data if session_engagements_response.status_code == 200 else []
+            # Only fetch session engagements if the account is a volunteer
+            if account.is_volunteer():
+                session_engagements_response = get_volunteer_session_engagements(request, account.account_uuid)
+                session_engagements = session_engagements_response.data if session_engagements_response.status_code == 200 else []
 
-            # Attach session engagement ID to each session
-            for session in sessions:
-                session["session_engagement_id"] = None
-                for eng in session_engagements:
-                    if eng["session"]["session_id"] == session["session_id"]:
-                        session["session_engagement_id"] = eng["session_engagement_id"]
-                        session["status"] = eng["status"]  # Store engagement status for UI
-                        break
+                # Attach session engagement ID to each session
+                for session in sessions:
+                    session["session_engagement_id"] = None
+                    for eng in session_engagements:
+                        if eng["session"]["session_id"] == session["session_id"]:
+                            session["session_engagement_id"] = eng["session_engagement_id"]
+                            session["status"] = eng["status"]  # Store engagement status for UI
+                            break
             
+            # If user is not the owner, only show confirmed sessions
             if not is_owner:
-                context["sessions"] = [s for s in sessions if s["status"] == "confirmed"]
+                sessions = [s for s in sessions if s["status"] == "upcoming"]
             
             context["sessions"] = sessions
         else:

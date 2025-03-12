@@ -687,7 +687,7 @@ def create_session_engagements_for_session(request, session_id):
 ### THE ORGANIZATION IS GONNA TRIGGER THIS
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def create_session_engagements_for_volunteer(request, account_uuid):
+def create_session_engagements_for_volunteer(request, account_uuid, opportunity_id):
     if request.method == "POST":
         if not request.user.is_organization():
             return Response({"error": "Only organizations can create session engagements."}, status=status.HTTP_403_FORBIDDEN)
@@ -697,28 +697,38 @@ def create_session_engagements_for_volunteer(request, account_uuid):
         except Volunteer.DoesNotExist:
             return Response({"error": "Volunteer not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Get all volunteer engagements for ongoing opportunities
-        engagements = VolunteerEngagement.objects.filter(volunteer=volunteer, volunteer_opportunity_application__volunteer_opportunity__ongoing=True)
+        # Ensure the volunteer is engaged in the specific ongoing opportunity
+        engagement = VolunteerEngagement.objects.filter(
+            volunteer=volunteer, 
+            volunteer_opportunity_application__volunteer_opportunity__volunteer_opportunity_id=opportunity_id,
+            volunteer_opportunity_application__volunteer_opportunity__ongoing=True
+        ).first()  # Get only the first (should be only one per opportunity)
 
-        created_engagements = []
-        for engagement in engagements:
-            # Get all upcoming sessions for the opportunity
-            sessions = VolunteerOpportunitySession.objects.filter(opportunity=engagement.volunteer_opportunity_application.volunteer_opportunity, session_date__gte=timezone.now().date())
+        if not engagement:
+            return Response({"error": "No valid engagement found for this ongoing opportunity."}, status=status.HTTP_404_NOT_FOUND)
 
-            for session in sessions:
-                data = {
-                    "volunteer_engagement_id": engagement.pk,
-                    "session_id": session.pk,
-                    "status": "cant_go"
-                }
-                serializer = VolunteerSessionEngagementSerializer(data=data)
-                if serializer.is_valid():
-                    serializer.save()
-                    created_engagements.append(serializer.data)
+        # Get all upcoming sessions for this specific opportunity
+        sessions = VolunteerOpportunitySession.objects.filter(
+            opportunity=engagement.volunteer_opportunity_application.volunteer_opportunity,
+            session_date__gte=timezone.now().date(),
+            status="upcoming"
+        )
 
-        return Response({"message": "Session engagements created successfully.", "data": created_engagements}, status=status.HTTP_201_CREATED)
-    else:
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        created_session_engagements = []
+        for session in sessions:
+            data = {
+                "volunteer_engagement_id": engagement.pk,
+                "session_id": session.pk,
+                "status": "cant_go"
+            }
+            serializer = VolunteerSessionEngagementSerializer(data=data, context={"request": request})
+            if serializer.is_valid():
+                serializer.save()
+                created_session_engagements.append(serializer.data)
+
+        return Response({"message": "Session engagements created successfully.", "data": created_session_engagements}, status=status.HTTP_201_CREATED)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 # Volunteer confirms attendance
 @api_view(['PATCH'])

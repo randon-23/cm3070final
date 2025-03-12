@@ -1,22 +1,33 @@
 document.addEventListener("htmx:afterRequest", function(event) {
     let url = event.detail.xhr.responseURL
 
+    // Authentication
     if (url.includes("logout")){
         console.log("Logging out!", event);
         showLogoutMessage(event);
-    } else if (url.includes("following")){
+    } 
+    // Following
+    else if (url.includes("following")){
         console.log("Updating following count!", event);
         updateFollowerCount(event);
-    } else if(url.includes("/status/create_status_post/")){
+    } 
+    // Status posts
+    else if(url.includes("/status/create_status_post/")){
         console.log("Updating status post!", event);
         updateContent(event);
-    } else if(url.includes("/endorsements/create_endorsement/")){
+    } 
+    // Endorsements
+    else if(url.includes("/endorsements/create_endorsement/")){
         console.log("Updating endorsements!", event);
         updateContent(event);
-    } else if(url.includes("/search/get_search_profiles/")){
+    } 
+    // Search results profiles
+    else if(url.includes("/search/get_search_profiles/")){
         console.log("Updating search results!", event);
         updateSearchResults(event);
-    } else if(url.includes("/volunteer_matching_preferences/create_volunteer_preferences/")){
+    } 
+    // Preferences
+    else if(url.includes("/volunteer_matching_preferences/create_volunteer_preferences/")){
         console.log("Creating initial preferences!", event);
         updateContent(event);
     } else if(url.includes("/organization_preferences/create_organization_preferences/")){
@@ -25,23 +36,15 @@ document.addEventListener("htmx:afterRequest", function(event) {
     } else if(url.includes("update_volunteer_preferences") || url.includes("update_organization_preferences")){
         console.log("Updating preferences!", event);
         updateContent(event);
-    } else if(url.includes('/opportunities/create_opportunity/')){
+    } 
+    // Opportunities
+    else if(url.includes('/opportunities/create_opportunity/')){
         console.log("Creating opportunity!", event);
         updateContent(event);
-    } else if(url.includes('/session_engagements/confirm_attendance/')){
-        console.log("Confirming attendance!", event);
-        updateContent(event);
-    } else if(url.includes('/session_engagements/cancel_attendance/')){
-        console.log("Cancelling attendance!", event);
-        updateContent(event);
-    } else if(url.includes('/engagement_logs/create_engagement_log_volunteer/')){
-        console.log("Creating engagement log!", event);
-        updateContent(event);
-    } else if(url.includes('/applications/create_application/')){
+    } 
+    // Applications
+    else if(url.includes('/applications/create_application/')){
         console.log("Creating application!", event);
-        updateContent(event);
-    } else if(url.includes('/applications/accept/')){
-        console.log("Accepting application!", event);
         updateContent(event);
     } else if(url.includes('/applications/reject/')){
         console.log("Rejecting application!", event);
@@ -49,8 +52,37 @@ document.addEventListener("htmx:afterRequest", function(event) {
     } else if(url.includes('/applications/cancel/')){
         console.log("Cancelling application!", event);
         updateContent(event);
-    } else if(url.includes('/engagements/cancel_engagements_volunteer')){
+    } 
+    // Engagements
+    else if(url.includes('/engagements/cancel_engagement_volunteer')){
         console.log("Cancelling engagement!", event);
+        updateContent(event);
+    } 
+    // Sessions
+    else if(url.includes('/sessions/get_sessions/')){
+        console.log("Updating sessions!", event);
+        updateContent(event);
+    } else if(url.includes('/sessions/cancel_session/')){
+        console.log("Cancelling session!", event);
+        updateContent(event);
+    } 
+    // Session engagements
+    else if(url.includes('/session_engagements/confirm_attendance/')){
+        console.log("Confirming attendance!", event);
+        updateContent(event);
+    } else if(url.includes('/session_engagements/cancel_attendance/')){
+        console.log("Cancelling attendance!", event);
+        updateContent(event);
+    } 
+    // Engagement logs
+    else if(url.includes('/engagement_logs/create_engagement_log_volunteer/')){
+        console.log("Creating engagement log!", event);
+        updateContent(event);
+    } else if(url.includes('/engagement_logs/approve_engagement_log/')){
+        console.log("Approving engagement log!", event);
+        updateContent(event);
+    } else if(url.includes('/engagement_logs/reject_engagement_log/')){
+        console.log("Rejecting engagement log!", event);
         updateContent(event);
     }
 });
