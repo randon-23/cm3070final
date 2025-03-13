@@ -1,0 +1,24 @@
+{% load static %}
+<div id="complete-session-modal" class="fixed inset-0 items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-4/5 max-w-4xl max-h-[80vh] overflow-y-auto">
+        <h2 class="text-2xl font-bold text-center mb-4">Review Session Attendees</h2>
+        <p class="text-gray-700 text-center mb-4">Mark any attendees who did not show up as "Can't Go" before completing the session.</p>
+
+        <div id="session-attendee-list" class="space-y-4">
+            <p class="text-gray-500 text-center">Loading...</p>
+        </div>
+
+        <div class="flex justify-between mt-6">
+            <button onclick="document.getElementById('complete-session-modal').classList.add('hidden')"
+                    class="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600">
+                Cancel
+            </button>
+            <button 
+                onclick="completeSession('{{ session.session_id }}'); document.getElementById('complete-session-modal').classList.add('hidden')"
+                id="confirm-complete-session" 
+                class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">
+                Confirm Completion
+            </button>
+        </div>
+    </div>
+</div>

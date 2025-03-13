@@ -31,7 +31,7 @@
         <div class="grid grid-cols-2 gap-6 mt-4">
             {% for application in applications %}
                 <div class="bg-gray-100 p-4 rounded-lg shadow-md">
-                    <h3 class="font-bold">{{ application.volunteer.first_name }} {{ application.volunteer.last_name }}</h3>
+                    <h3 class="font-bold">{{ application.volunteer.volunteer.first_name }} {{ application.volunteer.volunteer.last_name }}</h3>
                     <p><strong>Opportunity:</strong> {{ application.volunteer_opportunity.title }}</p>
                     <p><strong>Applied as Group:</strong> 
                         {% if application.as_group %} Yes ({{ application.no_of_additional_volunteers }} additional) 
@@ -40,10 +40,8 @@
                     <p class="text-sm text-gray-500"><strong>Submitted:</strong> {{ application.created_at|date:"M d, Y" }}</p>
 
                     <div class="flex space-x-2 mt-3">
-                        <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-                            hx-post="{% url 'opportunities_engagements:accept_application' application.volunteer_opportunity_application_id %}"
-                            hx-trigger="click"
-                            hx-target="#loading-modal-content">
+                        <button onclick="acceptApplication('{{ application.volunteer_opportunity_application_id }}', '{{ application.volunteer.account.account_uuid }}', '{{ application.volunteer_opportunity.volunteer_opportunity_id }}', '{{ application.volunteer_opportunity.ongoing|lower }}')"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
                             Accept
                         </button>
                         <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"

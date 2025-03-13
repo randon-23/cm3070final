@@ -688,80 +688,127 @@ class UpdateOpportunityStatusAPITest(APITestCase):
             organization_address={"raw": "Address 2"}
         )
 
-        # Create upcoming opportunities
-        cls.opportunity_org1 = VolunteerOpportunity.objects.create(
+        # Create an ongoing opportunity
+        cls.ongoing_opportunity = VolunteerOpportunity.objects.create(
             organization=cls.organization1,
-            title="Org1 Opportunity",
-            description="Description 1",
+            title="Ongoing Opportunity",
+            description="An ongoing opportunity with sessions.",
             work_basis="in-person",
-            duration="short-term",
-            opportunity_date=date.today() + timedelta(days=10),
-            opportunity_time_from="09:00:00",
-            opportunity_time_to="12:00:00",
-            area_of_work="education",
-            requirements=["teaching"],
+            duration="long-term",
+            ongoing=True,
+            area_of_work="environment",
+            requirements=["teamwork"],
             languages=["English"],
             status="upcoming"
         )
 
-        cls.opportunity_org2 = VolunteerOpportunity.objects.create(
-            organization=cls.organization2,
-            title="Org2 Opportunity",
-            description="Description 2",
-            work_basis="online",
-            duration="long-term",
-            ongoing=True,
-            days_of_week=["monday", "wednesday"],
-            area_of_work="technology",
-            requirements=["coding"],
-            languages=["French"],
+        # Create sessions for the ongoing opportunity
+        cls.completed_session = VolunteerOpportunitySession.objects.create(
+            opportunity=cls.ongoing_opportunity,
+            title="Completed Session",
+            session_date=timezone.now().date() - timedelta(days=3),
+            session_start_time="09:00:00",
+            session_end_time="12:00:00",
+            status="completed"
+        )
+
+        cls.upcoming_session = VolunteerOpportunitySession.objects.create(
+            opportunity=cls.ongoing_opportunity,
+            title="Upcoming Session",
+            session_date=timezone.now().date() + timedelta(days=2),
+            session_start_time="10:00:00",
+            session_end_time="12:00:00",
             status="upcoming"
         )
 
         cls.cancel_url = lambda obj_id: reverse("opportunities_engagements:cancel_opportunity", args=[obj_id])
         cls.complete_url = lambda obj_id: reverse("opportunities_engagements:complete_opportunity", args=[obj_id])
+        cls.cancel_session_url = lambda obj_id: reverse("opportunities_engagements:cancel_session", args=[obj_id])
+        cls.complete_session_url = lambda obj_id: reverse("opportunities_engagements:complete_session", args=[obj_id])
 
     def setUp(self):
         self.client.force_authenticate(user=self.org_account1)
 
-    # An organization can cancel its own opportunity.
+    # An organization can cancel its own opportunity (with no upcoming sessions).
     def test_cancel_own_opportunity(self):
-        response = self.client.patch(self.cancel_url(self.opportunity_org1.volunteer_opportunity_id), format="json")
+        self.upcoming_session.status = "cancelled"
+        self.upcoming_session.save()
+
+        response = self.client.patch(self.cancel_url(self.ongoing_opportunity.volunteer_opportunity_id), format="json")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["message"], "Opportunity successfully marked as cancelled.")
 
-        self.opportunity_org1.refresh_from_db()
-        self.assertEqual(self.opportunity_org1.status, "cancelled")
+        self.ongoing_opportunity.refresh_from_db()
+        self.assertEqual(self.ongoing_opportunity.status, "cancelled")
 
-    # An organization can complete its own opportunity.
+    # An organization can complete its own opportunity (with no upcoming sessions).
     def test_complete_own_opportunity(self):
-        response = self.client.patch(self.complete_url(self.opportunity_org1.volunteer_opportunity_id), format="json")
+        self.upcoming_session.status = "completed"
+        self.upcoming_session.save()
+
+        response = self.client.patch(self.complete_url(self.ongoing_opportunity.volunteer_opportunity_id), format="json")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["message"], "Opportunity successfully marked as completed.")
 
-        self.opportunity_org1.refresh_from_db()
-        self.assertEqual(self.opportunity_org1.status, "completed")
+        self.ongoing_opportunity.refresh_from_db()
+        self.assertEqual(self.ongoing_opportunity.status, "completed")
+
+    # Cannot cancel an opportunity with upcoming sessions.
+    def test_cannot_cancel_opportunity_with_upcoming_sessions(self):
+        response = self.client.patch(self.cancel_url(self.ongoing_opportunity.volunteer_opportunity_id), format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data["error"],
+            "Cannot cancel opportunity while there are upcoming sessions. Cancel sessions first."
+        )
+
+    # Cannot complete an opportunity with upcoming sessions.
+    def test_cannot_complete_opportunity_with_upcoming_sessions(self):
+        response = self.client.patch(self.complete_url(self.ongoing_opportunity.volunteer_opportunity_id), format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data["error"],
+            "Cannot complete opportunity while there are upcoming sessions. Complete or cancel sessions first."
+        )
+
+    # After cancelling session, opportunity can be cancelled.
+    def test_cancel_opportunity_after_cancelling_session(self):
+        # Cancel the session first
+        self.client.patch(self.cancel_session_url(self.upcoming_session.session_id), format="json")
+
+        response = self.client.patch(self.cancel_url(self.ongoing_opportunity.volunteer_opportunity_id), format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["message"], "Opportunity successfully marked as cancelled.")
+
+    # After completing session, opportunity can be completed.
+    def test_complete_opportunity_after_completing_session(self):
+        # Complete the session first
+        self.client.patch(self.complete_session_url(self.upcoming_session.session_id), format="json")
+
+        response = self.client.patch(self.complete_url(self.ongoing_opportunity.volunteer_opportunity_id), format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["message"], "Opportunity successfully marked as completed.")
 
     # An organization cannot cancel another organization's opportunity.
     def test_cannot_cancel_another_orgs_opportunity(self):
         self.client.force_authenticate(user=self.org_account2)  # Authenticate as Org2
-        response = self.client.patch(self.cancel_url(self.opportunity_org1.volunteer_opportunity_id), format="json")
+        response = self.client.patch(self.cancel_url(self.ongoing_opportunity.volunteer_opportunity_id), format="json")
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data["error"], "Unauthorized to update this opportunity.")
 
     # An organization cannot complete another organization's opportunity.
     def test_cannot_complete_another_orgs_opportunity(self):
         self.client.force_authenticate(user=self.org_account2)  # Authenticate as Org2
-        response = self.client.patch(self.complete_url(self.opportunity_org1.volunteer_opportunity_id), format="json")
+        response = self.client.patch(self.complete_url(self.ongoing_opportunity.volunteer_opportunity_id), format="json")
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data["error"], "Unauthorized to update this opportunity.")
 
     # An organization cannot update an opportunity that is not 'upcoming'.
     def test_cannot_update_non_upcoming_opportunity(self):
-        self.opportunity_org1.status = "completed"
-        self.opportunity_org1.save()
+        self.ongoing_opportunity.status = "completed"
+        self.ongoing_opportunity.save()
 
-        response = self.client.patch(self.cancel_url(self.opportunity_org1.volunteer_opportunity_id), format="json")
+        response = self.client.patch(self.cancel_url(self.ongoing_opportunity.volunteer_opportunity_id), format="json")
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data["error"], "Only upcoming opportunities can be modified.")
 
@@ -775,7 +822,7 @@ class UpdateOpportunityStatusAPITest(APITestCase):
     # Ensure unauthorized users cannot access this endpoint.
     def test_unauthorized_access(self):
         self.client.force_authenticate(user=None)  # No authentication
-        response = self.client.patch(self.cancel_url(self.opportunity_org1.volunteer_opportunity_id), format="json")
+        response = self.client.patch(self.cancel_url(self.ongoing_opportunity.volunteer_opportunity_id), format="json")
         self.assertEqual(response.status_code, 403)  # Permission denied
 
 class VolunteerOpportunityApplicationAPITest(APITestCase):
@@ -835,6 +882,27 @@ class VolunteerOpportunityApplicationAPITest(APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["message"], "Successfully applied for opportunity.")
     
+    # Ensures a volunteer cannot apply twice for the same opportunity.
+    def test_prevent_duplicate_application(self):
+        # First application (should succeed)
+        VolunteerOpportunityApplication.objects.create(
+            volunteer_opportunity=self.opportunity,
+            volunteer=self.volunteer,
+            application_status="pending"
+        )
+
+        # Attempt a duplicate application
+        create_application_url = reverse("opportunities_engagements:create_application", args=[self.opportunity.volunteer_opportunity_id])
+        response = self.client.post(create_application_url, {}, format="json")
+
+        # Ensure it fails due to unique constraint
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("non_field_errors", response.data)
+        self.assertEqual(
+            response.data["non_field_errors"][0],
+            "The fields volunteer_opportunity_id, volunteer must make a unique set."
+        )
+
     def test_accept_application_individual(self):
         application = VolunteerOpportunityApplication.objects.create(
             volunteer_opportunity=self.opportunity,
@@ -1063,7 +1131,7 @@ class VolunteerEngagementAPITestCase(APITestCase):
         self.assertEqual(response.status_code, 403)
 
     # Test Volunteer Cancelling Their Own Engagement
-    def test_cancel_engagement_volunteer_success(self):
+    def test_cancel_engagement_volunteer_success_by_volunteer(self):
         engagement = VolunteerEngagement.objects.create(
             volunteer_opportunity_application=self.application,
             volunteer=self.volunteer,
@@ -1075,7 +1143,7 @@ class VolunteerEngagementAPITestCase(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["message"], "Engagement successfully canceled.")
 
-    def test_cancel_engagement_volunteer_unauthorized(self):
+    def test_cancel_engagement_volunteer_success_by_organization(self):
         engagement = VolunteerEngagement.objects.create(
             volunteer_opportunity_application=self.application,
             volunteer=self.volunteer,
@@ -1085,7 +1153,38 @@ class VolunteerEngagementAPITestCase(APITestCase):
         cancel_engagement_volunteer_url = reverse("opportunities_engagements:cancel_engagement_volunteer", args=[engagement.volunteer_engagement_id])
         self.client.force_authenticate(user=self.organization_account)  # Switch to organization
         response = self.client.patch(cancel_engagement_volunteer_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["message"], "Engagement successfully canceled.")
+
+    def test_cancel_engagement_volunteer_unauthorized_user(self):
+        # Create another organization that is NOT related to the opportunity
+        other_org_account = Account.objects.create_user(
+            email_address="otherorg@example.com",
+            password="password123",
+            user_type="organization",
+            contact_number="+35612345999"
+        )
+        other_organization = Organization.objects.create(
+            account=other_org_account,
+            organization_name="Other Organization",
+            organization_description="Unrelated non-profit.",
+            organization_address={"raw": "987 Other St, Another City, US"}
+        )
+
+        # Create an engagement for the opportunity
+        engagement = VolunteerEngagement.objects.create(
+            volunteer_opportunity_application=self.application,
+            volunteer=self.volunteer,
+            organization=self.organization,  # Owner of opportunity
+            engagement_status="ongoing"
+        )
+        cancel_engagement_volunteer_url = reverse("opportunities_engagements:cancel_engagement_volunteer", args=[engagement.volunteer_engagement_id])
+
+        self.client.force_authenticate(user=other_org_account)  # Another organization, should be denied
+        response = self.client.patch(cancel_engagement_volunteer_url)
+
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["error"], "Unauthorized to cancel this engagement.")
 
     def test_cannot_cancel_completed_engagement(self):
         engagement = VolunteerEngagement.objects.create(
@@ -1155,6 +1254,66 @@ class VolunteerEngagementAPITestCase(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["message"], "Engagement successfully canceled.")
         self.assertEqual(self.opportunity.slots, initial_slots + 3)
+
+    # Ensure that an organization can fetch all engagements for its own opportunity.
+    def test_get_opportunity_engagements_success(self):
+        get_opportunity_engagements_url = reverse(
+            "opportunities_engagements:get_opportunity_engagements",
+            args=[self.opportunity.volunteer_opportunity_id]
+        )
+
+        # Create a volunteer engagement for the opportunity
+        VolunteerEngagement.objects.create(
+            volunteer_opportunity_application=self.application,
+            volunteer=self.volunteer,
+            organization=self.organization,
+            engagement_status="ongoing"
+        )
+
+        self.client.force_authenticate(user=self.organization_account)  # Authenticate as the organization
+        response = self.client.get(get_opportunity_engagements_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)  # Should return 1 engagement
+        self.assertEqual(response.data[0]["engagement_status"], "ongoing")
+
+    # Ensure that a different organization or volunteer cannot fetch engagements for an opportunity.
+    def test_get_opportunity_engagements_unauthorized(self):
+        get_opportunity_engagements_url = reverse(
+            "opportunities_engagements:get_opportunity_engagements",
+            args=[self.opportunity.volunteer_opportunity_id]
+        )
+
+        # Create a volunteer engagement for the opportunity
+        VolunteerEngagement.objects.create(
+            volunteer_opportunity_application=self.application,
+            volunteer=self.volunteer,
+            organization=self.organization,
+            engagement_status="ongoing"
+        )
+
+        # Try fetching as the volunteer (should fail)
+        response = self.client.get(get_opportunity_engagements_url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["error"], "Unauthorized access to get this opportunities' engagements.")
+
+        # Try fetching as another organization (should also fail)
+        self.client.force_authenticate(user=self.volunteer_account)  # Authenticate as a different user
+        response = self.client.get(get_opportunity_engagements_url)
+        self.assertEqual(response.status_code, 403)
+
+    # Ensure 404 is returned if the opportunity does not exist.
+    def test_get_opportunity_engagements_not_found(self):
+        fake_uuid = str(uuid.uuid4())
+        get_opportunity_engagements_url = reverse(
+            "opportunities_engagements:get_opportunity_engagements",
+            args=[fake_uuid]
+        )
+
+        self.client.force_authenticate(user=self.organization_account)  # Authenticate as the organization
+        response = self.client.get(get_opportunity_engagements_url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["error"], "Opportunity not found.")
 
 class VolunteerOpportunitySessionAPITest(APITestCase):
     @classmethod
@@ -1517,6 +1676,58 @@ class VolunteerSessionEngagementAPITest(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["message"], "Attendance canceled.")
         self.assertEqual(self.session.slots, initial_slots + 1)  # Slots should increment
+
+    def test_cancel_attendance_by_owner_success(self):
+        session_engagement = VolunteerSessionEngagement.objects.create(
+            volunteer_engagement=self.engagement,
+            session=self.session,
+            status="can_go"
+        )
+        cancel_attendance_url = reverse(
+            "opportunities_engagements:cancel_attendance",
+            args=[str(session_engagement.session_engagement_id)]
+        )
+
+        self.client.force_authenticate(user=self.organization_account)  # Organization that owns the opportunity
+        initial_slots = self.session.slots
+        response = self.client.patch(cancel_attendance_url)
+        self.session.refresh_from_db()  # Refresh from DB to check slot count update
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["message"], "Attendance canceled.")
+        self.assertEqual(self.session.slots, initial_slots + 1)  # Slots should increment
+
+    def test_cancel_attendance_unauthorized_user(self):
+        # Create another organization that does NOT own the opportunity
+        other_org_account = Account.objects.create_user(
+            email_address="otherorg@example.com",
+            password="password123",
+            user_type="organization",
+            contact_number="+35612345999"
+        )
+        other_organization = Organization.objects.create(
+            account=other_org_account,
+            organization_name="Other Organization",
+            organization_description="Unrelated non-profit.",
+            organization_address={"raw": "987 Other St, Another City, US"}
+        )
+
+        session_engagement = VolunteerSessionEngagement.objects.create(
+            volunteer_engagement=self.engagement,
+            session=self.session,
+            status="can_go"
+        )
+        cancel_attendance_url = reverse(
+            "opportunities_engagements:cancel_attendance",
+            args=[str(session_engagement.session_engagement_id)]
+        )
+
+        self.client.force_authenticate(user=other_org_account)  # Different organization, should be denied
+        response = self.client.patch(cancel_attendance_url)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data["error"], "Unauthorized to cancel attendance for this session.")
+
 
     # Organization retrieves session engagements
     def test_get_session_engagements_success(self):

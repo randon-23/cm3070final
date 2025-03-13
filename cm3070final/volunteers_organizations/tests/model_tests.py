@@ -264,7 +264,7 @@ class TestOrganizationModel(TestCase):
         self.organization.organization_address = new_address
         self.organization.save()
 
-        self.assertEqual(self.organization.organization_address['raw'], new_address)
+        self.assertEqual(self.organization.organization_address, new_address)
 
 class TestOrganizationPreferencesModel(TestCase):
     @classmethod

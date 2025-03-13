@@ -12,6 +12,8 @@
 <!-- If the user accessing is the organization who created the opportunity, the create session modal is included so that if it is ongoing they can create a session -->
 {% if is_opportunity_owner %}
     {% include 'opportunities_engagements/partials/create_session_modal.html' %}
+    {% include 'opportunities_engagements/partials/complete_opportunity_modal.html' %}
+    {% include 'opportunities_engagements/partials/complete_session_modal.html' %}
 {% endif %}
 
 <!--If the user is engaged, the create engagement log modal is included so that if it is ongoing, the user can create an engagement log-->
@@ -72,10 +74,16 @@
                         <p><strong>Status:</strong> {{ session.status|title }}</p>
 
                         {% if is_opportunity_owner %}
-                            <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 mt-2">
+                            <button 
+                            hx-patch="{% url 'opportunities_engagements:cancel_session' session.session_id %}"
+                            hx-trigger="click"
+                            hx-target="#loading-modal-content"
+                            hx-swap="innerHTML"
+                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 mt-2">
                                 Cancel Session
                             </button>
-                            <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 mt-2">
+                            <button onclick="openCompleteSessionModal('{{ session.session_id }}')"
+                                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 mt-2">
                                 Complete Session
                             </button>
                         {% endif %}
@@ -87,7 +95,8 @@
                                     hx-trigger="click"
                                     hx-target="#loading-modal-content"
                                     hx-swap="innerHTML"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                                    class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}
+                                    {% if session.status == 'can_go' %} opacity-50 cursor-not-allowed disabled {% endif %}">
                                     Can Go
                                 </button>
                                 <button 
@@ -95,7 +104,8 @@
                                     hx-trigger="click"
                                     hx-target="#loading-modal-content"
                                     hx-swap="innerHTML"
-                                    class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                                    class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-700 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}
+                                    {% if session.status == 'cant_go' %} opacity-50 cursor-not-allowed disabled {% endif %}">
                                     Can't Go
                                 </button>
                             </div>
@@ -116,13 +126,15 @@
             {% if is_opportunity_owner %}
                 <h2 class="text-xl font-semibold mb-2">Manage Opportunity</h2>
                 <div class="flex flex-col space-y-2">
-                    <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                    <button onclick="openCompleteOpportunityModal('{{ opportunity.volunteer_opportunity_id }}')"
+                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
                         Complete Opportunity
                     </button>
-                    <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
+                    <button onclick="cancelOpportunity('{{ opportunity.volunteer_opportunity_id }}')"
+                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
                         Cancel Opportunity
                     </button>
-                    {% if opportunity.ongoing and opportunity.status != "completed" %}
+                    {% if opportunity.ongoing and opportunity.status == "upcoming" %}
                         <button onclick="document.getElementById('create-session-modal').classList.remove('hidden')"
                             class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
                             Create Session
@@ -168,5 +180,9 @@
             <p class="text-gray-600"><strong>Location:</strong> {{ organization.organization_address.raw }}</p>
         </div>
     </div>
+
+    <script>
+        var csrftoken = '{{ csrf_token }}';
+    </script>
 </div>
 {% endblock %}

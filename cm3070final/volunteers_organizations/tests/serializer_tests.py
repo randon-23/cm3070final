@@ -34,6 +34,7 @@ class TestVolunteerSerializer(TestCase):
             "bio": "Passionate about helping others",
             "profile_img": None,
             "followers": 100,
+            "profile_url": f"/volunteers-organizations/profile/{self.account.account_uuid}"
         }
         self.assertEqual(serializer.data, expected_data)
 
@@ -65,6 +66,7 @@ class TestOrganizationSerializer(TestCase):
             "organization_website": "https://helpinghands.org",
             "organization_profile_img": None,
             "followers": 50,
+            "profile_url": f"/volunteers-organizations/profile/{self.account.account_uuid}"
         }
         self.assertEqual(serializer.data, expected_data)
 
@@ -266,7 +268,6 @@ class TestVolunteerMatchingPreferencesSerializer(TestCase):
             "fields_of_interest": ["education", "health"],
             "skills": ["communication", "leadership"],
             "languages": ["English", "French"],
-            "smart_matching_enabled": True
         }
         serializer = VolunteerMatchingPreferencesSerializer(data=data, context={"request": self.mock_request})
         self.assertTrue(serializer.is_valid(), serializer.errors)
@@ -316,8 +317,7 @@ class TestVolunteerMatchingPreferencesSerializer(TestCase):
             preferred_duration=["short-term"],
             fields_of_interest=["health"],
             skills=["teamwork"],
-            languages=["Spanish"],
-            smart_matching_enabled=True
+            languages=["Spanish"]
         )
 
         data = {
@@ -385,7 +385,6 @@ class TestVolunteerMatchingPreferencesSerializer(TestCase):
             fields_of_interest=["health"],
             skills=["teamwork"],
             languages=["Spanish"],
-            smart_matching_enabled=True,
             location={
                 "lat": 35.8995,
                 "lon": 14.5146,

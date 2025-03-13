@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from .models import VolunteerOpportunity, VolunteerOpportunityApplication, VolunteerEngagementLog, VolunteerEngagement, VolunteerOpportunitySession, VolunteerSessionEngagement
-from volunteers_organizations.models import Organization
+from volunteers_organizations.models import Organization, Volunteer
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
-from volunteers_organizations.serializers import OrganizationSerializer
+from volunteers_organizations.serializers import OrganizationSerializer, UserDataSerializer
+from django.db.utils import IntegrityError
+from rest_framework.exceptions import ValidationError
 
 Account = get_user_model()
 
@@ -86,6 +88,10 @@ class VolunteerOpportunityApplicationSerializer(serializers.ModelSerializer):
     volunteer_opportunity_id = serializers.PrimaryKeyRelatedField(
         queryset=VolunteerOpportunity.objects.all(), source='volunteer_opportunity', write_only=True
     )
+    volunteer = UserDataSerializer(source='volunteer.account', read_only=True)
+    volunteer_id = serializers.PrimaryKeyRelatedField(
+        queryset=Volunteer.objects.all(), source='volunteer', write_only=True
+    )
     class Meta:
         model = VolunteerOpportunityApplication
         fields = '__all__'
@@ -113,7 +119,12 @@ class VolunteerOpportunityApplicationSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        return super().create(validated_data)
+        try:
+            return super().create(validated_data)
+        except IntegrityError:
+            raise ValidationError(
+                {"non_field_errors": ["The fields volunteer_opportunity_id, volunteer must make a unique set."]}
+            )
 
     def update(self, instance, validated_data):
         new_status = validated_data.get("application_status", instance.application_status)

@@ -225,6 +225,14 @@ def cancel_opportunity(request, volunteer_opportunity_id):
         if opportunity.status != "upcoming":
             return Response({"error": "Only upcoming opportunities can be modified."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Check if opportunity is ongoing and has any upcoming sessions
+        if opportunity.ongoing:
+            if VolunteerOpportunitySession.objects.filter(opportunity=opportunity, status="upcoming").exists():
+                return Response(
+                    {"error": "Cannot cancel opportunity while there are upcoming sessions. Cancel sessions first."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
         opportunity.status = "cancelled"
         opportunity.save()
         
@@ -248,6 +256,14 @@ def complete_opportunity(request, volunteer_opportunity_id):
 
     if opportunity.status != "upcoming":
         return Response({"error": "Only upcoming opportunities can be modified."}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if opportunity is ongoing and has any upcoming sessions
+    if opportunity.ongoing:
+        if VolunteerOpportunitySession.objects.filter(opportunity=opportunity, status="upcoming").exists():
+            return Response(
+                {"error": "Cannot complete opportunity while there are upcoming sessions. Complete or cancel sessions first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     opportunity.status = "completed"
     opportunity.save()
@@ -269,7 +285,7 @@ def create_application(request, volunteer_opportunity_id):
         except:
             return Response({"error": "Invalid object ID"}, status=status.HTTP_404_NOT_FOUND)
         data = request.data.copy()
-        data["volunteer"] = volunteer.pk  # Ensure correct volunteer is set
+        data["volunteer_id"] = volunteer.pk  # Ensure correct volunteer is set
         data["volunteer_opportunity_id"] = volunteer_opportunity.pk  # Ensure correct opportunity is set
 
         serializer = VolunteerOpportunityApplicationSerializer(data=data, context={"request": request})
@@ -457,7 +473,27 @@ def get_engagements(request, account_uuid):
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+
+# Fetches all an opportunities' engagements - used primarily prior to completing an opportunity.
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_opportunity_engagements(request, volunteer_opportunity_id):
+    if request.method == "GET":
+        try:
+            opportunity = VolunteerOpportunity.objects.get(volunteer_opportunity_id=volunteer_opportunity_id)
+        except VolunteerOpportunity.DoesNotExist:
+            return Response({"error": "Opportunity not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if opportunity.organization.account != request.user:
+            return Response({"error": "Unauthorized access to get this opportunities' engagements."}, status=status.HTTP_403_FORBIDDEN)
+        
+        engagements = VolunteerEngagement.objects.filter(volunteer_opportunity_application__volunteer_opportunity=opportunity)
+        serializer = VolunteerEngagementSerializer(engagements, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        
 # Triggered when an organization marks all engagements for an opportunity as completed.
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
@@ -489,7 +525,7 @@ def complete_engagements_organization(request, volunteer_opportunity_id):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-# Triggered when a volunteer wants to cancel their engagement.
+# Triggered when a volunteer wants to cancel their engagement, or an organization wnates to cancel a singular engagement.
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def cancel_engagement_volunteer(request, volunteer_engagement_id):
@@ -499,14 +535,17 @@ def cancel_engagement_volunteer(request, volunteer_engagement_id):
         except VolunteerEngagement.DoesNotExist:
             return Response({"error": "Engagement not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if engagement.volunteer.account != request.user:
+        opportunity = engagement.volunteer_opportunity_application.volunteer_opportunity
+
+        # Check if request user is either the volunteer or the organization that owns the opportunity
+        is_volunteer = engagement.volunteer.account == request.user
+        is_organization = opportunity.organization.account == request.user
+
+        if not (is_volunteer or is_organization):
             return Response({"error": "Unauthorized to cancel this engagement."}, status=status.HTTP_403_FORBIDDEN)
 
         if engagement.engagement_status != "ongoing":
             return Response({"error": "Only ongoing engagements can be canceled."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Get opportunity linked to the engagement
-        opportunity = engagement.volunteer_opportunity_application.volunteer_opportunity
 
         # Re-increment slots if the opportunity has a limited number of slots
         if opportunity.slots is not None:
@@ -762,7 +801,13 @@ def cancel_attendance(request, session_engagement_id):
         except VolunteerSessionEngagement.DoesNotExist:
             return Response({"error": "Session engagement not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if session_engagement.volunteer_engagement.volunteer.account != request.user:
+        opportunity = session_engagement.session.opportunity
+
+        # Check if request user is either the volunteer or the organization that owns the opportunity
+        is_volunteer = session_engagement.volunteer_engagement.volunteer.account == request.user
+        is_organization = opportunity.organization.account == request.user
+
+        if not (is_volunteer or is_organization):
             return Response({"error": "Unauthorized to cancel attendance for this session."}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = VolunteerSessionEngagementSerializer(session_engagement, data={"status": "cant_go"}, partial=True)
@@ -771,8 +816,8 @@ def cancel_attendance(request, session_engagement_id):
             return Response({"message": "Attendance canceled.", "data": serializer.data}, status=status.HTTP_200_OK)
 
         return Response({"message": "Failed to cancel attendance.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 # Get all session engagements for a session
 @api_view(['GET'])
@@ -872,6 +917,7 @@ def create_session_engagement_logs(request, session_id):
         if not session.opportunity.ongoing:
             return Response({"error": "Only ongoing opportunities have session-based engagement logs."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Only session engagements with status "can_go" are considered
         session_engagements = VolunteerSessionEngagement.objects.filter(session=session, status="can_go")
 
         created_logs = []

@@ -250,7 +250,7 @@ class TestVolunteerOpportunityApplicationSerializer(TestCase):
     def test_create_valid_application(self):
         data = {
             "volunteer_opportunity_id": self.opportunity.pk,
-            "volunteer": self.volunteer.pk,
+            "volunteer_id": self.volunteer.pk,
             "as_group": False,
             "no_of_additional_volunteers": 0
         }
@@ -271,20 +271,27 @@ class TestVolunteerOpportunityApplicationSerializer(TestCase):
 
         data = {
             "volunteer_opportunity_id": self.opportunity.pk,
-            "volunteer": self.volunteer.pk,
+            "volunteer_id": self.volunteer.pk,
             "as_group": False,
             "no_of_additional_volunteers": 0
         }
 
         serializer = VolunteerOpportunityApplicationSerializer(data=data, context={'request': self.mock_request})
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("The fields volunteer_opportunity_id, volunteer must make a unique set.", serializer.errors["non_field_errors"][0])
+        self.assertTrue(serializer.is_valid())
+        # trigger the database save and check for validation error
+        with self.assertRaises(ValidationError) as context:
+            serializer.save()
+
+        self.assertIn(
+            "The fields volunteer_opportunity_id, volunteer must make a unique set.",
+            str(context.exception)
+    )
 
     # Test that group applications must have at least one additional volunteer.
     def test_group_application_validations(self):
         data = {
             "volunteer_opportunity_id": self.opportunity.pk,
-            "volunteer": self.volunteer.pk,
+            "volunteer_id": self.volunteer.pk,
             "as_group": True,
             "no_of_additional_volunteers": 0  # Invalid case
         }
@@ -296,7 +303,7 @@ class TestVolunteerOpportunityApplicationSerializer(TestCase):
     def test_solo_application_cannot_have_additional_volunteers(self):
         data = {
             "volunteer_opportunity_id": self.opportunity.pk,
-            "volunteer": self.volunteer.pk,
+            "volunteer_id": self.volunteer.pk,
             "as_group": False,
             "no_of_additional_volunteers": 2  # Invalid case
         }

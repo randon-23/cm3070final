@@ -29,13 +29,14 @@ class OrganizationSerializer(serializers.ModelSerializer):
     
 # Serializer to get volunteer and organization data along with account data
 class UserDataSerializer(serializers.HyperlinkedModelSerializer):
+    email_address = serializers.EmailField()
     user_type = serializers.SerializerMethodField()
     volunteer = VolunteerSerializer(read_only=True)
     organization = OrganizationSerializer(read_only=True)
 
     class Meta:
         model = Account
-        fields = ["account_uuid", "user_type", "volunteer", "organization"]
+        fields = ["account_uuid", "email_address", "user_type", "volunteer", "organization"]
         extra_kwargs = {
             "url": {"view_name": "volunteers_organizations:profile", "lookup_field": "account_uuid"}
         }
