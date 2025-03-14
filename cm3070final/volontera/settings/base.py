@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'address',
     'phonenumber_field',
+    'django_celery_beat',
     # Default apps
     'django.contrib.admin',
     'django.contrib.auth',
@@ -72,6 +73,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'volontera.wsgi.application'
 ASGI_APPLICATION = 'volontera.asgi.application'
+
+# Channels Layer Configuration
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"  # Default for local testing
+    }
+}
+
+# Celery Configuration
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default="redis://127.0.0.1:6379/0")  # Default to Redis (override for prod)
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default="redis://127.0.0.1:6379/1")  # Default to Redis (override for prod)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

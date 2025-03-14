@@ -15,6 +15,19 @@ DATABASES = {
     }
 }
 
+# Use Redis for Channels Layer in Production
+# Override the default Channels Layer configuration in base.py
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(env("REDIS_HOST"), 6379)],  # Redis Cloud Host - GOOGLE MEMORY STORE
+        },
+    },
+}
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")  # Example: redis://prod-redis-server:6379/0
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")  # Example: redis://prod-redis-server:6379/0
+
 # Security Settings
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True

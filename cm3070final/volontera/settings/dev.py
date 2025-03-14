@@ -13,3 +13,12 @@ DATABASES = {
         'PORT': '5432'
     }
 }
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(env('REDIS_HOST'), 6379)],  # Redis running on WSL
+        },
+    },
+}

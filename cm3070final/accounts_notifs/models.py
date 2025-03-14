@@ -86,17 +86,24 @@ class Account(AbstractUser):
 
 class Notification(models.Model):
     NOTIFICATION_TYPE_CHOICES = (
-        ('application', 'Application'),
-        ('engagement', 'Engagement'),
-        ('follow', 'Follow'),
-        ('message', 'Message'),
-        ('other', 'Other'),
+        ('new_follower', 'New Follower'),
+        ('new_endorsement', 'New Endorsement'),
+        ('new_status_post', 'New Status Post'),
+        ('application_submitted', 'Application Submitted'),
+        ('application_accepted', 'Application Accepted'),
+        ('application_rejected', 'Application Rejected'),
+        ('log_request_submitted', 'New Log Request'),
+        ('opportunity_completed', 'Opportunity Completed'),
+        ('opportunity_cancelled', 'Opportunity Cancelled'),
+        ('new_opportunity_session', 'New Opportunity Session'),
+        ('new_message', 'New Message'),
+        ('other', 'Other'), 
     )
 
     notification_id = models.AutoField(primary_key=True)
     recipient = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='notifications')
     # sender in case of message notification
-    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPE_CHOICES)
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPE_CHOICES)
     notification_message = models.TextField(max_length=500)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

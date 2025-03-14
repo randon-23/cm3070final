@@ -303,3 +303,56 @@ function openCompleteSessionModal(sessionId) {
     // Show modal
     modal.classList.remove("hidden");
 }
+
+// Called when opening attendance modals on an opportunity or its sessions
+function updateEngagementsModal(event){
+    let response = event.detail.xhr.responseText;
+    try {
+        let data = JSON.parse(response);
+        let url = event.detail.xhr.responseURL;
+
+        let modalContent, modalId, filteredData;
+
+        // Determine if it's an Opportunity Engagement (Engagees) or Session Engagement (Attendees)
+        if (url.includes('/engagements/get_opportunity_engagements/')) {
+            modalContent = document.getElementById("engagees-modal-content");
+            modalId = "engagees-modal";
+            filteredData = data; // Show all engagees
+        } 
+        else if (url.includes('/session_engagements/get_session_engagements/')) {
+            modalContent = document.getElementById("attendees-modal-content");
+            modalId = "attendees-modal";
+            // Filter only attendees with status "can_go"
+            filteredData = data.filter(attendee => attendee.status === "can_go");
+        } 
+        else {
+            console.error("Unknown URL for engagements:", url);
+            return;
+        }
+
+        // Clear previous content
+        modalContent.innerHTML = "";
+
+        if (filteredData.length === 0) {
+            modalContent.innerHTML = `<p class="text-gray-500">No ${modalId.includes("engagees") ? "engaged volunteers" : "attendees"} found.</p>`;
+        } else {
+            filteredData.forEach(entry => {
+                let volunteer = entry.volunteer_opportunity_application.volunteer;
+                let volunteerDetails = `
+                    <div class="p-2 bg-gray-100 rounded-lg shadow-md mt-2">
+                        <p><strong>${volunteer.volunteer.first_name} ${volunteer.volunteer.last_name}</strong></p>
+                        <p>Email: ${volunteer.email_address}</p>
+                        <a href="${volunteer.volunteer.profile_url}" class="text-blue-500 underline">View Profile</a>
+                    </div>
+                `;
+                modalContent.innerHTML += volunteerDetails;
+            });
+        }
+
+        // Show the modal
+        document.getElementById(modalId).classList.remove("hidden");
+        document.getElementById(modalId).classList.add("flex");
+    } catch (error) {
+        console.error("Invalid JSON response:", response);
+    }
+}

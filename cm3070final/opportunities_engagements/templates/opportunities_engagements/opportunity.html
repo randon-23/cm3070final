@@ -14,6 +14,8 @@
     {% include 'opportunities_engagements/partials/create_session_modal.html' %}
     {% include 'opportunities_engagements/partials/complete_opportunity_modal.html' %}
     {% include 'opportunities_engagements/partials/complete_session_modal.html' %}
+    {% include 'opportunities_engagements/partials/view_opportunity_engagees_modal.html' %}
+    {% include 'opportunities_engagements/partials/view_session_attendees_modal.html' %}
 {% endif %}
 
 <!--If the user is engaged, the create engagement log modal is included so that if it is ongoing, the user can create an engagement log-->
@@ -49,6 +51,15 @@
             {% endif %}
             <p><strong>Field of Interest:</strong> {{ opportunity.area_of_work|title }}</p>
             <p><strong>Requirements:</strong> {{ opportunity.requirements|join:", " }}</p>
+            {% if is_opportunity_owner %}
+                <button 
+                    class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                    hx-get="{% url 'opportunities_engagements:get_opportunity_engagements' opportunity.volunteer_opportunity_id %}"
+                    hx-trigger="click"
+                    hx-target="#engagees-modal-content">
+                    View Engagees
+                </button>
+            {% endif %}
         </div>
 
         <!-- Sessions Section (Only for ongoing opportunities) -->
@@ -85,6 +96,13 @@
                             <button onclick="openCompleteSessionModal('{{ session.session_id }}')"
                                 class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 mt-2">
                                 Complete Session
+                            </button>
+                            <button 
+                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                                hx-get="{% url 'opportunities_engagements:get_session_engagements' session.session_id %}"
+                                hx-trigger="click"
+                                hx-target="#attendees-modal-content">
+                                View Attendees
                             </button>
                         {% endif %}
 

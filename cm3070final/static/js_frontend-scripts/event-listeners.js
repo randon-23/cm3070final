@@ -57,7 +57,10 @@ document.addEventListener("htmx:afterRequest", function(event) {
     else if(url.includes('/engagements/cancel_engagement_volunteer')){
         console.log("Cancelling engagement!", event);
         updateContent(event);
-    } 
+    } else if(url.includes('/engagements/get_opportunity_engagements/')){
+        console.log("Getting opportunity engagements!", event);
+        updateEngagementsModal(event);
+    }
     // Sessions
     else if(url.includes('/sessions/get_sessions/')){
         console.log("Updating sessions!", event);
@@ -73,7 +76,10 @@ document.addEventListener("htmx:afterRequest", function(event) {
     } else if(url.includes('/session_engagements/cancel_attendance/')){
         console.log("Cancelling attendance!", event);
         updateContent(event);
-    } 
+    } else if(url.includes('/session_engagements/get_session_engagements/')){
+        console.log("Getting session engagements!", event);
+        updateEngagementsModal(event);
+    }
     // Engagement logs
     else if(url.includes('/engagement_logs/create_engagement_log_volunteer/')){
         console.log("Creating engagement log!", event);

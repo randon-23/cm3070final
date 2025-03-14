@@ -88,7 +88,14 @@
                 {% for log_request in log_requests %}
                     <div class="log-request-card bg-gray-100 p-4 rounded-lg shadow-md mt-2" data-status="{{ log_request.status }}">
                         <h3 class="font-bold">{{ log_request.volunteer_engagement.volunteer_opportunity_application.volunteer_opportunity.title }}</h3>
+                        <p><strong>Logged Hours:</strong> {{ log_request.no_of_hours }} hrs</p>
+                        {% if log_request.session %}
+                            <p><strong>Session:</strong> {{ log_request.session.title }} ({{ log_request.session.session_date }})</p>
+                        {% endif %}
                         <p><strong>Status:</strong> {{ log_request.status|title }}</p>
+                        {% if log_request.log_notes %}
+                            <p><strong>Log Notes:</strong> {{ log_request.log_notes }}</p>
+                        {% endif %}
                     </div>
                 {% empty %}
                     <p class="text-gray-500">No log requests found.</p>

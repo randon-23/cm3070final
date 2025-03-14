@@ -65,20 +65,20 @@
         <div class="grid grid-cols-2 gap-6 mt-4">
             {% for log in log_requests %}
                 <div class="bg-gray-100 p-4 rounded-lg shadow-md">
-                    <h3 class="font-bold">{{ log.volunteer.first_name }} {{ log.volunteer.last_name }}</h3>
+                    <h3 class="font-bold">{{ log.volunteer_engagement.volunteer_opportunity_application.volunteer.volunteer.first_name }} {{ log.volunteer_engagement.volunteer_opportunity_application.volunteer.volunteer.last_name }}</h3>
                     <p><strong>Opportunity:</strong> {{ log.volunteer_engagement.volunteer_opportunity_application.volunteer_opportunity.title }}</p>
                     <p><strong>Logged Hours:</strong> {{ log.no_of_hours }} hrs</p>
                     <p class="text-sm text-gray-500"><strong>Submitted:</strong> {{ log.created_at|date:"M d, Y" }}</p>
 
                     <div class="flex space-x-2 mt-3">
                         <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-                            hx-post="{% url 'opportunities_engagements:approve_engagement_log' log.engagement_log_id %}"
+                            hx-post="{% url 'opportunities_engagements:approve_engagement_log' log.volunteer_engagement_log_id %}"
                             hx-trigger="click"
                             hx-target="#loading-modal-content">
                             Approve
                         </button>
                         <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-                            hx-post="{% url 'opportunities_engagements:reject_engagement_log' log.engagement_log_id %}"
+                            hx-post="{% url 'opportunities_engagements:reject_engagement_log' log.volunteer_engagement_log_id %}"
                             hx-trigger="click"
                             hx-target="#loading-modal-content">
                             Reject

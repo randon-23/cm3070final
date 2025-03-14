@@ -2042,7 +2042,7 @@ class GetPendingOrganizationLogRequestsAPITest(APITestCase):
     def test_get_organization_log_requests_success(self):
         get_logs_url = reverse("opportunities_engagements:get_organization_log_requests", args=[self.organization.account.account_uuid])
         response = self.client.get(get_logs_url)
-
+        
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)  # Only pending logs should be returned
         self.assertEqual(response.data[0]["status"], "pending")
@@ -2241,7 +2241,7 @@ class GetVolunteerLogRequestsAPITest(APITestCase):
     def test_get_volunteer_log_requests_success(self):
         get_log_requests_url = reverse("opportunities_engagements:get_volunteer_log_requests", args=[self.volunteer_account.account_uuid])
         response = self.client.get(get_log_requests_url)
-
+        print(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)  # Only pending volunteer-requested logs should be returned
         self.assertEqual(response.data[0]["status"], "pending")
