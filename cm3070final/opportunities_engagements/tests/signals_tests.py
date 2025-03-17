@@ -5,7 +5,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
 from datetime import date
-from volunteers_organizations.models import Organization, Volunteer
+from volunteers_organizations.models import Organization, Volunteer, VolunteerMatchingPreferences
 from opportunities_engagements.models import VolunteerOpportunity, VolunteerOpportunityApplication, VolunteerEngagement, VolunteerEngagementLog, VolunteerOpportunitySession, VolunteerSessionEngagement
 from accounts_notifs.tasks import send_notification
 from accounts_notifs.models import Notification
@@ -477,4 +477,208 @@ class SessionActionSignalTest(TestCase):
             recipient_id=str(self.volunteer_account_2.account_uuid),
             notification_type="session_cancelled",
             message="The session Beach Cleanup Session 1 has been cancelled."
+        )
+
+### SMART MATCHING ALGORITHM TESTING ###
+class SmartMatchingSignalTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.volunteer_account_1, cls.organization_account = create_common_objects()
+        cls.volunteer_account_2 = Account.objects.create(email_address="volunteer2@test.com", password="password", user_type="volunteer", contact_number="+35612345272")    
+        cls.volunteer_account_3 = Account.objects.create(email_address="volunteer3@test.com", password="password", user_type="volunteer", contact_number="+35612345973")
+
+        cls.volunteer_1 = Volunteer.objects.create(account=cls.volunteer_account_1, first_name="Alice", last_name="Smith", dob=date(1996, 2, 2))
+        cls.volunteer_2 = Volunteer.objects.create(account=cls.volunteer_account_2, first_name="Bob", last_name="Johnson", dob=date(1997, 3, 3))
+        cls.volunteer_3 = Volunteer.objects.create(account=cls.volunteer_account_3, first_name="Charlie", last_name="Brown", dob=date(1998, 4, 4))
+
+        cls.organization = Organization.objects.create(
+            account=cls.organization_account,
+            organization_name="Helping Hands",
+            organization_description="Non-profit organization.",
+            organization_address={'raw': '123 Help St, Kindness City, US'}
+        )
+
+        cls.volunteer_preference_1 = VolunteerMatchingPreferences.objects.create(
+            volunteer=cls.volunteer_1,
+            availability=["monday"],
+            preferred_work_types="in-person",
+            preferred_duration=["short-term"],
+            fields_of_interest=["environment"],
+            skills=["teamwork"],
+            languages=["English"],
+            location={"lat": 35.9, "lon": 14.5, "formatted_address": "Kindness City", "city": "Kindness City"}
+        )
+
+        cls.volunteer_preference_2 = VolunteerMatchingPreferences.objects.create(
+            volunteer=cls.volunteer_2,
+            availability=["friday"],
+            preferred_work_types="online",
+            preferred_duration=["long-term"],
+            fields_of_interest=["health", "education"],
+            skills=["communication"],
+            languages=["French"],
+            location={"lat": 36.0, "lon": 14.7, "formatted_address": "Different City", "city": "Different City"}
+        )
+
+        cls.volunteer_preference_3 = VolunteerMatchingPreferences.objects.create(
+            volunteer=cls.volunteer_3,
+            availability=["sunday"],
+            preferred_work_types="both",
+            preferred_duration=["medium-term"],
+            fields_of_interest=["arts"],
+            skills=["photography"],
+            languages=["Spanish"],
+            location={"lat": 37.0, "lon": 14.8, "formatted_address": "Far Away", "city": "Far Away"}
+        )
+    
+    def setUp(self):
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.organization_account)
+
+    # Test that opportunity 1 triggers a match for volunteer 1 with partial matching.
+    @patch("opportunities_engagements.signals.send_mail") 
+    @patch("accounts_notifs.tasks.send_notification.delay")
+    def test_opportunity_1_triggers_matching_for_volunteer_1(self, mock_notification, mock_mail):
+        url = reverse("opportunities_engagements:create_opportunity")
+        data = {
+            "title": "Beach Cleanup",
+            "description": "Join us to clean the beach!",
+            "work_basis": "in-person",  # Matches Volunteer 1
+            "duration": "medium-term",  # Volunteer 1 prefers short-term
+            "area_of_work": "environment",  # Matches Volunteer 1
+            "requirements": ["teamwork", "leadership"],  # Matches (teamwork), extra (leadership)
+            "required_location": {"lat": 36.0, "lon": 14.6, "formatted_address": "Nearby City", "city": "Nearby City"},
+            "languages": ["English", "French"],  # Matches one language
+            "days_of_week": ["tuesday"],  # Volunteer 1 is available on Monday
+            "status": "upcoming",
+            "ongoing": True    
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        opportunity_id = response.data.get("data", {}).get("volunteer_opportunity_id")
+        self.assertIsNotNone(opportunity_id, "Opportunity ID should not be None!")
+
+        # Expected match percentages
+        expected_match_v1 = 80  # Volunteer 1 (above 65%, so notified)
+        expected_match_v2 = 55  # Volunteer 2 (below 65%, so not notified)
+        expected_match_v3 = 50  # Volunteer 3 (below 65%, so not notified)
+
+        # Only Volunteer 1 should be notified
+        mock_notification.assert_called_once_with(
+            recipient_id=str(self.volunteer_account_1.account_uuid),
+            notification_type="opportunity_match",
+            message=f"You are a {expected_match_v1}% match for 'Beach Cleanup' (14.3 km away) by Helping Hands. Check it out!"
+        )
+
+        mock_mail.assert_called_once()
+        mock_mail.assert_called_with(
+            f"You're a great match ({expected_match_v1}%) for a new opportunity!",
+            (
+                f"Hi {self.volunteer_1.first_name} {self.volunteer_1.last_name},\n\n"
+                "We found a new volunteering opportunity that matches your interests!\n\n"
+                f"[View Opportunity & Apply](https://volontera.com/opportunity/{response.data['data']['volunteer_opportunity_id']})\n\n"
+                "Happy Volunteering!"
+            ),
+            "volonteracm3070@gmail.com",
+            [self.volunteer_account_1.email_address],
+            fail_silently=False,
+        )
+
+    # Test that opportunity 2 triggers a match for volunteer 2 with partial matching.
+    @patch("opportunities_engagements.signals.send_mail") 
+    @patch("accounts_notifs.tasks.send_notification.delay")
+    def test_opportunity_2_triggers_matching_for_volunteer_2(self, mock_notification, mock_mail):
+        url = reverse("opportunities_engagements:create_opportunity")
+        data = {
+            "title": "Health Awareness",
+            "description": "Help spread health awareness in the community!",
+            "work_basis": "online",  # Matches Volunteer 2
+            "duration": "long-term",  # Matches Volunteer 2
+            "area_of_work": "education",  # Volunteer 2 prefers health
+            "requirements": ["communication", "public speaking"],  # Matches (communication)
+            "required_location": {"lat": 37.0, "lon": 15.0, "formatted_address": "Far City", "city": "Far City"},
+            "languages": ["Spanish", "French"],  # Matches one language
+            "days_of_week": ["friday"],  # Matches availability
+            "status": "upcoming",
+            "ongoing": True
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        opportunity_id = response.data.get("data", {}).get("volunteer_opportunity_id")
+        self.assertIsNotNone(opportunity_id, "Opportunity ID should not be None!")
+
+        # Expected match percentages
+        expected_match_v1 = 50  # Volunteer 1 (below 65%, so not notified)
+        expected_match_v2 = 75  # Volunteer 2 (above 65%, so notified)
+        expected_match_v3 = 55  # Volunteer 3 (below 65%, so not notified)
+
+        # Only Volunteer 2 should be notified
+        mock_notification.assert_called_once_with(
+            recipient_id=str(self.volunteer_account_2.account_uuid),
+            notification_type="opportunity_match",
+            message=f"You are a {expected_match_v2}% match for 'Health Awareness' (114.18 km away) by Helping Hands. Check it out!"
+        )
+
+        mock_mail.assert_called_with(
+            f"You're a great match ({expected_match_v2}%) for a new opportunity!",
+            (
+                f"Hi {self.volunteer_2.first_name} {self.volunteer_2.last_name},\n\n"
+                "We found a new volunteering opportunity that matches your interests!\n\n"
+                f"[View Opportunity & Apply](https://volontera.com/opportunity/{response.data['data']['volunteer_opportunity_id']})\n\n"
+                "Happy Volunteering!"
+            ),
+            "volonteracm3070@gmail.com",
+            [self.volunteer_account_2.email_address],
+            fail_silently=False,
+        )
+
+    # Test that opportunity 3 triggers a match for volunteer 3 with partial matching.
+    @patch("opportunities_engagements.signals.send_mail") 
+    @patch("accounts_notifs.tasks.send_notification.delay")
+    def test_opportunity_3_triggers_matching_for_volunteer_3(self, mock_notification, mock_mail):
+        url = reverse("opportunities_engagements:create_opportunity")
+        data = {
+            "title": "Photography Workshop",
+            "description": "A hands-on workshop for aspiring photographers.",
+            "work_basis": "both",  # Matches Volunteer 3
+            "duration": "medium-term",  # Matches Volunteer 3
+            "area_of_work": "arts",  # Matches Volunteer 3
+            "requirements": ["photography", "creativity"],  # Matches (photography)
+            "required_location": {"lat": 37.5, "lon": 15.5, "formatted_address": "Distant City", "city": "Distant City"},
+            "languages": ["English"],  # Volunteer 3 prefers Spanish
+            "days_of_week": ["sunday"],  # Matches availability
+            "status": "upcoming",
+            "ongoing": True
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        opportunity_id = response.data.get("data", {}).get("volunteer_opportunity_id")
+        self.assertIsNotNone(opportunity_id, "Opportunity ID should not be None!")
+
+        # Expected match percentages
+        expected_match_v1 = 55  # Volunteer 1 (below 65%, so not notified)
+        expected_match_v2 = 60  # Volunteer 2 (below 65%, so not notified)
+        expected_match_v3 = 95  # Volunteer 3 (above 65%, so notified)
+
+        # Only Volunteer 3 should be notified
+        mock_notification.assert_called_once_with(
+            recipient_id=str(self.volunteer_account_3.account_uuid),
+            notification_type="opportunity_match",
+            message=f"You are a {expected_match_v3}% match for 'Photography Workshop' (83.28 km away) by Helping Hands. Check it out!"
+        )
+
+        mock_mail.assert_called_with(
+            f"You're a great match ({expected_match_v3}%) for a new opportunity!",
+            (
+                f"Hi {self.volunteer_3.first_name} {self.volunteer_3.last_name},\n\n"
+                "We found a new volunteering opportunity that matches your interests!\n\n"
+                f"[View Opportunity & Apply](https://volontera.com/opportunity/{response.data['data']['volunteer_opportunity_id']})\n\n"
+                "Happy Volunteering!"
+            ),
+            "volonteracm3070@gmail.com",
+            [self.volunteer_account_3.email_address],
+            fail_silently=False,
         )

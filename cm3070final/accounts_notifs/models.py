@@ -97,10 +97,11 @@ class Notification(models.Model):
         ('opportunity_cancelled', 'Opportunity Cancelled'),
         ('new_opportunity_session', 'New Opportunity Session'),
         ('new_message', 'New Message'),
+        ('opportunity_match', 'Opportunity Match'),
         ('other', 'Other'), 
     )
 
-    notification_id = models.AutoField(primary_key=True)
+    notification_uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     recipient = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='notifications')
     # sender in case of message notification
     notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPE_CHOICES)

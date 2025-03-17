@@ -1,0 +1,54 @@
+{% extends 'base/base_authenticated.html' %}
+{% load static %}
+{% block title %}Notifications{% endblock %}
+{% block auth_content %}
+    <script src="{% static 'js_frontend-scripts/notifications-processes.js' %}"></script>
+
+    <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-4">Notifications</h2>
+
+        <!-- Notifications Container -->
+        <div id="notifications-container">
+            {% if notifications %}
+                {% for notification in notifications %}
+                    <div id="notification-{{ notification.notification_uuid }}" 
+                         class="flex items-center justify-between bg-gray-100 p-4 mb-2 rounded-lg shadow-sm">
+                        <div>
+                            <p class="font-semibold">{{ notification.notification_type|title }}</p>
+                            <p class="text-gray-600">{{ notification.notification_message }}</p>
+                            <p class="text-sm text-gray-500">{{ notification.created_at }}</p>
+                        </div>
+                        <button 
+                            hx-patch="{% url 'accounts_notifs:mark_read' notification_uuid=notification.notification_uuid %}" 
+                            hx-swap="outerHTML" 
+                            hx-target="closest div"
+                            data-notification-id="{{ notification.notification_uuid }}"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mark-as-read"
+                        >
+                            Mark as Read
+                        </button>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-600 text-center">No new notifications.</p>
+            {% endif %}
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="mt-4 flex justify-center">
+            {% if notifications.has_previous %}
+                <a href="?page=1" class="mx-1 px-3 py-1 bg-gray-300 text-gray-700 rounded">First</a>
+                <a href="?page={{ notifications.previous_page_number }}" class="mx-1 px-3 py-1 bg-gray-300 text-gray-700 rounded">Previous</a>
+            {% endif %}
+
+            <span class="mx-2 px-3 py-1 bg-blue-500 text-white rounded">
+                Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}
+            </span>
+
+            {% if notifications.has_next %}
+                <a href="?page={{ notifications.next_page_number }}" class="mx-1 px-3 py-1 bg-gray-300 text-gray-700 rounded">Next</a>
+                <a href="?page={{ notifications.paginator.num_pages }}" class="mx-1 px-3 py-1 bg-gray-300 text-gray-700 rounded">Last</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

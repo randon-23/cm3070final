@@ -1,9 +1,11 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 from accounts_notifs.tasks import send_notification
 from .models import VolunteerOpportunityApplication, VolunteerEngagementLog, VolunteerEngagement, VolunteerOpportunitySession, VolunteerOpportunity, VolunteerSessionEngagement
+from volunteers_organizations.models import VolunteerMatchingPreferences
+from django.core.mail import send_mail
+from django.conf import settings
+from geopy.distance import geodesic
 
 @receiver(post_save, sender=VolunteerOpportunityApplication)
 def notify_application_submitted(sender, instance, created, **kwargs):
@@ -143,3 +145,118 @@ def notify_session_status_change(sender, instance, **kwargs):
                 notification_type=notification_type,
                 message=message
             )
+
+# SMART MATCHING ALGORITHM - Triggered when a new VolunteerOpportunity is created. Matches it against volunteers' preferences and sends notifications & emails.
+@receiver(post_save, sender=VolunteerOpportunity)
+def match_volunteers_to_opportunity(sender, instance, created, **kwargs):
+    if not created:
+        return
+
+    matched_volunteers = []
+
+    volunteers = VolunteerMatchingPreferences.objects.select_related("volunteer__account").all()
+
+    for preference in volunteers:
+        match_score = 0
+        max_score = 100  # Total weight sum
+
+        log_details = {
+            "volunteer": f"{preference.volunteer.first_name} {preference.volunteer.last_name}",
+            "opportunity": instance.title,
+            "components": {}
+        }
+
+        # Location Matching (25%)**  
+        if "lat" in preference.location and "lon" in preference.location:
+            if "lat" in instance.required_location and "lon" in instance.required_location:
+                volunteer_distance = geodesic(
+                    (preference.location["lat"], preference.location["lon"]),
+                    (instance.required_location["lat"], instance.required_location["lon"])
+                ).km
+                if volunteer_distance <= 100:
+                    match_score += 25
+                    log_details["components"]["location"] = 25
+                else:
+                    log_details["components"]["location"] = 0
+
+        # Skills Matching (20%)**  
+        if preference.skills:
+            if any(skill in instance.requirements for skill in preference.skills):
+                match_score += 20
+                log_details["components"]["skills"] = 20
+            else:
+                log_details["components"]["skills"] = 0
+
+        # Fields of Interest (20%)**  
+        if preference.fields_of_interest:
+            if instance.area_of_work in preference.fields_of_interest:
+                match_score += 20
+                log_details["components"]["fields_of_interest"] = 20
+            else:
+                log_details["components"]["fields_of_interest"] = 0
+
+        # Duration Matching (10%)**  
+        if preference.preferred_duration:
+            if instance.duration in preference.preferred_duration:
+                match_score += 10
+                log_details["components"]["duration"] = 10
+            else:
+                log_details["components"]["duration"] = 0
+
+        # Availability Matching (10%)**  
+        if preference.availability and instance.days_of_week:
+            if any(day in preference.availability for day in instance.days_of_week):
+                match_score += 10
+                log_details["components"]["availability"] = 10
+            else:
+                log_details["components"]["availability"] = 0
+
+        # Work Type Matching (10%)**  
+        if instance.work_basis == preference.preferred_work_types or preference.preferred_work_types == "both":
+            match_score += 10
+            log_details["components"]["work_type"] = 10
+        else:
+            log_details["components"]["work_type"] = 0
+
+        # Languages Matching (5%)**  
+        if instance.languages:
+            if any(lang in instance.languages for lang in preference.languages):
+                match_score += 5
+                log_details["components"]["languages"] = 5
+            else:
+                log_details["components"]["languages"] = 0
+
+        # Calculate Final Match Percentage  
+        match_percentage = (match_score / max_score) * 100
+        log_details["final_match"] = match_percentage
+
+        if match_percentage >= 65:
+            matched_volunteers.append((preference.volunteer.account, match_percentage, volunteer_distance))
+
+    # Send Notifications & Emails to Matched Volunteers
+    for volunteer, match_percentage, distance in matched_volunteers:
+        distance_text = f" ({round(distance, 2)} km away)" if distance is not None else ""
+        message = f"You are a {int(match_percentage)}% match for '{instance.title}'{distance_text} by {instance.organization.organization_name}. Check it out!"
+        
+        # Send Notification
+        send_notification.delay(
+            recipient_id=str(volunteer.account_uuid),
+            notification_type="opportunity_match",
+            message=message
+        )
+
+        # Send Email - not sure if working
+        email_subject = f"You're a great match ({int(match_percentage)}%) for a new opportunity!"
+        email_body = (
+            f"Hi {volunteer.volunteer.first_name} {volunteer.volunteer.last_name},\n\n"
+            "We found a new volunteering opportunity that matches your interests!\n\n"
+            f"[View Opportunity & Apply](https://volontera.com/opportunity/{instance.volunteer_opportunity_id})\n\n"
+            "Happy Volunteering!"
+        )
+        send_mail(
+            email_subject,
+            email_body,
+            settings.EMAIL_HOST_USER,
+            [volunteer.email_address],
+            fail_silently=False,
+        )

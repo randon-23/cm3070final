@@ -1,6 +1,10 @@
+import uuid
 from django.test import TestCase
-from ..models import Account
-from ..serializers import AccountSerializer
+from ..models import Account, Notification
+from ..serializers import AccountSerializer, NotificationSerializer
+from django.contrib.auth import get_user_model
+
+Account = get_user_model()
 
 class TestAccountSerializer(TestCase):
     def setUp(self):
@@ -67,3 +71,26 @@ class TestAccountSerializer(TestCase):
         serializer = AccountSerializer(data=invalid_data)
         self.assertFalse(serializer.is_valid())
         self.assertIn("user_type", serializer.errors)
+
+class TestNotificationSerializer(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.volunteer_account = Account.objects.create_user(email_address="testuser@example.com", password="testpassword", user_type="volunteer", contact_number="+35612345678")
+        cls.notification = Notification.objects.create(
+            recipient=cls.volunteer_account,
+            notification_type="other",
+            notification_message="Test notification message"
+        )
+    
+    def test_serialization(self):
+        serializer = NotificationSerializer(instance=self.notification)
+        data = serializer.data
+
+        self.assertTrue(uuid.UUID(data["notification_uuid"]))
+        self.assertEqual(data["recipient"], self.notification.recipient.account_uuid)
+        self.assertEqual(data["notification_type"], self.notification.notification_type)
+        self.assertEqual(data["notification_message"], self.notification.notification_message)
+
+    def test_empty_serializer(self):
+        serializer = NotificationSerializer(data={})
+        self.assertFalse(serializer.is_valid())

@@ -90,5 +90,12 @@ document.addEventListener("htmx:afterRequest", function(event) {
     } else if(url.includes('/engagement_logs/reject_engagement_log/')){
         console.log("Rejecting engagement log!", event);
         updateContent(event);
+    } 
+    //Notifications
+    else if(url.includes('/notifications/mark_read/')){
+        console.log("Marking notification as read!", event)
+        let button = event.detail.target
+        let notificationId = button.dataset.notificationId
+        markAsRead(notificationId)
     }
 });

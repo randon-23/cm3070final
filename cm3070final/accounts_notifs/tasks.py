@@ -8,6 +8,7 @@ Account = get_user_model()
 
 @shared_task(autoretry_for=(Exception,), retry_backoff=True)
 def send_notification(recipient_id, notification_type, message):
+    print('hello world')
     try:
         recipient = Account.objects.get(account_uuid=recipient_id)
         notification = Notification.objects.create(
@@ -19,6 +20,7 @@ def send_notification(recipient_id, notification_type, message):
         # Send real-time notification via WebSockets
         channel_layer = get_channel_layer()
         group_name = f"user_notifications_{recipient_id}"
+        print(f"Sending notification to {recipient_id}: {message}")
         async_to_sync(channel_layer.group_send)(
             group_name,
             {
