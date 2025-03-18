@@ -3,6 +3,7 @@ from rest_framework.test import APITestCase
 from django.urls import reverse
 from accounts_notifs.models import Account
 from chats.models import Chat, Message
+from volunteers_organizations.models import Volunteer, Organization
 import uuid
 
 class ChatMessageAPITestCase(APITestCase):
@@ -11,6 +12,19 @@ class ChatMessageAPITestCase(APITestCase):
         self.user1 = Account.objects.create_user(email_address="user1@test.com", password="password123", user_type="volunteer", contact_number="+3522194828")
         self.user2 = Account.objects.create_user(email_address="user2@test.com", password="password123", user_type="organization", contact_number="+3522134828")
 
+        self.volunteer = Volunteer.objects.create(
+            account=self.user1,
+            first_name="John",
+            last_name="Doe", 
+            dob="1995-06-15" 
+        )
+
+        self.organization = Organization.objects.create(
+            account=self.user2,
+            organization_name="Helping Hands",
+            organization_address="123 Volunteer St.",
+            organization_website="https://helpinghands.org"
+        )
         # Authenticate as user1
         self.client.force_authenticate(user=self.user1)
 
@@ -26,7 +40,7 @@ class ChatMessageAPITestCase(APITestCase):
     def test_get_chats(self):
         url = reverse("chats:get_chats")  # Assuming name in urls.py is 'get_chats'
         response = self.client.get(url)
-
+        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["chat_id"], str(self.chat.chat_id))
@@ -35,7 +49,7 @@ class ChatMessageAPITestCase(APITestCase):
     def test_get_messages_for_chat(self):
         url = reverse("chats:get_messages", args=[str(self.chat.chat_id)])
         response = self.client.get(url)
-
+        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["content"], "Hello, this is a test message!")

@@ -7,6 +7,7 @@ app_name = 'chats'
 urlpatterns = [
     ### View endpoints ###
     # path('chats/', chats_view, name='chats'),
+    path('chats/', chats_view, name='chats_page'),
 
     ### RESTful endpoints ###
     path('api/chats/get_chats/', get_chats, name='get_chats'),
