@@ -28,6 +28,7 @@ urlpatterns = [
     path('volunteers-organizations/', include('volunteers_organizations.urls')),
     path('oauth/', include('allauth.urls')),
     path('opportunities-engagements/', include('opportunities_engagements.urls')),
+    path('chats/', include('chats.urls')),
 ]
 
 if settings.DEBUG:

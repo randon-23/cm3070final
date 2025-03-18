@@ -7,7 +7,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         Account = get_user_model()
         self.user = self.scope["user"]
-        print(f"Connecting WebSocket for user: {self.user}")
+        print(f"Connecting Notification WebSocket for user: {self.user}")
         
         # Authenticate user
         if isinstance(self.user, Account) and self.user.is_authenticated:

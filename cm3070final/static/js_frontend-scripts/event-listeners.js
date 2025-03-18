@@ -98,4 +98,9 @@ document.addEventListener("htmx:afterRequest", function(event) {
         let notificationId = button.dataset.notificationId
         markAsRead(notificationId)
     }
+    // Messages
+    else if(url.includes('/chats/start_or_send_message/')){
+        console.log("Sending message!", event);
+        updateContent(event);
+    }
 });

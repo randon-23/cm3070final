@@ -6,6 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
 <script src="{% static 'js_frontend-scripts/profile-processes.js.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/messages-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-search-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-engagements-processes.js' %}"></script>
 
@@ -196,11 +197,22 @@
             <h2 class="text-xl font-bold">{{ organization.organization_name }}</h2>
             <p class="text-gray-700 mt-2">{{ organization.organization_description }}</p>
             <p class="text-gray-600"><strong>Location:</strong> {{ organization.organization_address.raw }}</p>
+            {% if not is_opportunity_owner %}
+                <button 
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-3 open-message-modal"
+                    data-recipient-id="{{ organization.account.account_uuid }}"
+                >
+                    Message Organization
+                </button>
+            {% endif %}
         </div>
     </div>
 
     <script>
         var csrftoken = '{{ csrf_token }}';
     </script>
+    {% if not is_opportunity_owner %}
+        {% include 'chats/partials/send_message_modal.html' %}
+    {% endif %}
 </div>
 {% endblock %}

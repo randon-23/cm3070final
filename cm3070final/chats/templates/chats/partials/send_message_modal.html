@@ -1,0 +1,29 @@
+<div id="send-message-modal" class="fixed inset-0 items-center justify-center bg-gray-900 bg-opacity-50 hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+        <h2 class="text-xl font-bold mb-4">Send a Message</h2>
+        
+        <textarea 
+            id="message-content" 
+            class="w-full p-2 border rounded-md" 
+            placeholder="Type your message..."
+        ></textarea>
+
+        <div class="flex justify-between mt-4">
+            <button 
+                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded close-message-modal"
+            >
+                Cancel
+            </button>
+            
+            <button 
+                hx-post="{% url 'chats:start_or_send_message' %}" 
+                hx-vals='js:{"recipient_id": selectedRecipient, "content": document.getElementById("message-content").value}'
+                hx-target="#loading-modal-content"
+                hx-swap="innerHTML"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded send-message-btn"
+            >
+                Send
+            </button>
+        </div>
+    </div>
+</div>
