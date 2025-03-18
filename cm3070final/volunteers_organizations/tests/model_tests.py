@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group
-from ..models import Volunteer, VolunteerMatchingPreferences, Organization, OrganizationPreferences, Following, Membership, Endorsement, StatusPost
+from ..models import Volunteer, VolunteerMatchingPreferences, Organization, OrganizationPreferences, Following, Endorsement, StatusPost
 from accounts_notifs.models import Account
 from uuid import UUID
 from datetime import date
@@ -291,46 +291,45 @@ class TestOrganizationPreferencesModel(TestCase):
     def test_valid_organization_preferences(self):
         preferences = OrganizationPreferences.objects.create(
             organization=self.organization,
-            enable_volontera_point_opportunities=True,
-            volontera_points_rate=1.5
+            location={
+                "lat": 40.7128,
+                "lon": -74.0060,
+                "city": "New York",
+                "formatted_address": "New York, NY, USA"
+            }
         )
         self.assertEqual(preferences.organization, self.organization)
-        self.assertEqual(preferences.enable_volontera_point_opportunities, True)
-        self.assertEqual(preferences.volontera_points_rate, 1.5)
 
     # Test that enabling point opportunities without a rate raises ValidationError
-    def test_volontera_point_opportunities_enabled_without_rate(self):
+    def test_location_not_dictionary(self):
         preferences = OrganizationPreferences(
             organization=self.organization,
-            enable_volontera_point_opportunities=True,
-            volontera_points_rate=None
+            location = "Hello"
         )
         with self.assertRaises(ValidationError) as context:
             preferences.full_clean()
 
-        self.assertIn("If volontera point opportunities are enabled, the rate must be set.", str(context.exception))
-
-    # Test that setting a negative or zero volontera points rate raises ValidationError.
-    def test_negative_volontera_points_rate(self):
-        preferences = OrganizationPreferences(
-            organization=self.organization,
-            enable_volontera_point_opportunities=True,
-            volontera_points_rate=0
-        )
-        with self.assertRaises(ValidationError) as context:
-            preferences.full_clean()
-
-        self.assertIn("Volontera points rate must be positive.", str(context.exception))
+        self.assertIn("Location must be a dictionary", str(context.exception))
 
     # Test that preferences can be saved properly.
     def test_save_organization_preferences(self):
         preferences = OrganizationPreferences(
             organization=self.organization,
-            enable_volontera_point_opportunities=False,
-            volontera_points_rate=2.0
+            location={
+                "lat": 40.7128,
+                "lon": -74.0060,
+                "city": "New York",
+                "formatted_address": "New York, NY, USA"
+            }
         )
         preferences.save()
-        self.assertEqual(preferences.volontera_points_rate, 2.0)
+        self.assertEqual(preferences.organization, self.organization)
+        self.assertEqual(preferences.location, {
+            "lat": 40.7128,
+            "lon": -74.0060,
+            "city": "New York",
+            "formatted_address": "New York, NY, USA"
+        })
 
 class TestFollowingModel(TestCase):
     @classmethod
@@ -471,133 +470,6 @@ class TestFollowingModel(TestCase):
         self.assertEqual(follower_2.followed_organization, self.organization)
         self.assertIsNone(follower_2.followed_volunteer)
 
-class TestMembershipModel(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.volunteer_account_1 = Account.objects.create_user(
-            email_address="volunteer1@test.com",
-            password="password123",
-            user_type="volunteer",
-            contact_number="+1234567890"
-        )
-        cls.volunteer_account_2 = Account.objects.create_user(
-            email_address="volunteer2@test.com",
-            password="password123",
-            user_type="volunteer",
-            contact_number="+0987654321"
-        )
-        cls.volunteer_1 = Volunteer.objects.create(
-            account=cls.volunteer_account_1,
-            first_name="John",
-            last_name="Doe",
-            dob=date(1999, 1, 1)
-        )
-        cls.volunteer_2 = Volunteer.objects.create(
-            account=cls.volunteer_account_2,
-            first_name="Jane",
-            last_name="Smith",
-            dob=date(1998, 2, 2)
-        )
-
-        cls.organization_account = Account.objects.create_user(
-            email_address="organization@test.com",
-            password="password123",
-            user_type="organization",
-            contact_number="+23499876652"
-        )
-        cls.organization = Organization.objects.create(
-            account=cls.organization_account,
-            organization_name="Green Earth",
-            organization_description="Environmental conservation organization.",
-            organization_address={
-                'raw': '123 Greenway Blvd, Springfield, US',
-                'street_number': '123',
-                'route': 'Greenway Blvd',
-                'locality': 'Springfield',
-                'postal_code': '12345',
-                'state': 'Illinois',
-                'state_code': 'IL',
-                'country': 'United States',
-                'country_code': 'US'
-            }
-        )
-    
-    def test_valid_membership_creation(self):
-        membership=Membership.objects.create(
-            volunteer=self.volunteer_1,
-            organization=self.organization,
-            role='member'
-        )
-        self.assertEqual(membership.volunteer, self.volunteer_1)
-        self.assertEqual(membership.organization, self.organization)
-        self.assertEqual(membership.role, 'member')
-    
-    def test_unique_volunteer_per_organization(self):
-        Membership.objects.create(
-            volunteer=self.volunteer_1,
-            organization=self.organization,
-            role='member'
-        )
-        with self.assertRaises(ValidationError):
-            Membership.objects.create(
-                volunteer=self.volunteer_1,
-                organization=self.organization,
-                role='opportunity leader'
-            )
-    
-    def test_unique_admin_per_organization(self):
-        Membership.objects.create(
-            volunteer=self.volunteer_1,
-            organization=self.organization,
-            role='admin'
-        )
-        with self.assertRaises(ValidationError):
-            Membership.objects.create(
-                volunteer=self.volunteer_2,
-                organization=self.organization,
-                role='admin'
-            )
-    
-    def test_changing_admin(self):
-        membership_1=Membership.objects.create(
-            volunteer=self.volunteer_1,
-            organization=self.organization,
-            role='admin'
-        )
-        membership_2=Membership.objects.create(
-            volunteer=self.volunteer_2,
-            organization=self.organization,
-            role='member'
-        )
-        membership_1.role='member'
-        membership_1.save()
-        membership_2.role='admin'
-        membership_2.save()
-        self.assertEqual(membership_1.role, 'member')
-        self.assertEqual(membership_2.role, 'admin')
-    
-    def test_multiple_non_admin_roles(self):
-        membership_1 = Membership.objects.create(
-            volunteer=self.volunteer_1,
-            organization=self.organization,
-            role='member'
-        )
-        membership_2 = Membership.objects.create(
-            volunteer=self.volunteer_2,
-            organization=self.organization,
-            role='opportunity leader'
-        )
-        self.assertEqual(membership_1.role, 'member')
-        self.assertEqual(membership_2.role, 'opportunity leader')
-    
-    def test_invalid_role(self):
-        with self.assertRaises(ValidationError):
-            Membership.objects.create(
-                volunteer=self.volunteer_1,
-                organization=self.organization,
-                role='invalid_role'
-            )
-
 class TestEndorsementModel(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -624,6 +496,50 @@ class TestEndorsementModel(TestCase):
             password="SecurePass123!",
             user_type="organization",
             contact_number="+23499876653"
+        )
+        cls.volunteer1_profile = Volunteer.objects.create(
+            account=cls.volunteer1,
+            first_name="John",
+            last_name="Doe",
+            dob=date(1999, 1, 1)
+        )
+        cls.volunteer2_profile = Volunteer.objects.create(
+            account=cls.volunteer2,
+            first_name="Jane",
+            last_name="Doe",
+            dob=date(1999, 1, 1)
+        )
+        cls.organization1_profile = Organization.objects.create(
+            account=cls.organization1,
+            organization_name="Save the Earth",
+            organization_description="A non-profit dedicated to environmental conservation.",
+            organization_address={
+                'raw': '1 Somewhere Ave, Northcote, VIC 3070, AU',
+                'street_number': '1',
+                'route': 'Somewhere Ave',
+                'locality': 'Northcote',
+                'postal_code': '3070',
+                'state': 'Victoria',
+                'state_code': 'VIC',
+                'country': 'Australia',
+                'country_code': 'AU'
+            }
+        )
+        cls.organization2_profile = Organization.objects.create(
+            account=cls.organization2,
+            organization_name="Save the Animals",
+            organization_description="A non-profit dedicated to animal welfare.",
+            organization_address={
+                'raw': '2 Somewhere Ave, Northcote, VIC 3070, AU',
+                'street_number': '2',
+                'route': 'Somewhere Ave',
+                'locality': 'Northcote',
+                'postal_code': '3070',
+                'state': 'Victoria',
+                'state_code': 'VIC',
+                'country': 'Australia',
+                'country_code': 'AU'
+            }
         )
 
     def test_valid_volunteer_to_volunteer_endorsement(self):
@@ -672,6 +588,12 @@ class TestStatusPostModel(TestCase):
             password="SecurePass123!",
             user_type="volunteer",
             contact_number="+1234567890"
+        )
+        cls.user_profile = Volunteer.objects.create(
+            account=cls.user,
+            first_name="John",
+            last_name="Doe",
+            dob=date(1999, 1, 1)
         )
 
     def test_create_status_post(self):

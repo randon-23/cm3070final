@@ -221,12 +221,5 @@ class OrganizationPreferencesSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"Location must contain: {required_keys}.")
         return value
 
-    def validate_volontera_points_rate(self, value):
-        if value is not None and value <= 0:
-            raise serializers.ValidationError("Volontera points rate must be positive.")
-        if value > 1.5:
-            raise serializers.ValidationError("Volontera points rate cannot exceed 1.5.")
-        return value
-
     def create(self, validated_data):
         return super().create(validated_data)

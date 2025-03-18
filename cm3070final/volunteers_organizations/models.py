@@ -11,7 +11,7 @@ class Volunteer(models.Model):
     dob = models.DateField()
     bio = models.CharField(max_length=500, default='', blank=True)
     profile_img = models.ImageField(upload_to='profile_pics/',blank=True, null=True)
-    volontera_points = models.IntegerField(default=0)
+    volontera_points = models.FloatField(default=0)
     followers = models.IntegerField(default=0)
     
     def clean(self):
@@ -167,6 +167,7 @@ class Organization(models.Model):
     organization_address = models.JSONField(default=dict)
     organization_website=models.URLField(blank=True, null=True)
     organization_profile_img = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    volontera_points = models.FloatField(default=0)
     followers = models.IntegerField(default=0)
 
     def clean(self):
@@ -176,15 +177,9 @@ class Organization(models.Model):
 class OrganizationPreferences(models.Model):
     organization_preference_id = models.AutoField(primary_key=True)
     organization = models.OneToOneField(Organization, on_delete=models.CASCADE)
-    enable_volontera_point_opportunities = models.BooleanField(null=True, blank=True)
-    volontera_points_rate = models.FloatField(null=True, blank=True, default=1.0)
     location = models.JSONField(default=dict, blank=True)
 
     def clean(self):
-        if self.enable_volontera_point_opportunities is not None and self.volontera_points_rate is None:
-            raise ValidationError("If volontera point opportunities are enabled, the rate must be set.")
-        if self.volontera_points_rate is not None and self.volontera_points_rate <= 0:
-            raise ValidationError("Volontera points rate must be positive.")
         # Validate location
         if not isinstance(self.location, dict):
             raise ValidationError("Location must be a dictionary.")
@@ -232,42 +227,6 @@ class Following(models.Model):
         if self.follower.is_organization():
             raise ValidationError("Organizations cannot follow anyone.")
         
-        super().save(*args, **kwargs)
-
-class Membership(models.Model):
-    ROLE_TYPES = (
-        ('admin', 'Admin'),
-        ('opportunity leader', 'Opportunity Leader'),
-        ('member', 'Member'),
-    )
-
-    membership_id = models.AutoField(primary_key=True)
-    volunteer = models.ForeignKey(Volunteer, on_delete=models.CASCADE)
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
-    role = models.CharField(max_length=20, choices=ROLE_TYPES, default='member')
-
-    class Meta:
-        constraints = [
-            # Ensure a volunteer can only belong to an organization once
-            models.UniqueConstraint(
-                fields=['volunteer', 'organization'],
-                name='unique_volunteer_per_organization'
-            ),
-            # Ensure that an organization can only have one admin
-            models.UniqueConstraint(
-                fields=['organization', 'role'],
-                condition=models.Q(role='admin'),
-                name='unique_admin_per_organization'
-            ),
-            # Ensure that role is one of the valid choices
-            models.CheckConstraint(
-                check=models.Q(role__in=['admin', 'opportunity leader', 'member']),
-                name='valid_role_check'
-            )
-        ]
-    
-    def save(self, *args, **kwargs):
-        self.full_clean()
         super().save(*args, **kwargs)
 
 class Endorsement(models.Model):

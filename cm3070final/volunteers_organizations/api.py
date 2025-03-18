@@ -397,11 +397,7 @@ def create_organization_preferences(request):
             formatted_data = {}
 
             for key, value in data.lists():
-                if key == "enable_volontera_point_opportunities":
-                    formatted_data[key] = value[0].lower() == "true"
-                elif key == "volontera_points_rate":
-                    formatted_data[key] = float(value[0]) if value else None
-                elif key == "location":
+                if key == "location":
                     try:
                         formatted_data[key] = json.loads(value[0]) if isinstance(value[0], str) else value[0]
                     except json.JSONDecodeError:
@@ -454,11 +450,7 @@ def update_organization_preferences(request):
             formatted_data = {}
 
             for key, value in data.lists():
-                if key == "enable_volontera_point_opportunities":
-                    formatted_data[key] = value[0].lower() == "true"
-                elif key == "volontera_points_rate":
-                    formatted_data[key] = float(value[0]) if value else None
-                elif key == "location":
+                if key == "location":
                     try:
                         #Formatting location field to match existing JSON format
                         location_str = value[0]

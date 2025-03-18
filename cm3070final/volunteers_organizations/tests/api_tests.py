@@ -149,7 +149,34 @@ class TestEndorsementAPI(APITestCase):
             user_type="organization",
             contact_number="+356123456780"
         )
-
+        cls.volunteer1_profile = Volunteer.objects.create(
+            account=cls.volunteer1,
+            first_name="John",
+            last_name="Doe",
+            dob="1995-06-15"
+        )
+        cls.volunteer2_profile = Volunteer.objects.create(
+            account=cls.volunteer2,
+            first_name="Jane",
+            last_name="Smith",
+            dob="1996-07-20"
+        )
+        cls.organization_profile = Organization.objects.create(
+            account=cls.organization,
+            organization_name="Helping Hands",
+            organization_description="A non-profit org",
+            organization_address={
+                'raw': '123 Greenway Blvd, Springfield, US',
+                'street_number': '123',
+                'route': 'Greenway Blvd',
+                'locality': 'Springfield',
+                'postal_code': '12345',
+                'state': 'Illinois',
+                'state_code': 'IL',
+                'country': 'United States',
+                'country_code': 'US'
+            }
+        )
     def setUp(self):
         self.client.force_authenticate(user=self.volunteer1)
 
@@ -209,6 +236,12 @@ class TestStatusPostAPI(APITestCase):
             password="Securepass123!", 
             user_type="volunteer",
             contact_number="+356123456778"
+        )
+        cls.volunteer = Volunteer.objects.create(
+            account=cls.user,
+            first_name="John",
+            last_name="Doe",
+            dob="1995-06-15"
         )
 
     def setUp(self):
@@ -353,7 +386,6 @@ class TestVolunteerPreferencesAPI(APITestCase):
             "languages": ["English", "Spanish"]
         }
         response = self.client.post(self.create_volunteer_preferences_url, data, format="json")
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(VolunteerMatchingPreferences.objects.count(), 1)
         self.assertEqual(response.data["data"]["volunteer"], self.volunteer.pk)
@@ -512,8 +544,6 @@ class TestOrganizationPreferencesAPI(APITestCase):
     # Successfully create organization preferences
     def test_create_organization_preferences_success(self):
         data = {
-            "enable_volontera_point_opportunities": True,
-            "volontera_points_rate": 1.5,
             "location": {
                 "lat": 40.7128,
                 "lon": -74.0060,
@@ -522,7 +552,6 @@ class TestOrganizationPreferencesAPI(APITestCase):
             }
         }
         response = self.client.post(self.create_organization_preferences_url, data, format="json")
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(OrganizationPreferences.objects.count(), 1)
         self.assertEqual(response.data["data"]["organization"], self.organization.pk)
@@ -542,7 +571,6 @@ class TestOrganizationPreferencesAPI(APITestCase):
     # Sending invalid data should return 400 Bad Request
     def test_create_organization_preferences_invalid_data(self):
         data = {
-            "volontera_points_rate": -1,  # Should be positive
             "location": "invalid_location_format"  # Should be a dict
         }
         response = self.client.post(self.create_organization_preferences_url, data, format="json")
@@ -556,8 +584,6 @@ class TestOrganizationPreferencesAPI(APITestCase):
     # Successfully create organization preferences with location
     def test_create_organization_preferences_with_location_success(self):
         data = {
-            "enable_volontera_point_opportunities": True,
-            "volontera_points_rate": 1.2,
             "location": {
                 "lat": 40.7128,
                 "lon": -74.0060,
@@ -589,12 +615,15 @@ class TestOrganizationPreferencesAPI(APITestCase):
     def test_get_organization_preferences_success(self):
         OrganizationPreferences.objects.create(
             organization=self.organization,
-            enable_volontera_point_opportunities=True,
-            volontera_points_rate=1.2
+            location={
+                "lat": 40.7128,
+                "lon": -74.0060,
+                "city": "New York",
+                "formatted_address": "New York, NY, USA"
+            }
         )
         response = self.client.get(self.get_organization_preferences_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["volontera_points_rate"], 1.2)
 
     # Test retrieving preferences when they don't exist
     def test_get_organization_preferences_not_found(self):
@@ -612,24 +641,37 @@ class TestOrganizationPreferencesAPI(APITestCase):
     def test_update_organization_preferences_success(self):
         prefs = OrganizationPreferences.objects.create(
             organization=self.organization,
-            enable_volontera_point_opportunities=True,
-            volontera_points_rate=1.1
+            location={
+                "lat": 40.7128,
+                "lon": -74.0060,
+                "city": "New York",
+                "formatted_address": "New York, NY, USA"
+            }
         )
-        data = {"volontera_points_rate": 1.2}
+        data = {"location": {
+                "lat": 35.7128,
+                "lon": 14.0060,
+                "city": "St Julians",
+                "formatted_address": "St Julians, Malta"
+            }}
         response = self.client.patch(self.update_organization_preferences_url, data, format="json")
         prefs.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(prefs.volontera_points_rate, 1.2)
 
     # Test updating preferences when they don't exist
     def test_update_organization_preferences_not_found(self):
-        data = {"volontera_points_rate": 3.0}
+        data = {"location": {
+                "lat": 35.7128,
+                "lon": 14.0060,
+                "city": "St Julians",
+                "formatted_address": "St Julians, Malta"
+            }}
         response = self.client.patch(self.update_organization_preferences_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     # Test invalid data when updating preferences
     def test_update_organization_preferences_invalid_data(self):
         OrganizationPreferences.objects.create(organization=self.organization)
-        data = {"volontera_points_rate": "invalid_number"}
+        data = {"location": "invalid_location"}
         response = self.client.patch(self.update_organization_preferences_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
