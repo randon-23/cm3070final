@@ -189,6 +189,24 @@ def create_opportunity(request):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# Gets an organizations opportunities for their profile page for anyone viewing their profile    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_upcoming_opportunities(request, account_uuid):
+    if request.method == "GET":
+        try:
+            organization = Organization.objects.get(account__account_uuid=account_uuid)
+        except Organization.DoesNotExist:
+            return Response({"error": "Organization not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        opportunities = VolunteerOpportunity.objects.filter(organization=organization, status="upcoming")
+        serializer = VolunteerOpportunitySerializer(opportunities, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+# Gets an organizations opportunities for their Opportunities page
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_organization_opportunities(request):
@@ -1055,9 +1073,6 @@ def get_organization_log_requests(request, account_uuid):
 @permission_classes([IsAuthenticated])
 def get_engagement_logs(request, account_uuid):
     if request.method == "GET":
-        if not request.user.is_volunteer():
-            return Response({"error": "Only volunteers can view their engagement logs."}, status=status.HTTP_403_FORBIDDEN)
-        
         try:
             volunteer = Volunteer.objects.get(account__account_uuid=account_uuid)
         except Volunteer.DoesNotExist:

@@ -637,23 +637,128 @@ class GetOrganizationOpportunityAPITest(APITestCase):
 
             self.assertEqual(set(returned_titles), set(expected_titles))
 
-        # Ensure one organization does not see another organization's opportunities.
-        def test_cannot_access_another_org_opportunities(self):
-            self.client.force_authenticate(user=self.org_account2)
-            response = self.client.get(self.url)
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(len(response.data), 2)
-
-            returned_titles = [opp["title"] for opp in response.data]
-            expected_titles = ["Org2 Opportunity 1", "Org2 Opportunity 2"]
-
-            self.assertEqual(set(returned_titles), set(expected_titles))
-
         # Ensure unauthorized users cannot access organization opportunities.
         def test_unauthorized_access(self):
             self.client.force_authenticate(user=None)
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 403)
+
+class GetUpcomingOpportunitiesAPITest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.client = APIClient()
+
+        # Create an organization account
+        cls.org_account = Account.objects.create_user(
+            email_address='org@example.com',
+            password='password123',
+            user_type='organization',
+            contact_number='+35612345678'
+        )
+
+        cls.other_org_account = Account.objects.create_user(
+            email_address='other_org@example.com',
+            password='password123',
+            user_type='organization',
+            contact_number='+35687654321'
+        )
+
+        # Create organizations
+        cls.organization = Organization.objects.create(
+            account=cls.org_account,
+            organization_name="Helping Hands",
+            organization_description="Non-profit organization."
+        )
+
+        cls.other_organization = Organization.objects.create(
+            account=cls.other_org_account,
+            organization_name="Charity Works",
+            organization_description="Another organization."
+        )
+
+        # Create upcoming opportunities for this organization
+        cls.upcoming_opportunity1 = VolunteerOpportunity.objects.create(
+            organization=cls.organization,
+            title="Beach Cleanup",
+            description="Clean the beach with volunteers.",
+            work_basis="in-person",
+            duration="short-term",
+            ongoing=False,
+            opportunity_date=date.today() + timedelta(days=10),
+            opportunity_time_from="09:00:00",
+            opportunity_time_to="12:00:00",
+            area_of_work="environment",
+            requirements=["teamwork"],
+            languages=["English"],
+            status="upcoming"
+        )
+
+        cls.upcoming_opportunity2 = VolunteerOpportunity.objects.create(
+            organization=cls.organization,
+            title="Food Drive",
+            description="Help distribute food to the needy.",
+            work_basis="in-person",
+            duration="short-term",
+            ongoing=False,
+            opportunity_date=date.today() + timedelta(days=7),
+            opportunity_time_from="10:00:00",
+            opportunity_time_to="14:00:00",
+            area_of_work="health",
+            requirements=["communication"],
+            languages=["English"],
+            status="upcoming"
+        )
+
+        # Create a completed opportunity (should not be returned)
+        cls.completed_opportunity = VolunteerOpportunity.objects.create(
+            organization=cls.organization,
+            title="Past Event",
+            description="An event that already happened.",
+            work_basis="in-person",
+            duration="short-term",
+            ongoing=False,
+            opportunity_date=date.today() - timedelta(days=5),
+            opportunity_time_from="09:00:00",
+            opportunity_time_to="12:00:00",
+            area_of_work="education",
+            requirements=["teaching"],
+            languages=["English"],
+            status="completed"
+        )
+
+        # API endpoint URL
+        cls.url = reverse("opportunities_engagements:get_upcoming_opportunities", args=[cls.org_account.account_uuid])
+
+    def setUp(self):
+        self.client.force_authenticate(user=self.org_account)
+
+    # Test getting upcoming opportunities for an organization
+    def test_get_upcoming_opportunities(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+        returned_titles = [opp["title"] for opp in response.data]
+        expected_titles = ["Beach Cleanup", "Food Drive"]
+
+        self.assertEqual(set(returned_titles), set(expected_titles))
+
+    # Test that completed opportunities are NOT returned
+    def test_completed_opportunity_not_included(self):
+        response = self.client.get(self.url)
+        returned_titles = [opp["title"] for opp in response.data]
+
+        self.assertNotIn("Past Event", returned_titles)
+
+    # Test getting opportunities for a non-existing organization
+    def test_organization_not_found(self):
+        non_existing_uuid = "123e4567-e89b-12d3-a456-426614174000"
+        url = reverse("opportunities_engagements:get_upcoming_opportunities", args=[non_existing_uuid])
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data["error"], "Organization not found.")
 
 class UpdateOpportunityStatusAPITest(APITestCase):
     @classmethod
@@ -2144,15 +2249,6 @@ class GetVolunteerEngagementLogsAPITest(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)  # Only approved logs should be returned
         self.assertEqual(response.data[0]["status"], "approved")
-
-    # Organizations should not be able to fetch engagement logs for volunteers.
-    def test_get_engagement_logs_unauthorized(self):
-        self.client.force_authenticate(user=self.organization_account)  # Switch to organization
-        get_logs_url = reverse("opportunities_engagements:get_engagement_logs", args=[self.volunteer_account.account_uuid])
-        response = self.client.get(get_logs_url)
-
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data["error"], "Only volunteers can view their engagement logs.")
 
 class GetVolunteerLogRequestsAPITest(APITestCase):
     @classmethod

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Account
 from .api import get_user_profile, get_following, get_all_followers, get_status_posts, get_endorsements, get_search_profiles, get_volunteer_preferences, get_organization_preferences
-from opportunities_engagements.api import get_engagement_logs
+from opportunities_engagements.api import get_engagement_logs, get_upcoming_opportunities
 from .forms import VolunteerForm, OrganizationForm
 from .models import Volunteer, Organization, VolunteerMatchingPreferences, OrganizationPreferences
 import json
@@ -68,12 +68,53 @@ def profile_view(request, account_uuid):
             context['message'] = 'Followers not found'
         else:
             context['followers_count'] = followers.data
+
+        if user_profile.volunteer:
+            engagement_logs = get_engagement_logs(request, account_uuid)
+            if engagement_logs.status_code==404:
+                context['message'] = 'Engagement logs not found'
+            else:
+                logs_data = engagement_logs.data
+                context['engagement_logs'] = logs_data
+                context['total_hours'] = sum(log.get("no_of_hours", 0) for log in logs_data)
+                context["unique_organizations"] = len(set(
+                    log["volunteer_engagement"]["organization"].get("organization_name", "Unknown")
+                    for log in logs_data if log["volunteer_engagement"]["organization"]
+                ))
+        elif user_profile.organization:
+            upcoming_opportunities = get_upcoming_opportunities(request, account_uuid)
+            if upcoming_opportunities.status_code==404:
+                context['message'] = 'Upcoming opportunities not found'
+            else:
+                upcoming_opportunities = upcoming_opportunities.data
+                context['upcoming_opportunities'] = upcoming_opportunities
+
     else:
         followers = get_all_followers(request, account_uuid)
         if followers.status_code==404:
             context['message'] = 'Followers not found'
         else:
             context['followers_count'] = followers.data
+        
+        if request.user.is_volunteer():
+            engagement_logs = get_engagement_logs(request, account_uuid)
+            if engagement_logs.status_code==404:
+                context['message'] = 'Engagement logs not found'
+            else:
+                logs_data = engagement_logs.data
+                context['engagement_logs'] = logs_data
+                context['total_hours'] = sum(log.get("no_of_hours", 0) for log in logs_data)
+                context["unique_organizations"] = len(set(
+                    log["volunteer_engagement"]["organization"].get("organization_name", "Unknown")
+                    for log in logs_data if log["volunteer_engagement"]["organization"]
+                ))
+        elif request.user.is_organization():
+            upcoming_opportunities = get_upcoming_opportunities(request, account_uuid)
+            if upcoming_opportunities.status_code==404:
+                context['message'] = 'Upcoming opportunities not found'
+            else:
+                upcoming_opportunities = upcoming_opportunities.data
+                context['upcoming_opportunities'] = upcoming_opportunities
         
         # If the user is viewing their own profile, check if they are a volunteer and have not set their matching preferences, or if they are an organization and have not set their preferences
         show_preferences_modal = False
