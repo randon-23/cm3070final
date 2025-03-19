@@ -1,7 +1,7 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from accounts_notifs.tasks import send_notification
-from .models import Endorsement, Following, StatusPost
+from .models import Endorsement, Following, StatusPost, Organization
 from accounts_notifs.tasks import send_notification
 from django.db import models
 
@@ -89,3 +89,20 @@ def notify_new_status_post(sender, instance, created, **kwargs):
                 notification_type="new_status_post",
                 message=message
             )
+
+# Notifies an organization when they receive a Volontera points donation.
+@receiver(pre_save, sender=Organization)
+def notify_organization_on_donation(sender, instance, **kwargs):
+    if instance.pk:  # Ensure it's an update (not a new organization)
+        try:
+            previous_instance = Organization.objects.get(pk=instance.pk)
+            points_received = instance.volontera_points - previous_instance.volontera_points
+            
+            if points_received > 0:  # Ensure donation happened
+                send_notification.delay(
+                    recipient_id=str(instance.account.account_uuid),
+                    notification_type="new_volontera_points",
+                    message=f"Your organization has received a donation of {points_received} Volontera points!"
+                )
+        except Organization.DoesNotExist:
+            pass  # Organization didn't exist before, no notification needed

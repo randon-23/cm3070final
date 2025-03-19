@@ -155,15 +155,15 @@ async function executeChainedActions(actions, prevData = {}) {
 
 // SEQUENTIAL API CALL FUNCTIONS
 // no form
-function cancelOpportunity(volunteerOpportunityId) {
-    executeChainedActions([
+async function cancelOpportunity(volunteerOpportunityId) {
+    await executeChainedActions([
         { url: `/api/opportunities/cancel_opportunity/${volunteerOpportunityId}/`, method: "PATCH"},
         { url: `/api/engagements/cancel_engagements_organization/${volunteerOpportunityId}/`, method: "PATCH"}
     ]);
 }
 
 // no form - called from modal which displays current engagees so org can remove any
-function completeOpportunity(volunteerOpportunityId, isOngoing) {
+async function completeOpportunity(volunteerOpportunityId, isOngoing) {
     let actions = [
         { url: `/api/opportunities/complete_opportunity/${volunteerOpportunityId}/`, method: "PATCH" },
         { url: `/api/engagements/complete_engagements_organization/${volunteerOpportunityId}/`, method: "PATCH" },
@@ -175,11 +175,11 @@ function completeOpportunity(volunteerOpportunityId, isOngoing) {
             method: "POST",
         });
     }
-    executeChainedActions(actions);
+    await executeChainedActions(actions);
 }
 
 // no form
-function acceptApplication(applicationId, accountUuid, opportunityId, isOngoing) {
+async function acceptApplication(applicationId, accountUuid, opportunityId, isOngoing) {
     let actions = [
         { url: `/api/opportunities/applications/accept/${applicationId}/`, method: "PATCH" },
         { url: `/api/engagements/create_engagement/${applicationId}/`, method: "POST" },
@@ -189,12 +189,12 @@ function acceptApplication(applicationId, accountUuid, opportunityId, isOngoing)
         actions.push({url: `/api/session_engagements/create_session_engagements_for_volunteer/${accountUuid}/${opportunityId}/`, method: "POST"});
     }
 
-    executeChainedActions(actions);
+    await executeChainedActions(actions);
 }
 
 // called from form
-function createSession(opportunityId, data) {
-    executeChainedActions([
+async function createSession(opportunityId, data) {
+    await executeChainedActions([
         {
             url: `/api/sessions/create_session/${opportunityId}/`,
             method: "POST",
@@ -226,8 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // no form - called from modal which displays current session engagees so org can remove any
-function completeSession(sessionId) {
-    executeChainedActions([
+async function completeSession(sessionId) {
+    await executeChainedActions([
         { url: `/api/sessions/complete_session/${sessionId}/`, method: "PATCH"},
         { url: `/api/engagement_logs/create_session_engagement_logs/${sessionId}/`, method: "POST"}
     ]);

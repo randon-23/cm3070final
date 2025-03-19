@@ -98,6 +98,7 @@ class Notification(models.Model):
         ('new_opportunity_session', 'New Opportunity Session'),
         ('new_message', 'New Message'),
         ('opportunity_match', 'Opportunity Match'),
+        ('new_volontera_points', 'New Volontera Points'),
         ('other', 'Other'), 
     )
 

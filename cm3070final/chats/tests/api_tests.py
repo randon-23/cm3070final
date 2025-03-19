@@ -40,7 +40,6 @@ class ChatMessageAPITestCase(APITestCase):
     def test_get_chats(self):
         url = reverse("chats:get_chats")  # Assuming name in urls.py is 'get_chats'
         response = self.client.get(url)
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["chat_id"], str(self.chat.chat_id))
@@ -49,7 +48,6 @@ class ChatMessageAPITestCase(APITestCase):
     def test_get_messages_for_chat(self):
         url = reverse("chats:get_messages", args=[str(self.chat.chat_id)])
         response = self.client.get(url)
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["content"], "Hello, this is a test message!")

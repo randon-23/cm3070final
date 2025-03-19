@@ -103,4 +103,9 @@ document.addEventListener("htmx:afterRequest", function(event) {
         console.log("Sending message!", event);
         updateContent(event);
     }
+    // Donate
+    else if(url.includes('donate/donate_volontera_points/')){
+        console.log("Donating points!", event);
+        updateContent(event);
+    }
 });

@@ -4,7 +4,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
-from datetime import date
+from datetime import date, timedelta
 from volunteers_organizations.models import Organization, Volunteer, VolunteerMatchingPreferences
 from opportunities_engagements.models import VolunteerOpportunity, VolunteerOpportunityApplication, VolunteerEngagement, VolunteerEngagementLog, VolunteerOpportunitySession, VolunteerSessionEngagement
 from accounts_notifs.tasks import send_notification
@@ -682,3 +682,181 @@ class SmartMatchingSignalTest(TestCase):
             [self.volunteer_account_3.email_address],
             fail_silently=False,
         )
+
+class EngagementLogVolonteraPointSignalTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.volunteer_account, cls.organization_account = create_common_objects()
+
+        # Create volunteer and organization profiles
+        cls.volunteer = Volunteer.objects.create(
+            account=cls.volunteer_account,
+            first_name="John",
+            last_name="Doe",
+            dob=date(1995, 1, 1)
+        )
+        cls.organization = Organization.objects.create(
+            account=cls.organization_account,
+            organization_name="Helping Hands",
+            organization_description="Non-profit organization."
+        )
+
+        # One-time opportunity (for one-time engagement logs)
+        cls.opportunity = VolunteerOpportunity.objects.create(
+            organization=cls.organization,
+            title="One-Time Cleanup",
+            description="A one-time beach cleanup event.",
+            work_basis="in-person",
+            duration="short-term",
+            ongoing=False,
+            opportunity_date=date.today() - timedelta(days=2),  # Past event
+            opportunity_time_from=time(9, 0),
+            opportunity_time_to=time(12, 0),
+            slots=10,
+            area_of_work="environment",
+            requirements=["physical fitness"],
+            status="completed"
+        )
+
+        cls.application_one_time = VolunteerOpportunityApplication.objects.create(
+            volunteer_opportunity=cls.opportunity,
+            volunteer=cls.volunteer,
+            application_status="accepted"
+        )
+
+        cls.engagement_one_time = VolunteerEngagement.objects.create(
+            volunteer_opportunity_application=cls.application_one_time,
+            volunteer=cls.volunteer,
+            organization=cls.organization,
+            engagement_status="completed"
+        )
+
+        # Ongoing opportunity (for session engagement logs)
+        cls.ongoing_opportunity = VolunteerOpportunity.objects.create(
+            organization=cls.organization,
+            title="Ongoing Teaching",
+            description="Teaching English weekly.",
+            work_basis="in-person",
+            duration="long-term",
+            ongoing=True,
+            slots=None,
+            area_of_work="education",
+            requirements=["teaching"],
+            status="upcoming"
+        )
+
+        cls.application_ongoing = VolunteerOpportunityApplication.objects.create(
+            volunteer_opportunity=cls.ongoing_opportunity,
+            volunteer=cls.volunteer,
+            application_status="accepted"
+        )
+
+        cls.engagement_ongoing = VolunteerEngagement.objects.create(
+            volunteer_opportunity_application=cls.application_ongoing,
+            volunteer=cls.volunteer,
+            organization=cls.organization,
+            engagement_status="ongoing"
+        )
+
+        # Create a session for the ongoing opportunity
+        cls.session = VolunteerOpportunitySession.objects.create(
+            opportunity=cls.ongoing_opportunity,
+            title="Teaching Session",
+            description="Weekly session for teaching English.",
+            session_date=date.today() - timedelta(days=1),
+            session_start_time=time(10, 0),
+            session_end_time=time(12, 0),
+            status="completed"
+        )
+
+        cls.session_engagement = VolunteerSessionEngagement.objects.create(
+            volunteer_engagement=cls.engagement_ongoing,
+            session=cls.session,
+            status="can_go"
+        )
+    
+    def setUp(self):
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.organization_account)
+
+    # Test engagement log creation for opportunity engagement sends notification.
+    @patch("accounts_notifs.tasks.send_notification.delay")
+    def test_create_opportunity_engagement_log_triggers_notification(self, mock_notification_task):
+        url = reverse("opportunities_engagements:create_opportunity_engagement_logs", args=[self.opportunity.volunteer_opportunity_id])
+        self.client.force_authenticate(user=self.organization_account)
+        
+        response = self.client.post(url)
+        # Check if API returned success
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Verify notification was triggered
+        mock_notification_task.assert_called_once_with(
+            recipient_id=str(self.volunteer_account.account_uuid),
+            notification_type="new_volontera_points",
+            message=f"You have earned 3.0 Volontera points for your volunteer engagement!"
+        )
+
+        # Check if Volontera points increased
+        self.volunteer.refresh_from_db()
+        self.assertEqual(self.volunteer.volontera_points, 3.0)
+
+    # Test engagement log creation for session engagement sends notification.
+    @patch("accounts_notifs.tasks.send_notification.delay")
+    def test_create_session_engagement_log_triggers_notification(self, mock_notification_task):
+        url = reverse("opportunities_engagements:create_session_engagement_logs", args=[self.session.session_id])
+
+        response = self.client.post(url)
+
+        # Check if API returned success
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Verify notification was triggered
+        mock_notification_task.assert_called_once_with(
+            recipient_id=str(self.volunteer_account.account_uuid),
+            notification_type="new_volontera_points",
+            message=f"You have earned 2.0 Volontera points for your volunteer engagement!"
+        )
+
+        # Check if Volontera points increased
+        self.volunteer.refresh_from_db()
+        self.assertEqual(self.volunteer.volontera_points, 2.0)
+
+    # Test approving an engagement log sends notification.
+    @patch("accounts_notifs.tasks.send_notification.delay")
+    def test_approve_engagement_log_triggers_notification(self, mock_notification_task):
+        # Step 1: Create the engagement log (pending)
+        log = VolunteerEngagementLog.objects.create(
+            volunteer_engagement=self.engagement_ongoing,
+            no_of_hours=2,
+            status="pending",
+            log_notes="Tutored students in English",
+            is_volunteer_request=True
+        )
+
+        # Assert log request submission triggered a notification
+        mock_notification_task.assert_called_once_with(
+            recipient_id=str(self.organization_account.account_uuid),  # Assuming org gets notified
+            notification_type="log_request_submitted",
+            message=f"{self.volunteer.first_name} {self.volunteer.last_name} has submitted a new engagement log request for {self.ongoing_opportunity.title}."
+        )
+
+        # Reset mock to avoid interference with approval step
+        mock_notification_task.reset_mock()
+
+        # Step 2: Approve the engagement log
+        url = reverse("opportunities_engagements:approve_engagement_log", args=[log.volunteer_engagement_log_id])
+        response = self.client.patch(url)  
+
+        # Check API success
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify that new_volontera_points notification was sent
+        mock_notification_task.assert_called_once_with(
+            recipient_id=str(self.volunteer_account.account_uuid),
+            notification_type="new_volontera_points",
+            message=f"You have earned 2.0 Volontera points for your volunteer engagement!"
+        )
+
+        # Check if Volontera points increased
+        self.volunteer.refresh_from_db()
+        self.assertEqual(self.volunteer.volontera_points, 2)

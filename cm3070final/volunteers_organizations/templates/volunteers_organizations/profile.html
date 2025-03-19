@@ -189,10 +189,16 @@
                     {% endif %}
                     <button 
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-3 open-message-modal"
-                        data-recipient-id="{{ user.account.account_uuid }}"
+                        data-recipient-id="{{ user_profile.account.account_uuid }}"
                     >
                         Message User
                     </button>
+                    {% if user_profile.organization %}
+                    <button onclick="document.getElementById('donate-modal').classList.remove('hidden'); document.getElementById('donate-modal').classList.add('flex');" 
+                        class="bg-yellow-500 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded">
+                        Donate Volontera Points
+                    </button>
+                    {% endif %}
                 {% endif %}
             </div>
                 
@@ -356,6 +362,9 @@
     {% endif %}
     {% if not is_own_profile %}
         {% include 'chats/partials/send_message_modal.html' %}
+        {% if user_profile.organization %}
+            {% include 'volunteers_organizations/partials/donate_modal.html' %}
+        {% endif %}
     {% endif %}
     <!-- Modal Container for responses for hx-target-->
     <div id="modal-container"></div>

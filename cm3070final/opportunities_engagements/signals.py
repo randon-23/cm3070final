@@ -260,3 +260,22 @@ def match_volunteers_to_opportunity(sender, instance, created, **kwargs):
             [volunteer.email_address],
             fail_silently=False,
         )
+
+# Adds Volontera points to a volunteer when their engagement log is approved and/or an engagement log is created for them
+@receiver(post_save, sender=VolunteerEngagementLog)
+def add_volontera_points(sender, instance, created, **kwargs):
+    if instance.status == "approved":  # Ensure log is approved
+        volunteer = instance.volunteer_engagement.volunteer
+        hours_logged = instance.no_of_hours  # Correct field reference
+        points_earned = hours_logged
+        
+        # Update volunteer points
+        volunteer.volontera_points += points_earned
+        volunteer.save()
+
+        # Send notification
+        send_notification.delay(
+            recipient_id=str(volunteer.account.account_uuid),
+            notification_type="new_volontera_points",
+            message=f"You have earned {points_earned} Volontera points for your volunteer engagement!"
+        )

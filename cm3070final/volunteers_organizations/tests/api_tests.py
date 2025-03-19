@@ -675,3 +675,107 @@ class TestOrganizationPreferencesAPI(APITestCase):
         data = {"location": "invalid_location"}
         response = self.client.patch(self.update_organization_preferences_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+class DonateVolonteraPointsTests(APITestCase):
+    
+    def setUp(self):
+        # Create volunteer user
+        self.volunteer_user = Account.objects.create_user(
+            email_address="volunteer@test.com",
+            password="password123",
+            user_type="volunteer",
+            contact_number="+123456789"
+        )
+        self.volunteer = Volunteer.objects.create(
+            account=self.volunteer_user,
+            first_name="John",
+            last_name="Doe",
+            dob="1990-01-01",
+            volontera_points=100  # Give volunteer initial points
+        )
+
+        # Create organization user
+        self.organization_user = Account.objects.create_user(
+            email_address="org@test.com",
+            password="password123",
+            user_type="organization",
+            contact_number="+987654321"
+        )
+        self.organization = Organization.objects.create(
+            account=self.organization_user,
+            organization_name="Helping Hands",
+            organization_description="Non-profit organization.",
+            organization_address={
+                'raw': '123 Help St, Kindness City, US',
+                'street_number': '123',
+                'route': 'Help St',
+                'locality': 'Kindness City',
+                'postal_code': '12345',
+                'state': 'CA',
+                'state_code': 'CA',
+                'country': 'United States',
+                'country_code': 'US'
+            },
+            volontera_points=0  # Start with 0 points
+        )
+
+        # Authenticate the volunteer
+        self.client.force_authenticate(user=self.volunteer_user)
+
+        # API URL with organization UUID
+        self.url = reverse("volunteers_organizations:donate_volontera_points", args=[self.organization_user.account_uuid])
+    
+    def test_valid_donation(self):
+        data = {"amount": "50"}  # Donate 50 points
+        response = self.client.post(self.url, data)
+
+        self.volunteer.refresh_from_db()
+        self.organization.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.volunteer.volontera_points, 50)  # 100 - 50 = 50
+        self.assertEqual(self.organization.volontera_points, 50)  # 0 + 50 = 50
+        self.assertIn("Successfully donated", response.data["message"])
+
+    def test_donation_insufficient_points(self):
+        data = {"amount": "200"}  # More than the volunteer has
+        response = self.client.post(self.url, data)
+
+        self.volunteer.refresh_from_db()
+        self.organization.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.volunteer.volontera_points, 100)  # No change
+        self.assertEqual(self.organization.volontera_points, 0)  # No change
+        self.assertIn("Not enough points", response.data["error"])
+
+    def test_donation_invalid_amount(self):
+        data = {"amount": "-10"}  # Negative points
+        response = self.client.post(self.url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Donation amount must be greater than zero", response.data["error"])
+
+    def test_donation_non_numeric_amount(self):
+        data = {"amount": "abc"}  # Non-numeric input
+        response = self.client.post(self.url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Invalid amount", response.data["error"])
+
+    def test_donation_nonexistent_organization(self):
+        fake_uuid = "11111111-2222-3333-4444-555555555555"
+        url = reverse("volunteers_organizations:donate_volontera_points", kwargs={"organization_id": fake_uuid})
+        
+        data = {"amount": "20"}
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("Organization not found", response.data["error"])
+
+    def test_donation_unauthorized(self):
+        self.client.logout()  # Simulate an unauthenticated request
+        data = {"amount": "30"}
+        response = self.client.post(self.url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

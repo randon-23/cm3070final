@@ -383,3 +383,49 @@ class StatusPostSignalTest(TestCase):
             notification_type="new_status_post",
             message="Helping Hands has posted a new status update!"
         )
+
+class DonationSignalTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.volunteer_account = Account.objects.create_user(
+            email_address="volunteer@test.com",
+            password="password123",
+            user_type="volunteer",
+            contact_number="+37112345678"
+        )
+        cls.volunteer = Volunteer.objects.create(account=cls.volunteer_account, first_name='John', last_name='Doe', dob=date(1990, 3, 3), volontera_points=50)
+
+        cls.organization_account = Account.objects.create_user(
+            email_address="org@test.com",
+            password="password123",
+            user_type="organization",
+            contact_number="+37187654321"
+        )
+        cls.organization = Organization.objects.create(account=cls.organization_account, organization_name="Helping Hands", organization_description="Non-profit organization.", volontera_points=0)
+
+    def setUp(self):
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.volunteer_account)
+
+    # Test that donating Volontera points sends a notification to the organization
+    @patch("accounts_notifs.tasks.send_notification.delay")
+    def test_donate_volontera_points_triggers_notification(self, mock_notification_task):
+        url = reverse("volunteers_organizations:donate_volontera_points", args=[self.organization.account.account_uuid])
+
+        response = self.client.post(url, {"amount": 20})
+
+        # Check if API returned success
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify notification was triggered
+        mock_notification_task.assert_called_once_with(
+            recipient_id=str(self.organization_account.account_uuid),
+            notification_type="new_volontera_points",
+            message=f"Your organization has received a donation of 20.0 Volontera points!"
+        )
+
+        # Check if Volontera points updated correctly
+        self.volunteer.refresh_from_db()
+        self.organization.refresh_from_db()
+        self.assertEqual(self.volunteer.volontera_points, 30)  # 50 - 20
+        self.assertEqual(self.organization.volontera_points, 20)  # +20 received

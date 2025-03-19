@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import signup_final, profile_view, search_profiles_view, update_profile_view, preferences_view
-from .api import get_user_profile, get_all_followers, get_following, create_following, delete_following, get_endorsements, create_endorsement, delete_endorsement, get_status_posts, create_status_post, delete_status_post, get_search_profiles, create_volunteer_preferences, create_organization_preferences, get_organization_preferences, get_volunteer_preferences, update_volunteer_preferences, update_organization_preferences
+from .api import get_user_profile, get_all_followers, get_following, create_following, delete_following, get_endorsements, create_endorsement, delete_endorsement, get_status_posts, create_status_post, delete_status_post, get_search_profiles, create_volunteer_preferences, create_organization_preferences, get_organization_preferences, get_volunteer_preferences, update_volunteer_preferences, update_organization_preferences, donate_volontera_points
 
 app_name = 'volunteers_organizations'
 
@@ -42,4 +42,7 @@ urlpatterns = [
     path('api/organization_preferences/create_organization_preferences/', create_organization_preferences, name='create_organization_preferences'),
     path('api/organization_preferences/get_organization_preferences/', get_organization_preferences, name='get_organization_preferences'),
     path('api/organization_preferences/update_organization_preferences/', update_organization_preferences, name='update_organization_preferences'),
+
+    # Donate endpoints
+    path('api/donate/donate_volontera_points/<uuid:organization_id>', donate_volontera_points, name='donate_volontera_points'),
 ]

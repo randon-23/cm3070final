@@ -8,7 +8,6 @@ Account = get_user_model()
 
 @shared_task(autoretry_for=(Exception,), retry_backoff=True)
 def send_notification(recipient_id, notification_type, message):
-    print('hello world')
     try:
         recipient = Account.objects.get(account_uuid=recipient_id)
         notification = Notification.objects.create(

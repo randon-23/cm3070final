@@ -511,7 +511,7 @@ def complete_engagements_organization(request, volunteer_opportunity_id):
         if opportunity.organization.account != request.user:
             return Response({"error": "Unauthorized to update engagements for this opportunity."}, status=status.HTTP_403_FORBIDDEN)
 
-        engagements = VolunteerEngagement.objects.filter(volunteer_opportunity_application__volunteer_opportunity=opportunity)
+        engagements = VolunteerEngagement.objects.filter(volunteer_opportunity_application__volunteer_opportunity=opportunity, engagement_status="ongoing")
 
         if not engagements.exists():
             return Response({"error": "No engagements found for this opportunity."}, status=status.HTTP_404_NOT_FOUND)
@@ -878,7 +878,7 @@ def create_opportunity_engagement_logs(request, opportunity_id):
         if opportunity.ongoing:
             return Response({"error": "Logs for ongoing opportunities must be session-based."}, status=status.HTTP_400_BAD_REQUEST)
 
-        engagements = VolunteerEngagement.objects.filter(volunteer_opportunity_application__volunteer_opportunity=opportunity, engagement_status="ongoing")
+        engagements = VolunteerEngagement.objects.filter(volunteer_opportunity_application__volunteer_opportunity=opportunity, engagement_status="completed")
 
         created_logs = []
         for engagement in engagements:

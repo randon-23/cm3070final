@@ -473,3 +473,37 @@ def update_organization_preferences(request):
         return Response({"message": "An error occurred updating organization preferences", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def donate_volontera_points(request, organization_id):
+    if request.method == 'POST':
+        volunteer = request.user.volunteer  
+        amount = request.data['amount']  # Extract from request body
+
+        try:
+            amount = float(amount)
+        except (TypeError, ValueError):
+            return Response({"error": "Invalid amount"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if amount <= 0:
+            return Response({"error": "Donation amount must be greater than zero"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if volunteer.volontera_points < amount:
+            return Response({"error": "Not enough points"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            organization = Organization.objects.get(account__account_uuid=organization_id)
+        except Organization.DoesNotExist:
+            return Response({"error": "Organization not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Transfer the points
+        volunteer.volontera_points -= amount
+        organization.volontera_points += amount
+
+        volunteer.save()
+        organization.save()
+
+        return Response({"message": f"Successfully donated {amount} points!"}, status=status.HTTP_200_OK)
+    else:
+        return Response({'message': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

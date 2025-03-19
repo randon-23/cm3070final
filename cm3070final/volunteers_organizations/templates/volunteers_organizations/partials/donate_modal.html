@@ -1,0 +1,16 @@
+<div id="donate-modal" class="hidden fixed inset-0 items-center justify-center bg-gray-800 bg-opacity-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-lg font-bold">Donate Volontera Points</h2>
+        <p>You have <strong id="user-points">{{ user.volunteer.volontera_points }}</strong> points available.</p>
+        <input type="number" id="amount" class="border p-2 w-full mt-2" placeholder="Enter points to donate">
+        <button onclick="document.getElementById('donate-modal').classList.add('hidden'); document.getElementById('donate-modal').classList.remove('flex')" class="mt-2 text-gray-600">Cancel</button>
+        <button 
+            hx-post="{% url 'volunteers_organizations:donate_volontera_points' organization.account.account_uuid %}"
+            hx-trigger="click"
+            hx-target="#loading-modal-content"
+            hx-include="#amount"
+            class="mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            Confirm Donation
+        </button>
+    </div>
+</div>
