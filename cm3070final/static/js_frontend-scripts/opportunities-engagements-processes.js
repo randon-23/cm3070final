@@ -74,9 +74,38 @@ function filterSessions(status) {
 
 // Toggles the filter for engagements, applications and log requests
 function filterEngagementsApplicationsLogRequests(type, status) {
-    document.querySelectorAll(`.${type}-card`).forEach(card => {
-        card.style.display = status === "all" || card.getAttribute("data-status") === status ? "block" : "none";
+    // Remove 'selected' class from all buttons of the same category
+    document.querySelectorAll(`.${type}-filters button`).forEach(btn => {
+        btn.classList.remove("selected");
     });
+
+    // Find the clicked button and add the 'selected' class
+    let selectedButton = document.querySelector(`.${type}-filters button[data-status="${status}"]`);
+    if (selectedButton) {
+        selectedButton.classList.add("selected");
+    }
+
+    // Hide/show the relevant cards
+    let anyVisible = false;
+    document.querySelectorAll(`.${type}-card`).forEach(card => {
+        if (status === "all" || card.getAttribute("data-status") === status) {
+            card.style.display = "block";
+            anyVisible = true;
+        } else {
+            card.style.display = "none";
+        }
+    });
+
+    // Update the "No {type} found" message
+    let container = document.getElementById(`${type}s-container`);
+    let noResultsMessage = container.querySelector(".no-results");
+
+    if (!anyVisible) {
+        noResultsMessage.innerText = `No ${status} ${type.replace("-", " ")} found.`;
+        noResultsMessage.style.display = "block";
+    } else {
+        noResultsMessage.style.display = "none";
+    }
 }
 
 // Toggle the filter of applications and log requests
@@ -84,6 +113,10 @@ function filterApplicationsLogRequests(filter){
     document.getElementById("pending-applications").classList.add("hidden");
     document.getElementById("pending-log-requests").classList.add("hidden");
     document.getElementById(filter).classList.remove("hidden");
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.classList.remove("brightness-75"); // Reset button brightness
+    });
+    event.target.classList.add("brightness-75");
 }
 
 // HELPER FUNCTION FOR SEQUENTIAL API CALLS

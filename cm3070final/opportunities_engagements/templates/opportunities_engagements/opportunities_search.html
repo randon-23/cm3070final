@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
 <script src="{% static 'js_frontend-scripts/opportunities-search-processes.js' %}"></script>
-<script src="{% static 'js_frontend-scripts/profile-processes.js.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/profile-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/preferences-processes.js' %}"></script>
 
 <form 
@@ -14,7 +14,7 @@ id="filter-form"
 method="get"
 hx-get="{% url 'opportunities_engagements:get_opportunities' %}"
 hx-trigger="submit"
-hx-target="#loading-modal-content"
+hx-target="#opportunity-results"
 hx-swap="innerHTML"
 class="grid grid-cols-3 gap-4 bg-white shadow p-6 rounded-lg text-sm w-full mx-auto"
 >
@@ -177,7 +177,7 @@ class="grid grid-cols-3 gap-4 bg-white shadow p-6 rounded-lg text-sm w-full mx-a
 </p>
 
 <!-- Opportunity Results Section -->
-<div id="opportunity-results" class="mt-6"></div>
+<div id="opportunity-results" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
 <!-- Nearby & Latest Opportunities -->
 <div class="grid grid-cols-2 gap-6 mt-6">

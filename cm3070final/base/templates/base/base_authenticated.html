@@ -33,6 +33,7 @@
                     {% endif %}
                     <h2 class="text-white mt-4 font-semibold">{% if user.volunteer %}{{ user.volunteer.first_name }} {{ user.volunteer.last_name }}{% else %}{{ user.organization.organization_name }}{% endif %}</h2>
                     <h3 class="text-white text-sm">{% if user.user_type == 'volunteer' %}Volunteer{% else%}Organization{% endif %}</h3>
+                    <h3 class="text-white text-sm">Volontera Points: {% if user.volunteer %} {{ user.volunteer.volontera_points }} {% elif user.organization %} {{ user.organization.volontera_points }} {% endif %} </h3>
                 </div>
                 <nav class="mt-6">
                     <ul class="space-y-3">

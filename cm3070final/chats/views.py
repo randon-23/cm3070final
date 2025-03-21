@@ -7,14 +7,24 @@ from .api import get_chats, get_messages
 @login_required
 def chats_view(request):
     account = request.user
-    chats_data = get_chats(request)
+    context = {}
 
+    # Get the user's chats
+    chats_response = get_chats(request)
+    if chats_response.status_code == 404 or not chats_response.data:
+        context["chats"] = []
+    else:
+        context["chats"] = chats_response.data
+
+    # Get messages for each chat
     messages_data = {}
-    for chat in chats_data:
-        messages = get_messages(request, chat.chat_id)
-        messages_data[chat.chat_id] = messages
+    for chat in context["chats"]:  # Iterate over the actual data, not response
+        messages_response = get_messages(request, chat["chat_id"])
+        if messages_response.status_code == 404 or not messages_response.data:
+            messages_data[chat["chat_id"]] = []
+        else:
+            messages_data[chat["chat_id"]] = messages_response.data
 
-    return render(request, "chats/chats.html", {
-        "chats": chats_data,
-        "messages": messages_data
-    })
+    context["messages"] = messages_data
+
+    return render(request, "chats/chats.html", context)

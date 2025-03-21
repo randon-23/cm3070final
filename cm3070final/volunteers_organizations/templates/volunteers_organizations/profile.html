@@ -3,7 +3,7 @@
 {% block title %}Dashboard{% endblock %}
 {% block auth_content %}
     <script src="{% static 'js_frontend-scripts/profile-processes.js' %}"></script>
-    <script src="{% static 'js_frontend-scripts/messages-processes.js' %}"></script>
+    <script src="{% static 'js_frontend-scripts/message-processes.js' %}"></script>
 
     <!-- Profile Card -->
     <div class="bg-white p-6 rounded-lg shadow-lg flex items-center space-x-6">
@@ -154,9 +154,12 @@
             </div>
 
             <!-- Edit Profile Button (Only for Own Profile) / Follow Button-->
-            <div id="follow-btn-container" class="w-full flex justify-center items-center relative">
+            <div id="follow-btn-container" class="w-full flex flex-col justify-center items-center space-y-2">
                 {% if is_own_profile %}
-                    <div class="bg-yellow-500 text-black text-center font-bold py-2 px-4 rounded">
+                    <div class="w-full bg-yellow-500 text-black text-center font-bold py-2 px-4 rounded flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg> 
                         Volontera Points:{% if user.volunteer %} {{ user.volunteer.volontera_points }} {% elif user.organization %} {{ user.organization.volontera_points }} {% endif %}
                     </div>
                     <a href="{% url 'volunteers_organizations:update_profile' %}" 
@@ -167,40 +170,58 @@
                         <span class="font-bold">Edit Profile</span>
                     </a>    
                 {% else %}
-                    {% if is_following.is_following %}
-                        <button id="unfollow-btn" 
-                        hx-delete="{% url 'volunteers_organizations:delete_following' user_profile.account.account_uuid %}"
-                        hx-trigger="click"
-                        hx-target="#follow-btn-container"
-                        class="w-full mx-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center space-x-2">
+                    {% if user.volunteer %}
+                        {% if is_following.is_following %}
+                            <button id="unfollow-btn" 
+                            hx-delete="{% url 'volunteers_organizations:delete_following' user_profile.account.account_uuid %}"
+                            hx-trigger="click"
+                            hx-target="#follow-btn-container"
+                            class="w-full mx-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center space-x-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+                                </svg>
+                                <span class="font-bold">Unfollow</span>
+                            </button>
+                        {% else %}
+                            <button id="follow-btn"
+                            hx-post="{% url 'volunteers_organizations:create_following' user_profile.account.account_uuid %}"
+                            hx-trigger="click"
+                            hx-target="#follow-btn-container"
+                            class="w-full mx-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+                                </svg>                      
+                                <span class="font-bold">Follow</span>
+                            </button>
+                        {% endif %}
+                        {% if user_profile.organization %}
+                            <button onclick="document.getElementById('donate-modal').classList.remove('hidden'); document.getElementById('donate-modal').classList.add('flex');" 
+                                class="w-full mx-4 px-4 py-2 bg-yellow-500 hover:bg-yellow-700 text-black font-bold rounded flex items-center justify-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>                              
+                                Donate Volontera Points
+                            </button>
+                        {% endif %}
+                        <button 
+                            class="w-full mx-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded mt-3 flex items-center justify-center space-x-2 open-message-modal"
+                            data-recipient-id="{{ user_profile.account.account_uuid }}"
+                        >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                             </svg>
-                            <span class="font-bold">Unfollow</span>
+                            Message User
                         </button>
                     {% else %}
-                        <button id="follow-btn"
-                        hx-post="{% url 'volunteers_organizations:create_following' user_profile.account.account_uuid %}"
-                        hx-trigger="click"
-                        hx-target="#follow-btn-container"
-                        class="w-full mx-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2">
+                        <button 
+                            class="w-full mx-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded mt-3 flex items-center justify-center space-x-2 open-message-modal"
+                            data-recipient-id="{{ user_profile.account.account_uuid }}"
+                        >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-                            </svg>                      
-                            <span class="font-bold">Follow</span>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                            </svg>
+                            Message User
                         </button>
-                    {% endif %}
-                    <button 
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-3 open-message-modal"
-                        data-recipient-id="{{ user_profile.account.account_uuid }}"
-                    >
-                        Message User
-                    </button>
-                    {% if user_profile.organization %}
-                    <button onclick="document.getElementById('donate-modal').classList.remove('hidden'); document.getElementById('donate-modal').classList.add('flex');" 
-                        class="bg-yellow-500 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded">
-                        Donate Volontera Points
-                    </button>
                     {% endif %}
                 {% endif %}
             </div>
@@ -240,12 +261,14 @@
                     hx-trigger="submit"
                     hx-target="#status-posts-container"
                     class="space-y-3">
-                    <textarea name="content" class="w-full p-2 border rounded" placeholder="What's on your mind?" required></textarea>
+                    <textarea name="content" class="w-full p-3 border border-gray-300 bg-gray-100 rounded-lg 
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                    transition-all duration-200" placeholder="What's on your mind?" required></textarea>
                     <div class="flex justify-end">
                         <button type="submit" class="bg-blue-600 text-white px-4 py-1 text-sm rounded-md flex items-center justify-center space-x-2">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
-                            </svg>                              
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                            </svg>                             
                             <span class="font-bold">Post</span>
                         </button>
                     </div>
@@ -256,6 +279,7 @@
             <!-- Posts -->
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h1 class="text-lg text-center font-bold mb-2">Posts</h1>
+                <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
                 <div id="status-posts-container" class="w-full mb-6 space-y-4">
                     {% for post in status_posts %}
                     <div class="border-l-4 border-blue-500 pl-4">
@@ -288,7 +312,7 @@
             <!-- Create Endorsement (Only for Other Profiles) -->
             {% if not is_own_profile %}
                 <!--If both the user and profile being viewed are organizations, dont give possibility to endorse-->
-                {% if user.organization and user_profile.organization %}
+                {% if user.organization or user_profile.organization %}
                 {% else %}
                     <div class="bg-white p-4 rounded-lg shadow-md">
                         <h2 class="text-lg font-bold mb-2">Endorse This User</h2>
@@ -297,7 +321,9 @@
                             hx-trigger="submit"
                             hx-target="#endorsements-container"
                             class="space-y-3">
-                            <textarea name="endorsement" class="w-full p-2 border rounded" placeholder="Write an endorsement..." required></textarea>
+                            <textarea name="endorsement" class="w-full p-3 border border-gray-300 bg-gray-100 rounded-lg 
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                            transition-all duration-200" placeholder="Write an endorsement..." required></textarea>
                             <div class="flex justify-end">
                                 <button type="submit" class="bg-green-600 text-white px-4 py-1 text-sm rounded-md flex items-center justify-center space-x-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -312,40 +338,44 @@
             {% endif %}
 
             <!-- Endorsements -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h1 class="text-lg text-center font-bold mb-2">Endorsements</h1>
-                <div id="endorsements-container" class="w-full mb-6 space-y-4">
-                    {% for endorsement in endorsements %}
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <p class="text-gray-700 font-bold">
-                            {% if endorsement.giver.user_type == "Volunteer" %}
-                                {{ endorsement.giver.volunteer.first_name }} {{ endorsement.giver.volunteer.last_name }}
-                            {% elif endorsement.giver.user_type == "Organization" %}
-                                {{ endorsement.giver.organization.organization_name }}
-                            {% else %}
-                                Unknown User
-                            {% endif %}
-                        </p>
-                        <p class="text-gray-500 text-sm italic">{{ endorsement.giver.user_type }}</p> 
-                        <p class="text-gray-700">"{{ endorsement.endorsement }}"</p>
-                        <p class="text-sm text-gray-500">{{ endorsement.created_at|timesince }} ago</p>
+            {% if user.organization or user_profile.organization %}
+            {% else %}
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h1 class="text-lg text-center font-bold mb-2">Endorsements</h1>
+                    <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
+                    <div id="endorsements-container" class="w-full mb-6 space-y-4">
+                        {% for endorsement in endorsements %}
+                        <div class="border-l-4 border-green-500 pl-4">
+                            <p class="text-gray-700 font-bold">
+                                {% if endorsement.giver.user_type == "Volunteer" %}
+                                    {{ endorsement.giver.volunteer.first_name }} {{ endorsement.giver.volunteer.last_name }}
+                                {% elif endorsement.giver.user_type == "Organization" %}
+                                    {{ endorsement.giver.organization.organization_name }}
+                                {% else %}
+                                    Unknown User
+                                {% endif %}
+                            </p>
+                            <p class="text-gray-500 text-sm italic">{{ endorsement.giver.user_type }}</p> 
+                            <p class="text-gray-700">"{{ endorsement.endorsement }}"</p>
+                            <p class="text-sm text-gray-500">{{ endorsement.created_at|timesince }} ago</p>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 text-center">No endorsements yet.</p>
+                        {% endfor %}
                     </div>
-                    {% empty %}
-                    <p class="text-gray-500 text-center">No endorsements yet.</p>
-                    {% endfor %}
+                    <!-- Show "All endorsements loaded" only if there are endorsements -->
+                    {% if endorsements %}
+                    <div class="text-center mt-4 text-sm text-gray-500">All endorsements loaded</div>
+                    {% endif %}
                 </div>
-                <!-- Show "All endorsements loaded" only if there are endorsements -->
-                {% if endorsements %}
-                <div class="text-center mt-4 text-sm text-gray-500">All endorsements loaded</div>
-                {% endif %}
-            </div>
+            {% endif %}
 
             <!-- Latest Contributions (Volunteers) or Upcoming Opportunities (Organizations) -->
             {% if is_own_profile and user.volunteer or user_profile.volunteer %}
                 <div class="bg-white p-6 rounded-lg shadow-md">
                     <h2 class="text-lg text-center font-bold mb-2">Latest Contributions</h2>
                     <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
-                    <div class="space-y-4">
+                    <div id="volunteer-contributions-container" class="space-y-4 mb-6">
                         {% for log in engagement_logs %}
                         <div class="flex justify-between border-b pb-2">
                             <p class="text-gray-700">{{ log.log_notes }}</p>
@@ -361,7 +391,7 @@
                 <div class="bg-white p-6 rounded-lg shadow-md">
                     <h2 class="text-lg text-center font-bold mb-2">Upcoming Opportunities</h2>
                     <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
-                    <div class="space-y-4">
+                    <div id="organization-upcoming-opportunities-container" class="space-y-4 mb-6">
                         {% for opportunity in upcoming_opportunities %}
                             <div class="border-b pb-2 transition-transform duration-200 hover:scale-105 hover:bg-gray-100 rounded-md">
                                 <a href="{% url 'opportunities_engagements:opportunity' opportunity.volunteer_opportunity_id %}" 

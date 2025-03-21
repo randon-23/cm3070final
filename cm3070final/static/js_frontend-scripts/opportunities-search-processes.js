@@ -123,3 +123,40 @@ document.getElementById("filter-form").addEventListener("submit", function(event
         proximity.setAttribute("name", "proximity");
     }
 });
+
+document.addEventListener("htmx:afterRequest", function(event) {
+    if (event.detail.target.id === "opportunity-results") {
+        let responseData = event.detail.xhr.responseText;
+        try {
+            let opportunities = JSON.parse(responseData);
+            let resultsContainer = document.getElementById("opportunity-results");
+            resultsContainer.innerHTML = ""; // Clear previous results
+            
+            if (opportunities.length === 0) {
+                resultsContainer.innerHTML = `<p class="text-gray-500 text-center">No opportunities found.</p>`;
+                return;
+            }
+
+            opportunities.forEach(opportunity => {
+                let opportunityHTML = `
+                    <div class="bg-white p-4 shadow rounded-lg mb-4 hover:scale-105 transition transform duration-200 ease-in-out">
+                        <h3 class="font-bold">
+                            <a href="/opportunity/${opportunity.volunteer_opportunity_id}/"
+                               class="text-blue-600 hover:underline">
+                                ${opportunity.title}
+                            </a>
+                        </h3>
+                        <p class="text-sm text-gray-700">${opportunity.description}</p>
+                        <span class="text-xs text-gray-500">
+                            ${opportunity.ongoing ? "Ongoing" : `One-Time - ${opportunity.opportunity_date || "N/A"}`}
+                        </span>
+                    </div>
+                `;
+                resultsContainer.innerHTML += opportunityHTML;
+            });
+        } catch (error) {
+            console.error("Error parsing opportunities:", error);
+            document.getElementById("opportunity-results").innerHTML = `<p class="text-red-500 text-center">Failed to load results.</p>`;
+        }
+    }
+});

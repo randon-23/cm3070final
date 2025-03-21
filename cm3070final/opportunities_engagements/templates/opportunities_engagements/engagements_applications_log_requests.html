@@ -5,46 +5,51 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
-<script src="{% static 'js_frontend-scripts/profile-processes.js.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/profile-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/preferences-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-engagements-processes.js' %}"></script>
+<style>
+    .selected {
+        filter: brightness(0.75);
+    }
+</style>
 
-<div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg mt-6">
-    <h1 class="text-3xl font-bold mb-4">My Engagements, Applications & Log Requests</h1>
+<div class="mx-auto bg-white p-6 rounded-lg shadow-lg mt-6 min-h-[90vh] flex flex-col">
+    <h1 class="text-3xl text-center font-bold mb-4">Engagements, Applications & Log Requests</h1>
 
     <!-- Filter Buttons -->
     <div class="grid grid-cols-3 gap-4">
         <!-- Engagement Filters -->
         <div>
             <h2 class="text-xl font-semibold">Engagements</h2>
-            <div class="flex space-x-2 mt-2">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('engagement', 'ongoing')">Ongoing</button>
-                <button class="bg-green-500 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('engagement', 'completed')">Completed</button>
-                <button class="bg-red-500 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('engagement', 'cancelled')">Cancelled</button>
-                <button class="bg-gray-700 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('engagement', 'all')">All</button>
+            <div class="engagement-filters flex space-x-2 mt-2">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-md" data-status="ongoing" onclick="filterEngagementsApplicationsLogRequests('engagement', 'ongoing')">Ongoing</button>
+                <button class="bg-green-500 text-white px-4 py-2 rounded-md" data-status="completed" onclick="filterEngagementsApplicationsLogRequests('engagement', 'completed')">Completed</button>
+                <button class="bg-red-500 text-white px-4 py-2 rounded-md" data-status="cancelled" onclick="filterEngagementsApplicationsLogRequests('engagement', 'cancelled')">Cancelled</button>
+                <button class="bg-gray-700 text-white px-4 py-2 rounded-md" data-status="all" onclick="filterEngagementsApplicationsLogRequests('engagement', 'all')">All</button>
             </div>
         </div>
 
         <!-- Application Filters -->
         <div>
             <h2 class="text-xl font-semibold">Applications</h2>
-            <div class="flex space-x-2 mt-2">
-                <button class="bg-yellow-500 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('application', 'pending')">Pending</button>
-                <button class="bg-green-500 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('application', 'accepted')">Accepted</button>
-                <button class="bg-gray-500 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('application', 'rejected')">Rejected</button>
-                <button class="bg-red-600 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('application', 'cancelled')">Cancelled</button>
-                <button class="bg-gray-700 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('application', 'all')">All</button>
+            <div class="application-filters flex space-x-2 mt-2">
+                <button class="bg-yellow-500 text-white px-4 py-2 rounded-md" data-status="pending" onclick="filterEngagementsApplicationsLogRequests('application', 'pending')">Pending</button>
+                <button class="bg-green-500 text-white px-4 py-2 rounded-md" data-status="accepted" onclick="filterEngagementsApplicationsLogRequests('application', 'accepted')">Accepted</button>
+                <button class="bg-gray-500 text-white px-4 py-2 rounded-md" data-status="rejected" onclick="filterEngagementsApplicationsLogRequests('application', 'rejected')">Rejected</button>
+                <button class="bg-red-600 text-white px-4 py-2 rounded-md" data-status="cancelled" onclick="filterEngagementsApplicationsLogRequests('application', 'cancelled')">Cancelled</button>
+                <button class="bg-gray-700 text-white px-4 py-2 rounded-md" data-status="all" onclick="filterEngagementsApplicationsLogRequests('application', 'all')">All</button>
             </div>
         </div>
 
         <!-- Log Request Filters -->
         <div>
             <h2 class="text-xl font-semibold">Log Requests</h2>
-            <div class="flex space-x-2 mt-2">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('log-request', 'pending')">Pending</button>
-                <button class="bg-green-500 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('log-request', 'approved')">Approved</button>
-                <button class="bg-red-500 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('log-request', 'rejected')">Rejected</button>
-                <button class="bg-gray-700 text-white px-4 py-2 rounded-md" onclick="filterEngagementsApplicationsLogRequests('log-request', 'all')">All</button>
+            <div class="log-request-filters flex space-x-2 mt-2">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-md" data-status="pending" onclick="filterEngagementsApplicationsLogRequests('log-request', 'pending')">Pending</button>
+                <button class="bg-green-500 text-white px-4 py-2 rounded-md" data-status="approved" onclick="filterEngagementsApplicationsLogRequests('log-request', 'approved')">Approved</button>
+                <button class="bg-red-500 text-white px-4 py-2 rounded-md" data-status="rejected" onclick="filterEngagementsApplicationsLogRequests('log-request', 'rejected')">Rejected</button>
+                <button class="bg-gray-700 text-white px-4 py-2 rounded-md" data-status="all" onclick="filterEngagementsApplicationsLogRequests('log-request', 'all')">All</button>
             </div>
         </div>
     </div>
@@ -53,7 +58,6 @@
     <div class="grid grid-cols-3 gap-6 mt-4">
         <!-- Engagements -->
         <div>
-            <h2 class="text-xl font-semibold mb-2">Engagements</h2>
             <div id="engagements-container">
                 {% for engagement in engagements %}
                     <div class="engagement-card bg-gray-100 p-4 rounded-lg shadow-md mt-2" data-status="{{ engagement.engagement_status }}">
@@ -61,14 +65,13 @@
                         <p><strong>Status:</strong> {{ engagement.engagement_status|title }}</p>
                     </div>
                 {% empty %}
-                    <p class="text-gray-500">No engagements found.</p>
+                    <p class="no-results text-gray-500">No engagements found.</p>
                 {% endfor %}
             </div>
         </div>
 
         <!-- Applications -->
         <div>
-            <h2 class="text-xl font-semibold mb-2">Applications</h2>
             <div id="applications-container">
                 {% for application in applications %}
                     <div class="application-card bg-gray-100 p-4 rounded-lg shadow-md mt-2" data-status="{{ application.application_status }}">
@@ -76,14 +79,13 @@
                         <p><strong>Status:</strong> {{ application.application_status|title }}</p>
                     </div>
                 {% empty %}
-                    <p class="text-gray-500">No applications found.</p>
+                    <p class="no-results text-gray-500">No applications found.</p>
                 {% endfor %}
             </div>
         </div>
 
         <!-- Log Requests -->
         <div>
-            <h2 class="text-xl font-semibold mb-2">Log Requests</h2>
             <div id="log-requests-container">
                 {% for log_request in log_requests %}
                     <div class="log-request-card bg-gray-100 p-4 rounded-lg shadow-md mt-2" data-status="{{ log_request.status }}">
@@ -98,7 +100,7 @@
                         {% endif %}
                     </div>
                 {% empty %}
-                    <p class="text-gray-500">No log requests found.</p>
+                    <p class="no-results text-gray-500">No log requests found.</p>
                 {% endfor %}
             </div>
         </div>

@@ -53,7 +53,8 @@ def profile_view(request, account_uuid):
         if user_profile.status_code==404:
             context['message'] = 'Profile not found'
         else:
-            context['user_profile'] = json.loads(user_profile.content)
+            user_profile = json.loads(user_profile.content)
+            context['user_profile'] = user_profile
 
         # Get whether logged-in user is following the profile user
         is_following = get_following(request, account_uuid)
@@ -69,7 +70,7 @@ def profile_view(request, account_uuid):
         else:
             context['followers_count'] = followers.data
 
-        if user_profile.volunteer:
+        if user_profile["account"]["user_type"] == "volunteer":
             engagement_logs = get_engagement_logs(request, account_uuid)
             if engagement_logs.status_code==404:
                 context['message'] = 'Engagement logs not found'
@@ -81,7 +82,7 @@ def profile_view(request, account_uuid):
                     log["volunteer_engagement"]["organization"].get("organization_name", "Unknown")
                     for log in logs_data if log["volunteer_engagement"]["organization"]
                 ))
-        elif user_profile.organization:
+        elif user_profile["account"]["user_type"] == "organization":
             upcoming_opportunities = get_upcoming_opportunities(request, account_uuid)
             if upcoming_opportunities.status_code==404:
                 context['message'] = 'Upcoming opportunities not found'
@@ -148,8 +149,6 @@ def profile_view(request, account_uuid):
     else:
         context['endorsements'] = endorsements.data
 
-    ### NEED TO CALL get_engagement_logs(request, account_uuid) to get the engagement logs of the user
-    print(context)
     return render(request, 'volunteers_organizations/profile.html', context)
 
 @login_required

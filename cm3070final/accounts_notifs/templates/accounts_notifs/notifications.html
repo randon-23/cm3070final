@@ -4,8 +4,9 @@
 {% block auth_content %}
     <script src="{% static 'js_frontend-scripts/notifications-processes.js' %}"></script>
 
-    <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6">
-        <h2 class="text-2xl font-bold mb-4">Notifications</h2>
+    <div class="mx-auto bg-white shadow-md rounded-lg p-6 min-h-[90vh] flex flex-col">
+        <h2 class="text-2xl text-center font-bold mb-4">Notifications</h2>
+        <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
 
         <!-- Notifications Container -->
         <div id="notifications-container">
