@@ -393,10 +393,11 @@
                     <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
                     <div id="organization-upcoming-opportunities-container" class="space-y-4 mb-6">
                         {% for opportunity in upcoming_opportunities %}
-                            <div class="border-b pb-2 transition-transform duration-200 hover:scale-105 hover:bg-gray-100 rounded-md">
+                            <div class="border-b bg-gray-200 pb-2 transition-transform duration-200 hover:scale-105 hover:bg-gray-300 rounded-md">
                                 <a href="{% url 'opportunities_engagements:opportunity' opportunity.volunteer_opportunity_id %}" 
                                    class="flex justify-between items-center p-3 text-gray-700 font-semibold hover:text-blue-600">
                                     <p>{{ opportunity.title }}</p>
+                                    <p>{{ opportunity.description }}</p>
                                     <p class="text-gray-500">
                                         {% if opportunity.ongoing %}
                                             Ongoing

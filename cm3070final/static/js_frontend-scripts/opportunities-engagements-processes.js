@@ -24,31 +24,48 @@ function toggleGroupApplication() {
 
 // Toggles the visibility of the engagement type fields based on the selected radio button
 function filterOpportunities(status) {
+    let hasOpportunities = false;
+
     document.querySelectorAll('.opportunity-card').forEach(card => {
         if (card.getAttribute('data-status') === status) {
             card.style.display = 'block';
+            hasOpportunities = true;
         } else {
             card.style.display = 'none';
         }
     });
 
-    // If no opportunities, show message
-    if (!document.querySelector(`.opportunity-card[data-status="${status}"]`)) {
-        document.getElementById('opportunities-container').innerHTML = `<p class="text-center text-gray-500 mt-4">No ${status} opportunities available.</p>`;
-    }
-}
+    // Show or hide "No opportunities available" message without removing elements
+    let messageContainer = document.getElementById('no-opportunities-message');
 
-// Toggles the group application fields based on the selected radio button
-function toggleGroupApplication() {
-    let checkbox = document.getElementById('as_group');
-    let groupSizeContainer = document.getElementById('group-size-container');
-    
-    if (checkbox.checked) {
-        groupSizeContainer.classList.remove('hidden');
-    } else {
-        groupSizeContainer.classList.add('hidden');
+    if (!hasOpportunities) {
+        if (!messageContainer) {
+            messageContainer = document.createElement('p');
+            messageContainer.id = 'no-opportunities-message';
+            messageContainer.className = 'text-center text-gray-500 mt-4';
+            messageContainer.innerText = `No ${status} opportunities available.`;
+            document.getElementById('opportunities-container').appendChild(messageContainer);
+        } else {
+            messageContainer.innerText = `No ${status} opportunities available.`;
+            messageContainer.style.display = 'block';
+        }
+    } else if (messageContainer) {
+        messageContainer.style.display = 'none';
+    }
+
+    // Update active tab styling
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('border-blue-600'));
+    const activeTab = document.querySelector(`[onclick="filterOpportunities('${status}')"]`);
+    if (activeTab) {
+        activeTab.classList.add('border-blue-600');
     }
 }
+// Apply default filter on page load (show only upcoming opportunities)
+document.addEventListener("DOMContentLoaded", function () {
+    if(document.getElementById("opportunities-container")){
+        filterOpportunities("upcoming");   
+    }
+});
 
 // Toggles the visibility of the session type fields based on the selected radio button
 function filterSessions(status) {

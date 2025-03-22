@@ -4,7 +4,7 @@
         <!-- Modal Header -->
         <div class="flex justify-center relative mb-4">
             <h2 class="text-2xl font-bold mx-auto">Create a New Opportunity</h2>
-            <button onclick="document.getElementById('create-opportunity-modal').classList.add('hidden'); document.getElementById('create-opportunity-modal').classList.remove('flex')" 
+            <button onclick="document.getElementById('create-opportunity-modal').classList.add('hidden'); document.getElementById('create-opportunity-modal').classList.remove('flex'); document.getElementById('create-opportunity-form').reset()" 
                 class="absolute right-0 text-gray-500 hover:text-gray-700">✕
             </button>
         </div>
@@ -117,29 +117,27 @@
             <!-- Duration (Short-Term for One-Time, Selectable for Ongoing) -->
             <div class="bg-gray-100 p-4 rounded-lg">
                 <label class="block text-gray-700 font-semibold mb-2">Duration</label>
-                <select name="duration" id="duration-select" class="w-full text-sm text-gray-800 bg-white rounded-md outline-blue-600">
+                <select name="duration" id="duration-select" class="w-full text-sm text-gray-800 bg-white rounded-md outline-blue-600" disabled>
                     <option value="short-term" selected>Short-Term</option>
                     <option value="medium-term">Medium-Term</option>
                     <option value="long-term">Long-Term</option>
                 </select>
             </div>
 
-            <!-- Area of Work -->
+            <!-- Area of Work (Single Selection Dropdown) -->
             <div class="bg-gray-100 p-4 rounded-lg">
-                <label class="block text-gray-700 font-semibold mb-4">Fields of Interest (Max 5)</label>
-                <div class="grid grid-cols-3 gap-4">
+                <label class="block text-gray-700 font-semibold mb-2">Area of Work</label>
+                <select name="area_of_work" required 
+                        class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
                     {% for field in area_of_work %}
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" name="area_of_work" value="{{ field }}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                            <span class="text-gray-800">{{ field|title }}</span>
-                        </label>
+                        <option value="{{ field }}">{{ field|title }}</option>
                     {% endfor %}
-                </div>
+                </select>
             </div>
 
             <!-- Requirements -->
             <div class="bg-gray-100 p-4 rounded-lg">
-                <label class="block text-gray-700 font-semibold mb-2">Required Skills</label>
+                <label class="block text-gray-700 font-semibold mb-2">Required skills</label>
                 <div class="grid grid-cols-3 gap-4">
                     {% for skill in requirements %}
                         <label class="flex items-center space-x-2">

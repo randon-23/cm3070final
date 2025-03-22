@@ -8,6 +8,7 @@ from .models import VolunteerOpportunity, VolunteerOpportunityApplication, Volun
 from .serializers import VolunteerOpportunitySerializer, VolunteerOpportunityApplicationSerializer, VolunteerEngagementSerializer, VolunteerOpportunitySessionSerializer, VolunteerSessionEngagementSerializer, VolunteerEngagementLogSerializer
 import json
 from django.utils import timezone
+from django.http import QueryDict
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -176,11 +177,29 @@ def create_opportunity(request):
         except Organization.DoesNotExist:
             return Response({"error": "Organization not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        data = request.data.copy()
-        data["organization"] = organization.pk
+        if isinstance(request.data, QueryDict):
+            data = request.data.copy()
+            formatted_data = {}
+
+            for key, value in data.lists():
+                if key in ["requirements", "languages", "days_of_week"]:  # Fields stored as lists with multiple values
+                    formatted_data[key] = value  # Just assign the list directly
+                elif key in ["required_location"]: # Location field stored as JSON
+                    try:
+                        formatted_data[key] = json.loads(value[0]) if isinstance(value[0], str) else value[0]
+                    except json.JSONDecodeError:
+                        return Response({'error': 'Invalid JSON for location field'}, status=status.HTTP_400_BAD_REQUEST)
+                else: # All other fields stored as single values
+                    formatted_data[key] = value[0] if value else None
+
+            formatted_data["organization"] = organization.pk
+        else:
+            data = request.data.copy()
+            data["organization"] = organization.pk
+            formatted_data = data
 
         # Validate and create the opportunity
-        serializer = VolunteerOpportunitySerializer(data=data, context={"request": request})
+        serializer = VolunteerOpportunitySerializer(data=formatted_data, context={"request": request})
         if serializer.is_valid():
             opportunity = serializer.save()
             return Response({"message": "Successfully created opportunity", "data": serializer.data}, status=status.HTTP_201_CREATED)

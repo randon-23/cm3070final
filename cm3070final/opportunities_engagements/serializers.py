@@ -11,7 +11,7 @@ Account = get_user_model()
 
 class VolunteerOpportunitySerializer(serializers.ModelSerializer):
     contribution_hours = serializers.SerializerMethodField()  # Dynamically calculated, not stored
-    organization = OrganizationSerializer(read_only=True)
+    organization = UserDataSerializer(source='organization.account', read_only=True)
 
     class Meta:
         model = VolunteerOpportunity

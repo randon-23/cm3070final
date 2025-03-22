@@ -43,7 +43,7 @@ document.addEventListener("htmx:afterRequest", function(event) {
         updateContent(event);
     } 
     // Applications
-    else if(url.includes('/applications/create_application/')){
+    else if(url.includes('/applications/create/')){
         console.log("Creating application!", event);
         updateContent(event);
     } else if(url.includes('/applications/reject/')){

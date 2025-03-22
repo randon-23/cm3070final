@@ -5,7 +5,7 @@
         <!-- Modal Header -->
         <div class="flex justify-center relative mb-4">
             <h2 class="text-2xl font-bold mx-auto">Apply for Opportunity</h2>
-            <button onclick="document.getElementById('apply-opportunity-modal').classList.add('hidden')" 
+            <button onclick="document.getElementById('apply-opportunity-modal').classList.add('hidden'); document.getElementById('apply-opportunity-modal').classList.remove('flex'); document.getElementById('create-application-form').reset(); toggleGroupApplication();" 
                 class="absolute right-0 text-gray-500 hover:text-gray-700">✕
             </button>
         </div>
@@ -62,16 +62,3 @@
         </form>
     </div>
 </div>
-
-<script>
-    function toggleGroupApplication() {
-        let checkbox = document.getElementById('as_group');
-        let groupSizeContainer = document.getElementById('group-size-container');
-        
-        if (checkbox.checked) {
-            groupSizeContainer.classList.remove('hidden');
-        } else {
-            groupSizeContainer.classList.add('hidden');
-        }
-    }
-</script>

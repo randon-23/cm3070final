@@ -66,6 +66,12 @@ function updateContent(event){
             modalContent = `<p>${data.message}</p>`;
         } else if(data.error){
             modalContent = `<p>${data.error}</p>`;
+        } else if(data.non_field_errors){
+            if(data.non_field_errors[0].includes('must make a unique set')){
+                modalContent = `<p>Error - Already done</p>`;
+            } else {
+                modalContent = `<p>${data.non_field_errors}</p>`;
+            }
         }
         
         if (event.detail.xhr.status === 400 && typeof data.data === 'object') {

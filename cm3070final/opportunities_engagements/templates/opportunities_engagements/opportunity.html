@@ -6,7 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
 <script src="{% static 'js_frontend-scripts/profile-processes.js' %}"></script>
-<script src="{% static 'js_frontend-scripts/messages-processes.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/message-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-search-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-engagements-processes.js' %}"></script>
 
@@ -30,38 +30,52 @@
     window.isOpportunityOwner = "{{ is_opportunity_owner|yesno:'true,false' }}" === "true";
 </script>
 
-<div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg mt-6 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6">
+<div class="mx-auto bg-white p-6 rounded-lg shadow-lg mt-6 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6">
     
     <!-- Left Side: Main Opportunity Content -->
-    <div class="w-full lg:w-2/3">
-        <h1 class="text-3xl font-bold">{{ opportunity.title }}</h1>
-        <p class="text-gray-700 mt-2">{{ opportunity.description }}</p>
+    <div class="w-full lg:w-2/3 space-y-6">
+        <div class="bg-gray-100 p-4 rounded-lg shadow-md">
+            <h1 class="text-3xl font-bold">{{ opportunity.title }}</h1>
+            <p class="text-gray-700 mt-2">{{ opportunity.description }}</p>
+        </div>
+        
+        <div class="bg-gray-100 p-4 rounded-lg shadow-md mt-4">
+            <div class="grid grid-cols-2 gap-4 mt-4">
+                <p><strong>Status:</strong> {{ opportunity.status|title }}</p>
+                <p><strong>Opportunity Type:</strong>{% if opportunity.ongoing %} Ongoing {% else %} One-Time {% endif %}</p>
+                <p><strong>Work Type:</strong> {{ opportunity.work_basis|title }}</p>
+                <p><strong>Duration:</strong> {{ opportunity.duration|title }}</p>
+                <p><strong>Location:</strong> {{ opportunity.required_location.formatted_address }}</p>
+                <p><strong>Languages Required:</strong> {{ opportunity.languages|join:", " }}</p>
+                <p><strong>Group Applications:</strong> {% if opportunity.can_apply_as_group %}Allowed{% else %}Not Allowed{% endif %}</p>
+                {% if opportunity.ongoing %}
+                    <p><strong>Days Available:</strong> {{ opportunity.days_of_week|join:", " }}</p>
+                {% else %}
+                    <p><strong>Date:</strong> {{ opportunity.opportunity_date }}</p>
+                    <p><strong>Time:</strong> {{ opportunity.opportunity_time_from }} - {{ opportunity.opportunity_time_to }}</p>
+                    {% if opportunity.slots %}
+                        <p><strong>Slots:</strong> {{ opportunity.slots }}</p>
+                    {% endif %}
+                {% endif %}
+                <p><strong>Field of Interest:</strong> {{ opportunity.area_of_work|title }}</p>
+                <p><strong>Requirements:</strong> {{ opportunity.requirements|join:", " |title }}</p>
+            </div>
+        </div>
 
-        <div class="grid grid-cols-2 gap-4 mt-4">
-            <p><strong>Status:</strong> {{ opportunity.status|title }}</p>
-            <p><strong>Work Type:</strong> {{ opportunity.work_basis|title }}</p>
-            <p><strong>Duration:</strong> {{ opportunity.duration|title }}</p>
-            <p><strong>Location:</strong> {{ opportunity.required_location.formatted_address }}</p>
-            <p><strong>Languages Required:</strong> {{ opportunity.languages|join:", " }}</p>
-            <p><strong>Group Applications:</strong> {% if opportunity.can_apply_as_group %}Allowed{% else %}Not Allowed{% endif %}</p>
-            {% if opportunity.ongoing %}
-                <p><strong>Days Available:</strong> {{ opportunity.days_of_week|join:", " }}</p>
-            {% else %}
-                <p><strong>Date:</strong> {{ opportunity.opportunity_date }}</p>
-                <p><strong>Time:</strong> {{ opportunity.opportunity_time_from }} - {{ opportunity.opportunity_time_to }}</p>
-            {% endif %}
-            <p><strong>Field of Interest:</strong> {{ opportunity.area_of_work|title }}</p>
-            <p><strong>Requirements:</strong> {{ opportunity.requirements|join:", " }}</p>
-            {% if is_opportunity_owner %}
+        {% if is_opportunity_owner %}
+            <div class="flex justify-center items-center flex-grow py-6">
                 <button 
-                    class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                    class="w-full bg-blue-600 text-white px-6 py-3 rounded-md font-bold hover:bg-blue-700 flex items-center justify-center space-x-2"
                     hx-get="{% url 'opportunities_engagements:get_opportunity_engagements' opportunity.volunteer_opportunity_id %}"
                     hx-trigger="click"
                     hx-target="#engagees-modal-content">
-                    View Engagees
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                        </svg>
+                        <span class="font-bold">View Engagees</span>
                 </button>
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
 
         <!-- Sessions Section (Only for ongoing opportunities) -->
         {% if opportunity.ongoing %}
@@ -146,17 +160,26 @@
                 <h2 class="text-xl font-semibold mb-2">Manage Opportunity</h2>
                 <div class="flex flex-col space-y-2">
                     <button onclick="openCompleteOpportunityModal('{{ opportunity.volunteer_opportunity_id }}')"
-                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
-                        Complete Opportunity
+                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center justify-center space-x-2 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            <span class="font-bold">Complete Opportunity</span>
                     </button>
                     <button onclick="cancelOpportunity('{{ opportunity.volunteer_opportunity_id }}')"
-                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
-                        Cancel Opportunity
+                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            <span class="font-bold">Cancel Opportunity</span>
                     </button>
                     {% if opportunity.ongoing and opportunity.status == "upcoming" %}
                         <button onclick="document.getElementById('create-session-modal').classList.remove('hidden')"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                            Create Session
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                <span class="font-bold">Create Session</span>
                         </button>
                     {% endif %}
                 </div>
@@ -164,26 +187,41 @@
                 <h2 class="text-xl font-semibold mb-2">Your Status</h2>
                 <div class="flex flex-col space-y-2">
                     {% if not has_applied %}
-                        <button onclick="document.getElementById('apply-opportunity-modal').classList.remove('hidden')"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                            Apply for Opportunity
+                        <button onclick="document.getElementById('apply-opportunity-modal').classList.remove('hidden'); document.getElementById('apply-opportunity-modal').classList.add('flex')"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
+                                </svg>
+                                <span class="font-bold">Apply for Opportunity</span>
                         </button>
                     {% elif is_rejected %}
-                        <button class="bg-red-500 text-white px-4 py-2 rounded-md cursor-not-allowed">
-                            Rejected
+                        <button class="bg-red-500 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                <span class="font-bold">Rejected</span>
                         </button>
                     {% elif has_applied and not is_engaged %}
-                        <button class="bg-gray-400 text-white px-4 py-2 rounded-md cursor-not-allowed">
-                            Applied
+                        <button class="bg-gray-400 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282m0 0h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904m10.598-9.75H14.25M5.904 18.5c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 0 1-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h1.053c.472 0 .745.556.5.96a8.958 8.958 0 0 0-1.302 4.665c0 1.194.232 2.333.654 3.375Z" />
+                                </svg>                              
+                                <span class="font-bold">Applied</span>
                         </button>
                     {% elif is_engaged %}
-                        <button class="bg-green-600 text-white px-4 py-2 rounded-md cursor-not-allowed">
-                            Engaged
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg> 
+                                <span class="font-bold">Engaged</span>
                         </button>
                         {% if opportunity.ongoing and opportunity.status == "upcoming" %}
                             <button onclick="document.getElementById('create-engagement-log-modal').classList.remove('hidden')"
-                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                                Create Engagement Log
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    <span class="font-bold">Create Engagement Log</span>
                             </button>
                         {% endif %}
                     {% endif %}
@@ -193,17 +231,21 @@
 
         <!-- Organization Details Sidebar -->
         <div class="bg-gray-100 p-4 rounded-lg shadow-md">
-            <img src="{{ organization.organization_profile_img }}" alt="Organization Logo" class="w-full h-40 object-cover rounded-lg mb-4">
-            <h2 class="text-xl font-bold">{{ organization.organization_name }}</h2>
-            <p class="text-gray-700 mt-2">{{ organization.organization_description }}</p>
-            <p class="text-gray-600"><strong>Location:</strong> {{ organization.organization_address.raw }}</p>
+            <img src="{{ organization.organization.organization_profile_img }}" alt="Organization Logo" class="w-full h-40 object-cover rounded-lg mb-4">
+            <h2 class="text-xl font-bold">{{ organization.organization.organization_name }}</h2>
+            <p class="text-gray-700 mt-2">{{ organization.organization.organization_description }}</p>
+            <p class="text-gray-600"><strong>Location:</strong> {{ organization.organization.organization_address.raw }}</p>
             {% if not is_opportunity_owner %}
-                <button 
-                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-3 open-message-modal"
-                    data-recipient-id="{{ organization.account.account_uuid }}"
-                >
-                    Message Organization
-                </button>
+                <div class="flex justify-center mt-3">
+                    <button 
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center space-x-2 open-message-modal"
+                        data-recipient-id="{{ organization.account.account_uuid }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                        </svg>
+                        <span class="font-bold">Message Organization</span>
+                    </button>
+                </div>
             {% endif %}
         </div>
     </div>

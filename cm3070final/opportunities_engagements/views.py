@@ -110,8 +110,9 @@ def opportunity_view(request, opportunity_id):
         applications_response = get_volunteer_applications(request, account.account_uuid)
         if applications_response.status_code == 200:
             applications = applications_response.data
+            print(applications)
             for app in applications:
-                if app["volunteer_opportunity"]["volunteer_opportunity_id"] == opportunity_id:
+                if app["volunteer_opportunity"]["volunteer_opportunity_id"] == str(opportunity_id):
                     context["has_applied"] = True
                     context["is_rejected"] = app["application_status"] == "rejected"
                     break
@@ -121,7 +122,7 @@ def opportunity_view(request, opportunity_id):
         if engagements_response.status_code == 200:
             engagements = engagements_response.data
             context["is_engaged"] = any(
-                eng["volunteer_opportunity_application"]["volunteer_opportunity"]["volunteer_opportunity_id"] == opportunity_id
+                eng["volunteer_opportunity_application"]["volunteer_opportunity"]["volunteer_opportunity_id"] == str(opportunity_id)
                 and eng["engagement_status"] == "accepted"
                 for eng in engagements
             )
