@@ -2,12 +2,15 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Chat
 from .api import get_chats, get_messages
+from accounts_notifs.helpers import has_unread_notifications
 
 # Create your views here.
 @login_required
 def chats_view(request):
     account = request.user
     context = {}
+    has_unread = has_unread_notifications(account)
+    context["has_unread_notifications"] = has_unread
 
     # Get the user's chats
     chats_response = get_chats(request)

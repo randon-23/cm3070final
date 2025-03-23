@@ -134,20 +134,21 @@ class TestFollowingCreateSerializer(TestCase):
             serializer.is_valid(raise_exception=True)
         self.assertIn("Cannot follow yourself", str(error.exception))
 
-    # Ensure organizations cannot follow anyone
-    def test_organization_cannot_follow(self):
+    # Ensure organizations cannot follow other organizations
+    def test_organization_cannot_follow_other_organizations(self):
         org_follower = Account.objects.create_user(
             email_address="org_follower@example.com",
             password="SecurePass123!",
             user_type="organization",
             contact_number="+35655556666"
         )
+        Organization.objects.create(account=org_follower, organization_name="The Helpers", organization_description="NGO")
         self.mock_request.user = org_follower
-        data = {"followed_volunteer": self.volunteer}
+        data = {"followed_organization": self.organization_followee}
         serializer = FollowingCreateSerializer(data=data, context={"request": self.mock_request})
         with self.assertRaises(ValidationError) as error:
             serializer.is_valid(raise_exception=True)
-        self.assertIn("Organizations cannot follow", str(error.exception))
+        self.assertIn("Organizations cannot follow other organizations", str(error.exception))
 
 class TestEndorsementSerializer(TestCase):
     def setUp(self):

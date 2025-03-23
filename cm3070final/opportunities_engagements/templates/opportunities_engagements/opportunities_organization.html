@@ -15,7 +15,7 @@
         <div class="flex justify-between items-center mt-6 mb-4 border-b pb-4">
             <h1 class="text-3xl font-bold text-gray-800">Your Opportunities</h1>
             <button onclick="document.getElementById('create-opportunity-modal').classList.remove('hidden'); document.getElementById('create-opportunity-modal').classList.add('flex')" 
-                    class="bg-blue-600 font-bold text-white px-4 py-2 rounded-md shadow-md hover:bg-blue-700">
+                    class="bg-blue-600 font-bold text-white px-4 py-2 rounded-md shadow-md hover:bg-blue-700 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
                 + Create Opportunity
             </button>
         </div>
@@ -32,14 +32,14 @@
             </button>
             <button class="tab-btn py-2 px-4 text-gray-800 border-b-2 border-transparent hover:border-blue-600 focus:border-blue-600"
                     onclick="filterOpportunities('cancelled')">
-                Cancelled
+                <span class="font-bold"></span>Cancelled
             </button>
         </div>
 
         <!-- Opportunity Cards -->
-        <div id="opportunities-container" class="mt-6 space-y-4 flex-grow">
+        <div id="opportunities-container" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
             {% for opportunity in all_opportunities %}
-                <div class="opportunity-card bg-white p-6 rounded-lg shadow-md border border-gray-200 cursor-pointer"
+                <div class="opportunity-card bg-white p-6 rounded-lg shadow-md border border-gray-200 cursor-pointer transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-50"
                     data-status="{{ opportunity.status }}"
                     data-url="{% url 'opportunities_engagements:opportunity' opportunity_id=opportunity.volunteer_opportunity_id %}"
                     onclick="window.location.href=this.getAttribute('data-url')">
@@ -54,9 +54,13 @@
                             <p><strong>Days Available:</strong> {{ opportunity.days_of_week|join:", " }}</p>
                         {% else %}
                             <p><strong>Opportunity Date:</strong> {{ opportunity.opportunity_date }}</p>
-                        {% endif %}
+                            <p><strong>From:</strong> {{ opportunity.opportunity_time_from }}</p>
+                            <p><strong>To:</strong> {{ opportunity.opportunity_time_to }}</p>
+                            {% endif %}
                         <p><strong>Location:</strong> {{ opportunity.required_location.formatted_address }}</p>
-                        <p><strong>Skills Required:</strong> {{ opportunity.requirements|join:", " }}</p>
+                        <p><strong>Area of Work:</strong> {{ opportunity.area_of_work|title }}</p>
+                        <p><strong>Skills Required:</strong> {{ opportunity.requirements|join:", "|title }}</p>
+                        <p><strong>Languages:</strong> {{ opportunity.languages|join:", " }}</p>
                         {% if opportunity.application_deadline %}
                             <p><strong>Application Deadline:</strong> {{ opportunity.application_deadline }}</p>
                         {% endif %}

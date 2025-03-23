@@ -1,5 +1,6 @@
 {% extends 'base/base_authenticated.html' %}
 {% load static %}
+{% load custom_filters %}
 {% block title %}Notifications{% endblock %}
 {% block auth_content %}
     <script src="{% static 'js_frontend-scripts/notifications-processes.js' %}"></script>
@@ -15,18 +16,21 @@
                     <div id="notification-{{ notification.notification_uuid }}" 
                          class="flex items-center justify-between bg-gray-100 p-4 mb-2 rounded-lg shadow-sm">
                         <div>
-                            <p class="font-semibold">{{ notification.notification_type|title }}</p>
+                            <p class="font-semibold">{{ notification.notification_type|pretty_title }}</p>
                             <p class="text-gray-600">{{ notification.notification_message }}</p>
-                            <p class="text-sm text-gray-500">{{ notification.created_at }}</p>
+                            <p class="text-sm text-gray-500">on {{ notification.created_at|date:"M d, Y H:i" }}</p>
                         </div>
                         <button 
                             hx-patch="{% url 'accounts_notifs:mark_read' notification_uuid=notification.notification_uuid %}" 
-                            hx-swap="outerHTML" 
-                            hx-target="closest div"
+                            hx-swap="none" 
+                            hx-trigger="click"
                             data-notification-id="{{ notification.notification_uuid }}"
-                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mark-as-read"
-                        >
-                            Mark as Read
+                            class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded mark-as-read flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
+                        >   
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                            </svg>
+                            <span class="font-bold">Mark as Read</span>
                         </button>
                     </div>
                 {% endfor %}
@@ -42,7 +46,7 @@
                 <a href="?page={{ notifications.previous_page_number }}" class="mx-1 px-3 py-1 bg-gray-300 text-gray-700 rounded">Previous</a>
             {% endif %}
 
-            <span class="mx-2 px-3 py-1 bg-blue-500 text-white rounded">
+            <span class="mx-2 px-3 py-1 bg-blue-600 text-white rounded">
                 Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}
             </span>
 

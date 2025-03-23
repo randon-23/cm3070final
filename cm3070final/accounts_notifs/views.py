@@ -6,6 +6,9 @@ from phonenumbers.data import _COUNTRY_CODE_TO_REGION_CODE
 from django.contrib.auth.decorators import login_required
 from .api import get_notifications
 from django.core.paginator import Paginator
+from datetime import datetime
+from django.utils.dateparse import parse_datetime
+from .helpers import has_unread_notifications
 
 def authentication_view(request):
     country_prefixes = [
@@ -85,16 +88,27 @@ def password_reset_view(request):
 @login_required
 def notifications_view(request):
     account = request.user
-    notifications = get_notifications(request, account.account_uuid)
-    if notifications.status_code != 200:
-        return render(request, 'base/base_error.html', {"status_code": notifications.status_code}, status=notifications.status_code)
+    has_unread = has_unread_notifications(account)
+    notifications_response = get_notifications(request, account.account_uuid)
+
+    if notifications_response.status_code != 200:
+        return render(request, 'base/base_error.html', {
+            "status_code": notifications_response.status_code
+        }, status=notifications_response.status_code)
+
+    notifications = notifications_response.data
+
+    # Convert created_at to datetime
+    for notif in notifications:
+        if isinstance(notif["created_at"], str):
+            notif["created_at"] = parse_datetime(notif["created_at"])
 
     # Paginate notifications (20 per page)
     page = request.GET.get("page", 1)
-    paginator = Paginator(notifications.data, 20)
+    paginator = Paginator(notifications, 20)
     paginated_notifications = paginator.get_page(page)
 
-    context = {
+    return render(request, 'accounts_notifs/notifications.html', {
         "notifications": paginated_notifications,
-    }
-    return render(request, 'accounts_notifs/notifications.html', context)
+        "has_unread_notifications": has_unread,
+    })

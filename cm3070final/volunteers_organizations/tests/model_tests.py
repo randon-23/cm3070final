@@ -344,7 +344,8 @@ class TestFollowingModel(TestCase):
         cls.volunteer_account_to_be_followed=Account.objects.create(
             email_address='test2vol@volontera.com',
             password='testerpassword',
-            user_type='volunteer'
+            user_type='volunteer',
+            contact_number="+1234567660"
         )
         cls.volunteer_to_be_followed=Volunteer.objects.create(
             account=cls.volunteer_account_to_be_followed,
@@ -368,6 +369,20 @@ class TestFollowingModel(TestCase):
             organization_name="Save the Earth",
             organization_description="A non-profit dedicated to environmental conservation.",
             organization_address=cls.organization_address
+        )
+        cls.organization_account_to_be_followed=Account.objects.create(
+            email_address="org@account.com",
+            password="SecurePass123",
+            user_type="organization",
+            contact_number="+1234567150"
+        )
+        cls.organization_to_be_followed=Organization.objects.create(
+            account=cls.organization_account_to_be_followed,
+            organization_name="Save the Animals",
+            organization_description="A non-profit dedicated to animal welfare.",
+            organization_address={
+                'raw': '2 Somewhere Ave, Northcote, VIC 3070, AU'
+            }
         )
     
     def test_valid_follow_volunteer(self):
@@ -425,12 +440,21 @@ class TestFollowingModel(TestCase):
                 followed_volunteer=self.volunteer_follower
             )
 
-    def test_prevent_organization_from_following(self):
+    def test_prevent_organization_from_following_other_organizations(self):
         with self.assertRaises(ValidationError):
             Following.objects.create(
                 follower=self.organization_account,
-                followed_volunteer=self.volunteer_to_be_followed
+                followed_organization=self.organization_to_be_followed
             )
+
+    def test_organizations_can_follow_volunteers(self):
+        following=Following.objects.create(
+            follower=self.organization_account,
+            followed_volunteer=self.volunteer_to_be_followed
+        )
+        self.assertEqual(following.follower, self.organization_account)
+        self.assertEqual(following.followed_volunteer, self.volunteer_to_be_followed)
+        self.assertIsNone(following.followed_organization)
 
     def test_no_follow_entity(self):
         with self.assertRaises(IntegrityError):

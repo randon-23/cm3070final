@@ -15,6 +15,12 @@ document.addEventListener("htmx:afterRequest", function(event) {
     else if(url.includes("/status/create_status_post/")){
         console.log("Updating status post!", event);
         updateContent(event);
+
+        // Reset the form
+        const form = document.getElementById("status-post-form");
+        if (form) {
+            form.reset();
+        }
     } 
     // Endorsements
     else if(url.includes("/endorsements/create_endorsement/")){

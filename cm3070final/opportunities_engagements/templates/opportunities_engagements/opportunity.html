@@ -57,7 +57,7 @@
                         <p><strong>Slots:</strong> {{ opportunity.slots }}</p>
                     {% endif %}
                 {% endif %}
-                <p><strong>Field of Interest:</strong> {{ opportunity.area_of_work|title }}</p>
+                <p><strong>Area of Work:</strong> {{ opportunity.area_of_work|title }}</p>
                 <p><strong>Requirements:</strong> {{ opportunity.requirements|join:", " |title }}</p>
             </div>
         </div>
@@ -65,7 +65,7 @@
         {% if is_opportunity_owner %}
             <div class="flex justify-center items-center flex-grow py-6">
                 <button 
-                    class="w-full bg-blue-600 text-white px-6 py-3 rounded-md font-bold hover:bg-blue-700 flex items-center justify-center space-x-2"
+                    class="w-full bg-blue-600 text-white px-6 py-3 rounded-md font-bold hover:bg-blue-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
                     hx-get="{% url 'opportunities_engagements:get_opportunity_engagements' opportunity.volunteer_opportunity_id %}"
                     hx-trigger="click"
                     hx-target="#engagees-modal-content">
@@ -160,14 +160,14 @@
                 <h2 class="text-xl font-semibold mb-2">Manage Opportunity</h2>
                 <div class="flex flex-col space-y-2">
                     <button onclick="openCompleteOpportunityModal('{{ opportunity.volunteer_opportunity_id }}')"
-                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center justify-center space-x-2 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
+                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
                             <span class="font-bold">Complete Opportunity</span>
                     </button>
                     <button onclick="cancelOpportunity('{{ opportunity.volunteer_opportunity_id }}')"
-                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
+                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
@@ -175,7 +175,7 @@
                     </button>
                     {% if opportunity.ongoing and opportunity.status == "upcoming" %}
                         <button onclick="document.getElementById('create-session-modal').classList.remove('hidden')"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2">
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                 </svg>

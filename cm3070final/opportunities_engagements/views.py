@@ -1,4 +1,5 @@
 from rest_framework import status
+from django.utils.dateparse import parse_datetime
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from accounts_notifs.models import Account
@@ -9,11 +10,14 @@ import json
 import pycountry
 from .models import *
 from .api import *
+from accounts_notifs.helpers import has_unread_notifications
 
 @login_required
 def opportunities_search_view(request):
     account = request.user
     context = {}
+    has_unread = has_unread_notifications(account)
+    context["has_unread_notifications"] = has_unread
 
     if account.is_volunteer():
         context["days_of_week"] = [choice[0] for choice in VolunteerOpportunity.DAYS_OF_WEEK_CHOICES]
@@ -45,6 +49,8 @@ def opportunities_search_view(request):
 def opportunities_organization_view(request):
     account = request.user
     context = {}
+    has_unread = has_unread_notifications(account)
+    context["has_unread_notifications"] = has_unread
 
     if account.is_organization():
         # Fetch the organization's opportunities
@@ -84,6 +90,8 @@ def opportunities_organization_view(request):
 def opportunity_view(request, opportunity_id):
     account = request.user
     context = {}
+    has_unread = has_unread_notifications(account)
+    context["has_unread_notifications"] = has_unread
 
     opportunity_response = get_opportunity(request, opportunity_id)
 
@@ -160,6 +168,8 @@ def opportunity_view(request, opportunity_id):
 def engagements_applications_log_requests_view(request):
     account = request.user
     context = {}
+    has_unread = has_unread_notifications(account)
+    context["has_unread_notifications"] = has_unread
 
     if account.is_volunteer():
         engagements_response = get_engagements(request, account.account_uuid)
@@ -214,25 +224,41 @@ def engagements_applications_log_requests_view(request):
 def applications_log_requests_view(request):
     account = request.user
     context = {}
+    has_unread = has_unread_notifications(account)
+    context["has_unread_notifications"] = has_unread
 
     if account.is_organization():
+        # Get applications
         applications_response = get_organization_applications(request, account.account_uuid)
         if applications_response.status_code == 200:
-            applications = applications_response.data
-            # Only pending applicaions and log requests are shown in this view
-            context["applications"] = [a for a in applications if a["application_status"] == "pending"]
+            applications = [
+                a for a in applications_response.data if a["application_status"] == "pending"
+            ]
+            # Parse application created_at datetime
+            for app in applications:
+                if isinstance(app["created_at"], str):
+                    app["created_at"] = parse_datetime(app["created_at"])
+            context["applications"] = applications
         else:
             context["applications"] = []
 
-        # Fetch pending engagement log requests
+        # Get log requests
         log_requests_response = get_organization_log_requests(request, account.account_uuid)
         if log_requests_response.status_code == 200:
-            log_requests = log_requests_response.data
-            # Only pending log_requests shown in this view
-            context["log_requests"] = [l for l in log_requests if l["status"] == "pending"]
+            log_requests = [
+                l for l in log_requests_response.data if l["status"] == "pending"
+            ]
+            # Parse log request created_at datetime
+            for log in log_requests:
+                if isinstance(log["created_at"], str):
+                    log["created_at"] = parse_datetime(log["created_at"])
+            context["log_requests"] = log_requests
         else:
             context["log_requests"] = []
-        
+
         return render(request, 'opportunities_engagements/applications_log_requests.html', context)
-    return render(request, 'base/base_error.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
+
+    return render(request, 'base/base_error.html', {
+        "status_code": status.HTTP_403_FORBIDDEN
+    }, status=status.HTTP_403_FORBIDDEN)
 

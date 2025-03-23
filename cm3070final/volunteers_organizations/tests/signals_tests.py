@@ -72,6 +72,28 @@ class FollowingSignalTest(TestCase):
                 'country_code': 'US'
             }
         )
+        cls.additional_organization_account = Account.objects.create(
+            email_address='test_email_org1@tester.com',
+            password='testerpassword',
+            user_type='organization',
+            contact_number="+35612345676"
+        )
+        cls.additional_organization_profile = Organization.objects.create(
+            account=cls.additional_organization_account,
+            organization_name="Helping Hands 2",
+            organization_description="Non-profit organization.",
+            organization_address={
+                'raw': '123 Help St, Kindness City, US',
+                'street_number': '123',
+                'route': 'Help St',
+                'locality': 'Kindness City',
+                'postal_code': '12345',
+                'state': 'CA',
+                'state_code': 'CA',
+                'country': 'United States',
+                'country_code': 'US'
+            }
+        )
 
     def setUp(self):
         # Set up per-test dependencies
@@ -113,8 +135,8 @@ class FollowingSignalTest(TestCase):
         )
 
     # Ensure organizations cannot follow volunteers or other organizations.
-    def test_organization_cannot_follow(self):
-        url = reverse("volunteers_organizations:create_following", args=[self.followed_volunteer.account.account_uuid])
+    def test_organization_cannot_follow_other_organizations(self):
+        url = reverse("volunteers_organizations:create_following", args=[self.additional_organization_profile.account.account_uuid])
         self.client.force_authenticate(user=self.followed_organization_account)
 
         response = self.client.post(url)

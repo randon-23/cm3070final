@@ -130,8 +130,8 @@ def create_following(request, account_uuid):
             serializer.save()
 
             followers_count = Following.objects.filter(
-                models.Q(followed_volunteer=followed_volunteer) |
-                models.Q(followed_organization=followed_organization)
+                models.Q(followed_volunteer__account=followed_account) |
+                models.Q(followed_organization__account=followed_account)
             ).count()
 
             return Response({'message': 'Followed successfully', 'followers_count': followers_count, "is_following": True}, status=status.HTTP_201_CREATED)
@@ -166,8 +166,8 @@ def delete_following(request, account_uuid):
         following.delete()
 
         followers_count = Following.objects.filter(
-            models.Q(followed_volunteer=followed_volunteer) |
-            models.Q(followed_organization=followed_organization)
+            models.Q(followed_volunteer__account=followed_account) |
+            models.Q(followed_organization__account=followed_account)
         ).count()
 
         return Response({'message': 'Unfollowed successfully', 'followers_count': followers_count, 'is_following': False}, status=status.HTTP_200_OK)

@@ -225,7 +225,8 @@ class Following(models.Model):
     def save(self, *args, **kwargs):
         # Enforce that organizations cannot follow anyone
         if self.follower.is_organization():
-            raise ValidationError("Organizations cannot follow anyone.")
+            if self.followed_organization is not None:
+                raise ValidationError("Organizations cannot follow anyone.")
         
         super().save(*args, **kwargs)
 

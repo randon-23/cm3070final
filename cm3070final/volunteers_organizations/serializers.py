@@ -74,11 +74,14 @@ class FollowingCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Cannot follow both a volunteer and an organization.")
             
         if follower.is_organization():
-            raise serializers.ValidationError("Organizations cannot follow")
+            if followed_organization:
+                raise serializers.ValidationError("Organizations cannot follow other organizations")
         
-        if follower.volunteer:
-            if follower.volunteer == followed_volunteer or follower.volunteer == followed_organization:
-                raise serializers.ValidationError("Cannot follow yourself")
+        if followed_volunteer and followed_volunteer.account.account_uuid == follower.account_uuid:
+            raise serializers.ValidationError("Cannot follow yourself.")
+
+        if followed_organization and followed_organization.account.account_uuid == follower.account_uuid:
+            raise serializers.ValidationError("Cannot follow yourself.")
         
         return data
     

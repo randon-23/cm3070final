@@ -4,6 +4,8 @@ from accounts_notifs.tasks import send_notification
 from .models import Endorsement, Following, StatusPost, Organization
 from accounts_notifs.tasks import send_notification
 from django.db import models
+import logging
+logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Following)
 def increment_follow_count(sender, instance, created, **kwargs):
@@ -77,7 +79,7 @@ def notify_new_status_post(sender, instance, created, **kwargs):
         followers = Following.objects.filter(
             models.Q(followed_volunteer=author_volunteer) |
             models.Q(followed_organization=author_organization)
-        ).values_list("follower", flat=True)
+        ).exclude(follower=author).values_list("follower", flat=True)
 
         # Notification message
         message = f"{author_name} has posted a new status update!"

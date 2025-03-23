@@ -9,6 +9,7 @@ import json
 import pycountry
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
+from accounts_notifs.helpers import has_unread_notifications
     
 def signup_final(request):
     account_data=request.session.get('account_data')
@@ -46,6 +47,8 @@ def signup_final(request):
 def profile_view(request, account_uuid):
     is_own_profile = request.user.account_uuid == account_uuid
     context ={'is_own_profile': is_own_profile}
+    has_unread = has_unread_notifications(request.user)
+    context["has_unread_notifications"] = has_unread
 
     if not is_own_profile:
         # Get user profile data
@@ -153,6 +156,8 @@ def profile_view(request, account_uuid):
 
 @login_required
 def search_profiles_view(request):
+    account = request.user
+    has_unread = has_unread_notifications(account)
     search_response = get_search_profiles(request)
 
     if search_response.status_code != 200:
@@ -166,12 +171,14 @@ def search_profiles_view(request):
 
     return render(request, 'volunteers_organizations/search_profiles.html', {
         'results': paginated_results,
-        'query': request.GET.get('q')
+        'query': request.GET.get('q'),
+        'has_unread_notifications': has_unread
     })
 
 @login_required
 def update_profile_view(request):
     account = request.user
+    has_unread = has_unread_notifications(account)
 
     if account.is_volunteer():
         instance = get_object_or_404(Volunteer, account=account)
@@ -192,13 +199,17 @@ def update_profile_view(request):
     
     return render(request, "volunteers_organizations/update_profile.html", {
         "form": form,
-        "user_type": account.user_type
+        "user_type": account.user_type,
+        "has_unread_notifications": has_unread
     })
 
 @login_required
 def preferences_view(request):
     account = request.user
     context = {}
+    has_unread = has_unread_notifications(account)
+    context["has_unread_notifications"] = has_unread
+
     if account.is_volunteer():
         # Dynamically pass the choices to preferences template
         context["days_of_week"] = [choice[0] for choice in VolunteerMatchingPreferences.DAYS_OF_WEEK_CHOICES]
@@ -222,5 +233,4 @@ def preferences_view(request):
             context["message"] = "Preferences not found"
         else:
             context['preferences'] = preferences.data
-    print(context)
     return render(request, "volunteers_organizations/preferences.html", context)

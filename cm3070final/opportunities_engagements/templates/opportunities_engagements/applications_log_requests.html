@@ -8,6 +8,11 @@
 <script src="{% static 'js_frontend-scripts/profile-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/preferences-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-engagements-processes.js' %}"></script>
+<style>
+    .selected {
+        filter: brightness(0.75);
+    }
+</style>
 
 <div class="mx-auto bg-white p-6 rounded-lg shadow-lg mt-6 min-h-[90vh] flex flex-col">
     <h1 class="text-3xl text-center font-bold mb-4">Pending Applications & Log Requests</h1>
@@ -16,12 +21,12 @@
     <!-- Tabs for Filtering -->
     <div class="flex space-x-4 mt-4">
         <button class="filter-btn bg-blue-500 text-white px-4 py-2 rounded-md"
-            onclick="filterApplicationsLogRequests('pending-applications')">
-            Pending Applications
+            onclick="filterApplicationsLogRequests('pending-applications', this)" data-default>
+            <span class="font-bold">Pending Applications</span>
         </button>
         <button class="filter-btn bg-green-500 text-white px-4 py-2 rounded-md"
-            onclick="filterApplicationsLogRequests('pending-log-requests')">
-            Pending Log Requests
+            onclick="filterApplicationsLogRequests('pending-log-requests', this)">
+            <span class="font-bold">Pending Log Requests</span>
         </button>
     </div>
 
@@ -31,25 +36,48 @@
 
         <div class="grid grid-cols-2 gap-6 mt-4">
             {% for application in applications %}
-                <div class="bg-gray-100 p-4 rounded-lg shadow-md">
-                    <h3 class="font-bold">{{ application.volunteer.volunteer.first_name }} {{ application.volunteer.volunteer.last_name }}</h3>
-                    <p><strong>Opportunity:</strong> {{ application.volunteer_opportunity.title }}</p>
-                    <p><strong>Applied as Group:</strong> 
-                        {% if application.as_group %} Yes ({{ application.no_of_additional_volunteers }} additional) 
-                        {% else %} No {% endif %}
-                    </p>
-                    <p class="text-sm text-gray-500"><strong>Submitted:</strong> {{ application.created_at|date:"M d, Y" }}</p>
-
-                    <div class="flex space-x-2 mt-3">
-                        <button onclick="acceptApplication('{{ application.volunteer_opportunity_application_id }}', '{{ application.volunteer.account.account_uuid }}', '{{ application.volunteer_opportunity.volunteer_opportunity_id }}', '{{ application.volunteer_opportunity.ongoing|lower }}')"
-                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-                            Accept
+                <div class="bg-gray-100 p-4 rounded-lg shadow-md flex justify-between items-center space-x-4">
+                    <!-- Left: Profile + Info -->
+                    <div class="flex items-center space-x-4">
+                        <!-- Clickable Profile Picture -->
+                        <a href="{% url 'volunteers_organizations:profile' application.volunteer.account_uuid %}">
+                            <img src="{{ application.volunteer.volunteer.profile_img }}" alt="Profile Picture"
+                                class="w-16 h-16 rounded-full object-cover border border-gray-300 shadow-sm hover:ring hover:ring-blue-500 transition">
+                        </a>
+                
+                        <!-- Info -->
+                        <div>
+                            <!-- Clickable Name -->
+                            <a href="{% url 'volunteers_organizations:profile' application.volunteer.account_uuid %}" 
+                            class="font-bold text-gray-900 hover:text-blue-600 transition">
+                                {{ application.volunteer.volunteer.first_name }} {{ application.volunteer.volunteer.last_name }}
+                            </a>
+                            <p><strong>Opportunity:</strong> {{ application.volunteer_opportunity.title }}</p>
+                            <p><strong>Applied as Group:</strong> 
+                                {% if application.as_group %} Yes ({{ application.no_of_additional_volunteers }}) 
+                                {% else %} No {% endif %}
+                            </p>
+                            <p class="text-sm text-gray-500"><strong>Submitted on:</strong> {{ application.created_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                
+                    <!-- Right: Buttons -->
+                    <div class="flex space-x-2">
+                        <button onclick="acceptApplication('{{ application.volunteer_opportunity_application_id }}', '{{ application.volunteer.account_uuid }}', '{{ application.volunteer_opportunity.volunteer_opportunity_id }}', '{{ application.volunteer_opportunity.ongoing|lower }}')"
+                                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                <span class="font-bold">Accept</span>
                         </button>
-                        <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-                            hx-post="{% url 'opportunities_engagements:reject_application' application.volunteer_opportunity_application_id %}"
-                            hx-trigger="click"
-                            hx-target="#loading-modal-content">
-                            Reject
+                        <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
+                                hx-post="{% url 'opportunities_engagements:reject_application' application.volunteer_opportunity_application_id %}"
+                                hx-trigger="click"
+                                hx-target="#loading-modal-content">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                <span class="font-bold">Reject</span>
                         </button>
                     </div>
                 </div>
@@ -72,17 +100,23 @@
                     <p class="text-sm text-gray-500"><strong>Submitted:</strong> {{ log.created_at|date:"M d, Y" }}</p>
 
                     <div class="flex space-x-2 mt-3">
-                        <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
                             hx-post="{% url 'opportunities_engagements:approve_engagement_log' log.volunteer_engagement_log_id %}"
                             hx-trigger="click"
                             hx-target="#loading-modal-content">
-                            Approve
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            <span class="font-bold">Approve</span>
                         </button>
-                        <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                        <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
                             hx-post="{% url 'opportunities_engagements:reject_engagement_log' log.volunteer_engagement_log_id %}"
                             hx-trigger="click"
                             hx-target="#loading-modal-content">
-                            Reject
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            <span class="font-bold">Reject</span>
                         </button>
                     </div>
                 </div>
@@ -91,5 +125,13 @@
             {% endfor %}
         </div>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const defaultBtn = document.querySelector('.filter-btn[data-default]');
+            if (defaultBtn) {
+                defaultBtn.click();
+            }
+        });
+    </script>
 </div>
 {% endblock %}
