@@ -1,6 +1,6 @@
 {% extends 'base/base_authenticated.html' %}
 {% load static %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Preferences{% endblock %}
 {% block auth_content %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
@@ -13,7 +13,7 @@
 <div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-md relative mt-4">
     <!-- Title & Back Button -->
     <div class="flex items-center justify-between mb-4">
-        <a href="{{ request.META.HTTP_REFERER|default:'#' }}" class="absolute left-5 top-5 px-2 py-2 bg-gray-700 text-white rounded-md shadow-sm hover:bg-gray-600 flex items-center">
+        <a href="{{ request.META.HTTP_REFERER|default:'#' }}" class="absolute left-5 top-5 px-2 py-2 bg-gray-700 text-white rounded-md shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-600 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12l2.25-2.25M14.25 12 12 14.25m-2.58 4.92-6.374-6.375a1.125 1.125 0 0 1 0-1.59L9.42 4.83c.21-.211.497-.33.795-.33H19.5a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25h-9.284c-.298 0-.585-.119-.795-.33Z" />
             </svg>
@@ -130,7 +130,7 @@
 
             <!-- Buttons -->
             <div class="flex justify-center mt-10">
-                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-blue-700">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-blue-700">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
                     </svg>
@@ -163,7 +163,7 @@
 
             <!-- Buttons -->
             <div class="flex justify-center mt-10">
-                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center space-x-4 hover:bg-blue-700">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-blue-700">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
                     </svg>

@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
+<script>var csrftoken = '{{ csrf_token }}';</script>
 <script src="{% static 'js_frontend-scripts/profile-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/message-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-search-processes.js' %}"></script>
@@ -189,24 +190,24 @@
                     {% if not has_applied %}
                         <button onclick="document.getElementById('apply-opportunity-modal').classList.remove('hidden'); document.getElementById('apply-opportunity-modal').classList.add('flex')"
                             class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
-                                </svg>
-                                <span class="font-bold">Apply for Opportunity</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
+                            </svg>
+                            <span class="font-bold">Apply for Opportunity</span>
                         </button>
                     {% elif is_rejected %}
                         <button class="bg-red-500 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                </svg>
-                                <span class="font-bold">Rejected</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            <span class="font-bold">Rejected</span>
                         </button>
                     {% elif has_applied and not is_engaged %}
                         <button class="bg-gray-400 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282m0 0h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904m10.598-9.75H14.25M5.904 18.5c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 0 1-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h1.053c.472 0 .745.556.5.96a8.958 8.958 0 0 0-1.302 4.665c0 1.194.232 2.333.654 3.375Z" />
-                                </svg>                              
-                                <span class="font-bold">Applied</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282m0 0h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904m10.598-9.75H14.25M5.904 18.5c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 0 1-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h1.053c.472 0 .745.556.5.96a8.958 8.958 0 0 0-1.302 4.665c0 1.194.232 2.333.654 3.375Z" />
+                            </svg>                              
+                            <span class="font-bold">Applied</span>
                         </button>
                     {% elif is_engaged %}
                         <button class="bg-green-600 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
@@ -218,12 +219,26 @@
                         {% if opportunity.ongoing and opportunity.status == "upcoming" %}
                             <button onclick="document.getElementById('create-engagement-log-modal').classList.remove('hidden')"
                                 class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                    </svg>
-                                    <span class="font-bold">Create Engagement Log</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                                <span class="font-bold">Create Engagement Log</span>
                             </button>
                         {% endif %}
+                    {% elif is_cancelled %}
+                        <button class="bg-gray-400 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                            <span class="font-bold">Cancelled</span>
+                        </button>
+                    {% elif is_completed %}
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            <span class="font-bold">Completed</span>
+                        </button>
                     {% endif %}
                 </div>
             {% endif %}
@@ -249,10 +264,6 @@
             {% endif %}
         </div>
     </div>
-
-    <script>
-        var csrftoken = '{{ csrf_token }}';
-    </script>
     {% if not is_opportunity_owner %}
         {% include 'chats/partials/send_message_modal.html' %}
     {% endif %}

@@ -26,6 +26,11 @@ document.addEventListener("htmx:afterRequest", function(event) {
     else if(url.includes("/endorsements/create_endorsement/")){
         console.log("Updating endorsements!", event);
         updateContent(event);
+
+        const form = document.getElementById("endorsement-form");
+        if (form) {
+            form.reset();
+        }
     } 
     // Search results profiles
     else if(url.includes("/search/get_search_profiles/")){

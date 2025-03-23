@@ -113,12 +113,13 @@ def opportunity_view(request, opportunity_id):
         context["has_applied"] = False
         context["is_engaged"] = False
         context["is_rejected"] = False
+        context["is_cancelled"] = False
+        context["is_completed"] = False
 
         # Check if volunteer has applied to this opportunity, and if they have been rejected
         applications_response = get_volunteer_applications(request, account.account_uuid)
         if applications_response.status_code == 200:
             applications = applications_response.data
-            print(applications)
             for app in applications:
                 if app["volunteer_opportunity"]["volunteer_opportunity_id"] == str(opportunity_id):
                     context["has_applied"] = True
@@ -131,7 +132,17 @@ def opportunity_view(request, opportunity_id):
             engagements = engagements_response.data
             context["is_engaged"] = any(
                 eng["volunteer_opportunity_application"]["volunteer_opportunity"]["volunteer_opportunity_id"] == str(opportunity_id)
-                and eng["engagement_status"] == "accepted"
+                and eng["engagement_status"] == "ongoing"
+                for eng in engagements
+            )
+            context["is_cancelled"] = any(
+                eng["volunteer_opportunity_application"]["volunteer_opportunity"]["volunteer_opportunity_id"] == str(opportunity_id)
+                and eng["engagement_status"] == "cancelled"
+                for eng in engagements
+            )
+            context["is_completed"] = any(
+                eng["volunteer_opportunity_application"]["volunteer_opportunity"]["volunteer_opportunity_id"] == str(opportunity_id)
+                and eng["engagement_status"] == "completed"
                 for eng in engagements
             )
     

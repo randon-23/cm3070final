@@ -151,7 +151,7 @@ async function executeChainedActions(actions, prevData = {}) {
     modal.classList.remove("hidden");
     modal.classList.add("flex");
     let hasErrorOccurred = false;
-
+    console.log("Executing chained actions:", actions);
     for (let action of actions) {
         try{
             let url = typeof action.url === "function" ? action.url(prevData) : action.url;
@@ -194,7 +194,8 @@ async function executeChainedActions(actions, prevData = {}) {
                 hasErrorOccurred = true;
                 break;
             }
-        } catch {
+        } catch(error) { 
+            console.error("An error occurred:", error);
             modalContent.innerHTML += `<p class="text-red-600">❌ An error occurred. Please try again later.</p>`;
             hasErrorOccurred = true;
             break;
@@ -213,21 +214,21 @@ async function executeChainedActions(actions, prevData = {}) {
 // no form
 async function cancelOpportunity(volunteerOpportunityId) {
     await executeChainedActions([
-        { url: `/api/opportunities/cancel_opportunity/${volunteerOpportunityId}/`, method: "PATCH"},
-        { url: `/api/engagements/cancel_engagements_organization/${volunteerOpportunityId}/`, method: "PATCH"}
+        { url: `/opportunities-engagements/api/opportunities/cancel_opportunity/${volunteerOpportunityId}/`, method: "PATCH"},
+        { url: `/opportunities-engagements/api/engagements/cancel_engagements_organization/${volunteerOpportunityId}/`, method: "PATCH"}
     ]);
 }
 
 // no form - called from modal which displays current engagees so org can remove any
 async function completeOpportunity(volunteerOpportunityId, isOngoing) {
     let actions = [
-        { url: `/api/opportunities/complete_opportunity/${volunteerOpportunityId}/`, method: "PATCH" },
-        { url: `/api/engagements/complete_engagements_organization/${volunteerOpportunityId}/`, method: "PATCH" },
+        { url: `/opportunities-engagements/api/opportunities/complete_opportunity/${volunteerOpportunityId}/`, method: "PATCH" },
+        { url: `/opportunities-engagements/api/engagements/complete_engagements_organization/${volunteerOpportunityId}/`, method: "PATCH" },
     ];
 
-    if (!isOngoing) {
+    if (isOngoing === 'false') {
         actions.push({
-            url: `/api/engagement_logs/create_opportunity_engagement_logs/${volunteerOpportunityId}/`,
+            url: `/opportunities-engagements/api/engagement_logs/create_opportunity_engagement_logs/${volunteerOpportunityId}/`,
             method: "POST",
         });
     }
@@ -237,12 +238,12 @@ async function completeOpportunity(volunteerOpportunityId, isOngoing) {
 // no form
 async function acceptApplication(applicationId, accountUuid, opportunityId, isOngoing) {
     let actions = [
-        { url: `/api/opportunities/applications/accept/${applicationId}/`, method: "PATCH" },
-        { url: `/api/engagements/create_engagement/${applicationId}/`, method: "POST" },
+        { url: `/opportunities-engagements/api/opportunities/applications/accept/${applicationId}/`, method: "PATCH" },
+        { url: `/opportunities-engagements/api/engagements/create_engagement/${applicationId}/`, method: "POST" },
     ];
 
-    if (isOngoing) {
-        actions.push({url: `/api/session_engagements/create_session_engagements_for_volunteer/${accountUuid}/${opportunityId}/`, method: "POST"});
+    if (isOngoing === 'true') {
+        actions.push({url: `/opportunities-engagements/api/session_engagements/create_session_engagements_for_volunteer/${accountUuid}/${opportunityId}/`, method: "POST"});
     }
 
     await executeChainedActions(actions);
@@ -252,14 +253,14 @@ async function acceptApplication(applicationId, accountUuid, opportunityId, isOn
 async function createSession(opportunityId, data) {
     await executeChainedActions([
         {
-            url: `/api/sessions/create_session/${opportunityId}/`,
+            url: `/opportunities-engagements/api/sessions/create_session/${opportunityId}/`,
             method: "POST",
             data: data,
             extractParam: "data.session_id",
             nextKey: "sessionId"
         },
         {
-            url: (params) => `/api/session_engagements/create_session_engagements_for_session/${params.sessionId}/`,
+            url: (params) => `/opportunities-engagements/api/session_engagements/create_session_engagements_for_session/${params.sessionId}/`,
             method: "POST"
         }
     ]);
@@ -284,19 +285,19 @@ document.addEventListener("DOMContentLoaded", () => {
 // no form - called from modal which displays current session engagees so org can remove any
 async function completeSession(sessionId) {
     await executeChainedActions([
-        { url: `/api/sessions/complete_session/${sessionId}/`, method: "PATCH"},
-        { url: `/api/engagement_logs/create_session_engagement_logs/${sessionId}/`, method: "POST"}
+        { url: `/opportunities-engagements/api/sessions/complete_session/${sessionId}/`, method: "PATCH"},
+        { url: `/opportunities-engagements/api/engagement_logs/create_session_engagement_logs/${sessionId}/`, method: "POST"}
     ]);
 }
 
 // FETCH REQUESTS AND CORRESPONDING REMOVAL ON MODAL OPEN FUNCTIONS
 function removeEngagement(engagementId) {
-    fetch(`/api/engagements/cancel_engagement_volunteer/${engagementId}/`, { method: "PATCH" })
+    fetch(`/opportunities-engagements/api/engagements/cancel_engagement_volunteer/${engagementId}/`, { method: "PATCH" })
         .then(() => document.getElementById(engagementId).remove());
 }
 
 function setCantGo(sessionEngagementId) {
-    fetch(`/api/session_engagements/cancel_attendance/${sessionEngagementId}/`, { method: "PATCH" })
+    fetch(`/opportunities-engagements/api/session_engagements/cancel_attendance/${sessionEngagementId}/`, { method: "PATCH" })
         .then(() => document.getElementById(sessionEngagementId).remove());
 }
 
@@ -306,7 +307,7 @@ function openCompleteOpportunityModal(volunteerOpportunityId) {
     let listContainer = document.getElementById("opportunity-engagement-list");
 
     // Fetch engaged volunteers
-    fetch(`/api/engagements/get_opportunity_engagements/${volunteerOpportunityId}/`)
+    fetch(`/opportunities-engagements/api/engagements/get_opportunity_engagements/${volunteerOpportunityId}/`)
         .then(response => response.json())
         .then(data => {
             if (data.length === 0) {
@@ -336,7 +337,7 @@ function openCompleteSessionModal(sessionId) {
     let listContainer = document.getElementById("session-attendee-list");
 
     // Fetch session attendees
-    fetch(`/api/session_engagements/get_session_engagements/${sessionId}/`)
+    fetch(`/opportunities-engagements/api/session_engagements/get_session_engagements/${sessionId}/`)
         .then(response => response.json())
         .then(data => {
             if (data.length === 0) {

@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
+<script>var csrftoken = '{{ csrf_token }}';</script>
 <script src="{% static 'js_frontend-scripts/profile-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/preferences-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-engagements-processes.js' %}"></script>
@@ -71,7 +72,7 @@
                                 <span class="font-bold">Accept</span>
                         </button>
                         <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
-                                hx-post="{% url 'opportunities_engagements:reject_application' application.volunteer_opportunity_application_id %}"
+                                hx-patch="{% url 'opportunities_engagements:reject_application' application.volunteer_opportunity_application_id %}"
                                 hx-trigger="click"
                                 hx-target="#loading-modal-content">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -101,7 +102,7 @@
 
                     <div class="flex space-x-2 mt-3">
                         <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
-                            hx-post="{% url 'opportunities_engagements:approve_engagement_log' log.volunteer_engagement_log_id %}"
+                            hx-patch="{% url 'opportunities_engagements:approve_engagement_log' log.volunteer_engagement_log_id %}"
                             hx-trigger="click"
                             hx-target="#loading-modal-content">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -110,7 +111,7 @@
                             <span class="font-bold">Approve</span>
                         </button>
                         <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
-                            hx-post="{% url 'opportunities_engagements:reject_engagement_log' log.volunteer_engagement_log_id %}"
+                            hx-patch="{% url 'opportunities_engagements:reject_engagement_log' log.volunteer_engagement_log_id %}"
                             hx-trigger="click"
                             hx-target="#loading-modal-content">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">

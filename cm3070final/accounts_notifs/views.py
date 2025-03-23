@@ -32,7 +32,6 @@ def authentication_view(request):
                     cleaned_data.pop('password_2')
                     cleaned_data['password'] = password
                     request.session['account_data'] = cleaned_data
-                    print(request.session['account_data'])
 
                     return redirect('volunteers_organizations:signup_final')
                 else:

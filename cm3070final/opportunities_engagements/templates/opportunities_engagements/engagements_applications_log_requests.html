@@ -60,10 +60,52 @@
         <div>
             <div id="engagements-container">
                 {% for engagement in engagements %}
-                    <div class="engagement-card bg-gray-100 p-4 rounded-lg shadow-md mt-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-50" data-status="{{ engagement.engagement_status }}">
-                        <h3 class="font-bold">{{ engagement.volunteer_opportunity.title }}</h3>
-                        <p><strong>Status:</strong> {{ engagement.engagement_status|title }}</p>
-                    </div>
+                    {% with opp=engagement.volunteer_opportunity_application.volunteer_opportunity %}
+                        <div class="engagement-card bg-gray-50 p-4 rounded-lg shadow-md mt-2 flex justify-between items-start transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-100"
+                            data-url="{% url 'opportunities_engagements:opportunity' opportunity_id=opp.volunteer_opportunity_id %}"
+                            onclick="window.location.href=this.getAttribute('data-url')"
+                            data-status="{{ engagement.engagement_status }}">
+                            
+                            <!-- Left: Info -->
+                            <div>
+                                <h3 class="font-bold text-lg">{{ opp.title }}</h3>
+                                <p class="text-sm text-gray-700 mb-2">{{ opp.description }}</p>
+                                <p class="text-sm"><strong>Status:</strong> {{ engagement.engagement_status|title }}</p>
+                                <p class="text-sm"><strong>Opportunity Type:</strong>{% if opp.ongoing %} Ongoing{% else %} One-Time{% endif %}</p>
+
+                                {% if not opp.ongoing %}
+                                    <p class="text-sm"><strong>Date:</strong> {{ opp.opportunity_date }}</p>
+                                    <p class="text-sm"><strong>From:</strong> {{ opp.opportunity_time_from }} <strong>To:</strong> {{ opp.opportunity_time_to }}</p>
+                                    <p class="text-sm"><strong>As Group:</strong> {% if engagement.volunteer_opportunity_application.as_group %} Yes ({{ engagement.volunteer_opportunity_application.no_of_additional_volunteers }}){% else %} No{% endif %}</p>
+                                {% endif %}
+                                
+                                <p class="text-sm"><strong>Location:</strong> {{ opp.required_location.formatted_address }}</p>
+                                <p class="text-sm mt-2">
+                                    <strong>Organization:</strong> 
+                                    <a href="{{ opp.organization.organization.profile_url }}" class="text-blue-600 hover:underline">
+                                        {{ opp.organization.organization.organization_name }}
+                                    </a>
+                                </p>
+                            </div>
+
+                            <!-- Right: Cancel Button -->
+                            {% if engagement.engagement_status == 'ongoing' %}
+                                <div class="flex justify-center mt-2">
+                                    <button 
+                                        class="bg-red-600 text-white text-sm px-3 py-1 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:cursor-pointer"
+                                        hx-patch="{% url 'opportunities_engagements:cancel_engagement_volunteer' engagement.volunteer_engagement_id %}"
+                                        hx-trigger="click"
+                                        hx-target="#loading-modal-content"
+                                        hx-swap="innerHTML">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                            </svg>
+                                            <span class="font-bold">Cancel</span>
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endwith %}
                 {% endfor %}
                 <p class="no-results text-gray-500">No engagements found.</p>
             </div>
@@ -73,20 +115,48 @@
         <div>
             <div id="applications-container">
                 {% for application in applications %}
-                    <div class="application-card bg-gray-50 p-4 rounded-lg shadow-md mt-2 cursor-pointer transition-all duration-200 ease-in-out hover:scale-[1.02] hover:shadow-lg hover:bg-gray-100" 
-                        data-url="{% url 'opportunities_engagements:opportunity' opportunity_id=application.volunteer_opportunity.volunteer_opportunity_id %}"
-                        onclick="window.location.href=this.getAttribute('data-url')"
-                        data-status="{{ application.application_status }}">
-                        <h3 class="font-bold">{{ application.volunteer_opportunity.title }}</h3>
-                        <h4 class="font-bold">{{ application.volunteer_opportunity.description }}</h3>
-                        <p><strong>Status:</strong> {{ application.application_status|title }}</p>
-                        <p><strong>Opportunity Type:</strong>{%if application.volunteer_opportunity.ongoing %} Ongoing{% else %} One-Time{% endif %}</p>
-                        {% if not application.volunteer_opportunity.ongoing %}
-                            <p><strong>Opportunity Date:</strong> {{ application.volunteer_opportunity.opportunity_date }}</p>
-                            <p><strong>From:</strong> {{ application.volunteer_opportunity.opportunity_time_from }}</p>
-                            <p><strong>To:</strong> {{ application.volunteer_opportunity.opportunity_time_to }}</p>
+                    <div class="application-card bg-gray-50 p-4 rounded-lg shadow-md mt-2 flex justify-between items-start transition-all duration-200 ease-in-out hover:scale-[1.02] hover:shadow-lg hover:bg-gray-100 hover:cursor-pointer"
+                            data-url="{% url 'opportunities_engagements:opportunity' opportunity_id=application.volunteer_opportunity.volunteer_opportunity_id %}"
+                            onclick="window.location.href=this.getAttribute('data-url')"
+                            data-status="{{ application.application_status }}">
+                    
+                        <!-- Left: Info -->
+                        <div>
+                            <h3 class="font-bold text-lg">{{ application.volunteer_opportunity.title }}</h3>
+                            <p class="text-sm text-gray-700 mb-2">{{ application.volunteer_opportunity.description }}</p>
+                            <p class="text-sm"><strong>Status:</strong> {{ application.application_status|title }}</p>
+                            <p class="text-sm"><strong>Opportunity Type:</strong>{% if application.volunteer_opportunity.ongoing %} Ongoing{% else %} One-Time{% endif %}</p>
+                            
+                            {% if not application.volunteer_opportunity.ongoing %}
+                                <p class="text-sm"><strong>Opportunity Date:</strong> {{ application.volunteer_opportunity.opportunity_date }}</p>
+                                <p class="text-sm"><strong>From:</strong> {{ application.volunteer_opportunity.opportunity_time_from }} <strong>To:</strong> {{ application.volunteer_opportunity.opportunity_time_to }}</p>
+                                <p class="text-sm"><strong>As Group:</strong> {% if application.as_group %} ({{ application.no_of_additional_volunteers }}) Yes{% else %} No{% endif %}</p>
+                            {% endif %}
+                            <p class="text-sm"><strong>Location:</strong> {{ application.volunteer_opportunity.required_location.formatted_address }}</p>
+                            <p class="text-sm mt-2">
+                                <strong>Organization:</strong> 
+                                <a href="{{ application.volunteer_opportunity.organization.organization.profile_url }}" class="text-blue-600 hover:underline">
+                                    {{ application.volunteer_opportunity.organization.organization.organization_name }}
+                                </a>
+                            </p>
+                        </div>
+                    
+                        <!-- Right: Cancel Button -->
+                        {% if application.application_status == 'pending' %}
+                            <div class="flex justify-center mt-2">
+                                <button 
+                                    class="bg-red-600 text-white text-sm px-3 py-1 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
+                                    hx-patch="{% url 'opportunities_engagements:cancel_application' application.volunteer_opportunity_application_id %}"
+                                    hx-trigger="click"
+                                    hx-target="#loading-modal-content"
+                                    hx-swap="innerHTML">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    <span class="font-bold">Cancel</span>
+                                </button>
+                            </div>
                         {% endif %}
-                        <p><strong>Location:</strong>{{ application.volunteer_opportunity.required_location.formatted_address }}</p>
                     </div>
                 {% endfor %}
                 <p class="no-results text-gray-500">No applications found.</p>

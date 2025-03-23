@@ -10,13 +10,13 @@
 
         <div class="flex justify-between mt-6">
             <button onclick="document.getElementById('complete-session-modal').classList.add('hidden')"
-                    class="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600">
+                    class="bg-gray-600 text-white px-6 py-2 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-700">
                 Cancel
             </button>
             <button 
                 onclick="completeSession('{{ session.session_id }}'); document.getElementById('complete-session-modal').classList.add('hidden')"
                 id="confirm-complete-session" 
-                class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">
+                class="bg-green-600 text-white px-6 py-2 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-green-700">
                 Confirm Completion
             </button>
         </div>
