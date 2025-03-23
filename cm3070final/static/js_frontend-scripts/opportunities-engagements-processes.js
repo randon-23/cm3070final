@@ -316,19 +316,38 @@ function openCompleteOpportunityModal(volunteerOpportunityId) {
                 return;
             }
 
-            listContainer.innerHTML = data.map(engagement => `
-                <div id="${engagement.volunteer_engagement_id}" class="flex justify-between bg-gray-100 p-4 rounded-md">
-                    <span>${engagement.volunteer.account.email_address}</span>
-                    <button onclick="removeEngagement('${engagement.volunteer_engagement_id}')"
-                            class="bg-red-500 text-white px-4 py-1 rounded-md hover:bg-red-700">
-                        Remove
-                    </button>
-                </div>
-            `).join('');
+            listContainer.innerHTML = data.map(engagement => {
+                const volData = engagement.volunteer_opportunity_application.volunteer;
+                const fullName = `${volData.volunteer.first_name} ${volData.volunteer.last_name}`;
+                const email = volData.email_address;
+                const additional = engagement.volunteer_opportunity_application.no_of_additional_volunteers;
+                const profileImg = volData.volunteer.profile_img || "/static/images/default_volunteer.svg";
+            
+                return `
+                    <div id="${engagement.volunteer_engagement_id}" class="flex items-center justify-between bg-gray-100 p-4 rounded-md">
+                        <div class="flex items-center space-x-4">
+                            <img src="${profileImg}" alt="Profile Image" class="w-12 h-12 rounded-full object-cover border border-gray-300">
+                            <div>
+                                <p class="font-semibold">${fullName}</p>
+                                <p class="text-sm text-gray-600">${email}</p>
+                                ${additional > 0 ? `<p class="text-sm text-gray-500">+${additional} additional volunteer${additional > 1 ? 's' : ''}</p>` : ''}
+                            </div>
+                        </div>
+                        <button onclick="removeEngagement('${engagement.volunteer_engagement_id}')"
+                            class="bg-red-500 text-white px-4 py-1 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-red-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                            <span class="font-bold">Remove</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
         });
 
     // Show modal
     modal.classList.remove("hidden");
+    modal.classList.add("flex");
 }
 
 // Open modal to confirm session completion with option to cancel listed session engagements
@@ -394,21 +413,32 @@ function updateEngagementsModal(event){
             modalContent.innerHTML = `<p class="text-gray-500">No ${modalId.includes("engagees") ? "engaged volunteers" : "attendees"} found.</p>`;
         } else {
             filteredData.forEach(entry => {
-                let volunteer = entry.volunteer_opportunity_application.volunteer;
-                let volunteerDetails = `
-                    <div class="p-2 bg-gray-100 rounded-lg shadow-md mt-2">
-                        <p><strong>${volunteer.volunteer.first_name} ${volunteer.volunteer.last_name}</strong></p>
-                        <p>Email: ${volunteer.email_address}</p>
-                        <a href="${volunteer.volunteer.profile_url}" class="text-blue-500 underline">View Profile</a>
+                const volData = entry.volunteer_opportunity_application.volunteer;
+                const profile = volData.volunteer;
+                const profileImg = profile.profile_img || "/static/images/default_volunteer.svg";
+                const additionalVols = entry.volunteer_opportunity_application.no_of_additional_volunteers;
+
+                let card = `
+                    <div class="bg-gray-100 rounded-lg shadow-md mt-2 p-4 flex items-center space-x-4 hover:bg-gray-200 cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+                         onclick="window.location.href='${profile.profile_url}'">
+                        <img src="${profileImg}" alt="Profile Image" class="w-12 h-12 rounded-full object-cover border border-gray-300" />
+                        <div>
+                            <p class="font-semibold">${profile.first_name} ${profile.last_name}</p>
+                            <p class="text-sm text-gray-700">${volData.email_address}</p>
+                            ${additionalVols > 0 ? `<p class="text-sm text-gray-500">${additionalVols} additional volunteer${additionalVols > 1 ? 's' : ''}</p>` : ""}
+                        </div>
                     </div>
                 `;
-                modalContent.innerHTML += volunteerDetails;
+                modalContent.innerHTML += card;
             });
         }
 
         // Show the modal
-        document.getElementById(modalId).classList.remove("hidden");
-        document.getElementById(modalId).classList.add("flex");
+        // Timeout as view engagees button glitches in front of modal for split second
+        setTimeout(() => {
+            document.getElementById(modalId).classList.remove("hidden");
+            document.getElementById(modalId).classList.add("flex");
+        }, 500);
     } catch (error) {
         console.error("Invalid JSON response:", response);
     }

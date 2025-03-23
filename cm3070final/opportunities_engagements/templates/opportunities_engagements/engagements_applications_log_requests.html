@@ -61,7 +61,7 @@
             <div id="engagements-container">
                 {% for engagement in engagements %}
                     {% with opp=engagement.volunteer_opportunity_application.volunteer_opportunity %}
-                        <div class="engagement-card bg-gray-50 p-4 rounded-lg shadow-md mt-2 flex justify-between items-start transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-100"
+                        <div class="engagement-card bg-gray-50 p-4 rounded-lg shadow-md mt-2 flex justify-between items-start transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-100 hover:cursor-pointer"
                             data-url="{% url 'opportunities_engagements:opportunity' opportunity_id=opp.volunteer_opportunity_id %}"
                             onclick="window.location.href=this.getAttribute('data-url')"
                             data-status="{{ engagement.engagement_status }}">
@@ -92,7 +92,7 @@
                             {% if engagement.engagement_status == 'ongoing' %}
                                 <div class="flex justify-center mt-2">
                                     <button 
-                                        class="bg-red-600 text-white text-sm px-3 py-1 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:cursor-pointer"
+                                        class="bg-red-600 text-white text-sm px-3 py-1 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
                                         hx-patch="{% url 'opportunities_engagements:cancel_engagement_volunteer' engagement.volunteer_engagement_id %}"
                                         hx-trigger="click"
                                         hx-target="#loading-modal-content"

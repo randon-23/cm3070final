@@ -187,14 +187,42 @@ class="grid grid-cols-3 gap-4 bg-white shadow p-6 rounded-lg text-sm w-full mx-a
         <div id="nearby-opportunities">
             {% if nearby_opportunities %}
                 {% for opportunity in nearby_opportunities %}
-                    <div class="bg-white p-4 shadow rounded-lg mb-4">
-                        <h3 class="font-bold">{{ opportunity.title }}</h3>
-                        <p class="text-sm text-gray-700">{{ opportunity.description }}</p>
-                        <span class="text-xs text-gray-500">
-                            {{ opportunity.required_location.formatted_address }}
-                        </span>
-                        <a href="{% url 'opportunities_engagements:opportunity' opportunity_id=opportunity.volunteer_opportunity_id %}" 
-                           class="text-blue-500 hover:underline block mt-2">View Details</a>
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-md mt-2 flex items-center justify-between transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-100 cursor-pointer"
+                        data-url="{% url 'opportunities_engagements:opportunity' opportunity_id=opportunity.volunteer_opportunity_id %}"
+                        onclick="window.location.href=this.getAttribute('data-url')">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <h3 class="font-bold text-lg">{{ opportunity.title }}</h3>
+                                <p class="text-sm text-gray-700 mb-2">{{ opportunity.description }}</p>
+                                
+                                <p class="text-sm"><strong>Opportunity Type:</strong> {% if opportunity.ongoing %} Ongoing{% else %} One-Time{% endif %}</p>
+                                {% if not opportunity.ongoing %}
+                                    <p class="text-sm"><strong>Date:</strong> {{ opportunity.opportunity_date }}</p>
+                                    <p class="text-sm"><strong>From:</strong> {{ opportunity.opportunity_time_from }} <strong>To:</strong> {{ opportunity.opportunity_time_to }}</p>
+                                {% endif %}
+                        
+                                <p class="text-sm"><strong>Location:</strong> {{ opportunity.required_location.formatted_address }}</p>
+                            </div>
+                            <div class="flex flex-col justify-center">
+                                <p class="text-sm"><strong>Work Basis:</strong> {{ opportunity.work_basis|title }}</p>
+                                <p class="text-sm"><strong>Duration:</strong> {{ opportunity.duration|title }}</p>
+                                <p class="text-sm"><strong>Area of Work:</strong> {{ opportunity.area_of_work|title }}</p>
+                        
+                                {% if not opportunity.ongoing %}
+                                    <p class="text-sm"><strong>Apply as Group:</strong> {% if opportunity.can_apply_as_group %} Yes{% if opportunity.slots %} ({{ opportunity.slots }} slots available){% endif %}{% else %} No{% endif %}</p>
+                                {% else %}
+                                    <p class="text-sm"><strong>Days of Week:</strong> {{ opportunity.days_of_week|join:", " }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-span-2 text-center">
+                                <p class="text-sm">
+                                  <strong>Organization:</strong>
+                                  <a href="{{ opportunity.organization.organization.profile_url }}" class="text-blue-600 hover:underline">
+                                    {{ opportunity.organization.organization.organization_name }}
+                                  </a>
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 {% endfor %}
             {% else %}
@@ -209,14 +237,42 @@ class="grid grid-cols-3 gap-4 bg-white shadow p-6 rounded-lg text-sm w-full mx-a
         <div id="latest-opportunities">
             {% if latest_opportunities %}
                 {% for opportunity in latest_opportunities %}
-                    <div class="bg-white p-4 shadow rounded-lg mb-4">
-                        <h3 class="font-bold">{{ opportunity.title }}</h3>
-                        <p class="text-sm text-gray-700">{{ opportunity.description }}</p>
-                        <span class="text-xs text-gray-500">
-                            {{ opportunity.required_location.formatted_address }}
-                        </span>
-                        <a href="{% url 'opportunities_engagements:opportunity' opportunity_id=opportunity.volunteer_opportunity_id %}" 
-                           class="text-blue-500 hover:underline block mt-2">View Details</a>
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-md mt-2 flex items-center justify-between transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-100 cursor-pointer"
+                        data-url="{% url 'opportunities_engagements:opportunity' opportunity_id=opportunity.volunteer_opportunity_id %}"
+                        onclick="window.location.href=this.getAttribute('data-url')">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <h3 class="font-bold text-lg">{{ opportunity.title }}</h3>
+                                <p class="text-sm text-gray-700 mb-2">{{ opportunity.description }}</p>
+                                
+                                <p class="text-sm"><strong>Opportunity Type:</strong> {% if opportunity.ongoing %} Ongoing{% else %} One-Time{% endif %}</p>
+                                {% if not opportunity.ongoing %}
+                                    <p class="text-sm"><strong>Date:</strong> {{ opportunity.opportunity_date }}</p>
+                                    <p class="text-sm"><strong>From:</strong> {{ opportunity.opportunity_time_from }} <strong>To:</strong> {{ opportunity.opportunity_time_to }}</p>
+                                {% endif %}
+                        
+                                <p class="text-sm"><strong>Location:</strong> {{ opportunity.required_location.formatted_address }}</p>
+                            </div>
+                            <div class="flex flex-col justify-center">
+                                <p class="text-sm"><strong>Work Basis:</strong> {{ opportunity.work_basis|title }}</p>
+                                <p class="text-sm"><strong>Duration:</strong> {{ opportunity.duration|title }}</p>
+                                <p class="text-sm"><strong>Area of Work:</strong> {{ opportunity.area_of_work|title }}</p>
+                        
+                                {% if not opportunity.ongoing %}
+                                    <p class="text-sm"><strong>Apply as Group:</strong> {% if opportunity.can_apply_as_group %} Yes{% if opportunity.slots %} ({{ opportunity.slots }} slots available){% endif %}{% else %} No{% endif %}</p>
+                                {% else %}
+                                    <p class="text-sm"><strong>Days of Week:</strong> {{ opportunity.days_of_week|join:", " }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-span-2 text-center">
+                                <p class="text-sm">
+                                  <strong>Organization:</strong>
+                                  <a href="{{ opportunity.organization.organization.profile_url }}" class="text-blue-600 hover:underline">
+                                    {{ opportunity.organization.organization.organization_name }}
+                                  </a>
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 {% endfor %}
             {% else %}
