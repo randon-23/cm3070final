@@ -18,20 +18,22 @@
               hx-swap="innerHTML"
               class="space-y-6">
             
-            <!-- Apply as Group? -->
-            <div class="bg-gray-100 p-4 rounded-lg">
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="as_group" name="as_group" value="true" onchange="toggleGroupApplication()">
-                    <span class="text-gray-800">Apply as a Group</span>
-                </label>
-            </div>
+            {% if not opportunity.ongoing %}
+                <!-- Apply as Group? -->
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="as_group" name="as_group" value="true" onchange="toggleGroupApplication()">
+                        <span class="text-gray-800">Apply as a Group</span>
+                    </label>
+                </div>
 
-            <!-- Number of Additional Volunteers (Shown Only if Applying as Group) -->
-            <div id="group-size-container" class="bg-gray-100 p-4 rounded-lg hidden">
-                <label class="block text-gray-700 font-semibold mb-2">Number of Additional Volunteers</label>
-                <input type="number" name="no_of_additional_volunteers" min="1" placeholder="Enter number of additional volunteers"
-                       class="w-full text-sm text-gray-800 bg-white focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
-            </div>
+                <!-- Number of Additional Volunteers (Shown Only if Applying as Group) -->
+                <div id="group-size-container" class="bg-gray-100 p-4 rounded-lg hidden">
+                    <label class="block text-gray-700 font-semibold mb-2">Number of Additional Volunteers</label>
+                    <input type="number" name="no_of_additional_volunteers" min="1" placeholder="Enter number of additional volunteers"
+                        class="w-full text-sm text-gray-800 bg-white focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
+                </div>
+            {% endif %}
 
             <!-- Rationale for Applying -->
             <div class="bg-gray-100 p-4 rounded-lg">

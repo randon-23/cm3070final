@@ -211,7 +211,7 @@ class="grid grid-cols-3 gap-4 bg-white shadow p-6 rounded-lg text-sm w-full mx-a
                                 {% if not opportunity.ongoing %}
                                     <p class="text-sm"><strong>Apply as Group:</strong> {% if opportunity.can_apply_as_group %} Yes{% if opportunity.slots %} ({{ opportunity.slots }} slots available){% endif %}{% else %} No{% endif %}</p>
                                 {% else %}
-                                    <p class="text-sm"><strong>Days of Week:</strong> {{ opportunity.days_of_week|join:", " }}</p>
+                                    <p class="text-sm"><strong>Days of Week:</strong> {{ opportunity.days_of_week|join:", "|title }}</p>
                                 {% endif %}
                             </div>
                             <div class="col-span-2 text-center">
@@ -261,7 +261,7 @@ class="grid grid-cols-3 gap-4 bg-white shadow p-6 rounded-lg text-sm w-full mx-a
                                 {% if not opportunity.ongoing %}
                                     <p class="text-sm"><strong>Apply as Group:</strong> {% if opportunity.can_apply_as_group %} Yes{% if opportunity.slots %} ({{ opportunity.slots }} slots available){% endif %}{% else %} No{% endif %}</p>
                                 {% else %}
-                                    <p class="text-sm"><strong>Days of Week:</strong> {{ opportunity.days_of_week|join:", " }}</p>
+                                    <p class="text-sm"><strong>Days of Week:</strong> {{ opportunity.days_of_week|join:", "|title }}</p>
                                 {% endif %}
                             </div>
                             <div class="col-span-2 text-center">

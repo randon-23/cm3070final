@@ -48,10 +48,11 @@
 
                     <!-- Details -->
                     <div class="mt-2 text-gray-600 text-sm">
+                        <p><strong>Opportunity Type:</strong>{% if opportunity.ongoing %} Ongoing{% else %} One-Time{% endif%}</p>
                         <p><strong>Work Type:</strong> {{ opportunity.work_basis|title }}</p>
                         <p><strong>Duration:</strong> {{ opportunity.duration|title }}</p>
                         {% if opportunity.ongoing %}
-                            <p><strong>Days Available:</strong> {{ opportunity.days_of_week|join:", " }}</p>
+                            <p><strong>Days Available:</strong> {{ opportunity.days_of_week|join:", "|title }}</p>
                         {% else %}
                             <p><strong>Opportunity Date:</strong> {{ opportunity.opportunity_date }}</p>
                             <p><strong>From:</strong> {{ opportunity.opportunity_time_from }}</p>

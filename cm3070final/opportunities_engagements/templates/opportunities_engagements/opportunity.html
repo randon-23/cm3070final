@@ -10,6 +10,11 @@
 <script src="{% static 'js_frontend-scripts/message-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-search-processes.js' %}"></script>
 <script src="{% static 'js_frontend-scripts/opportunities-engagements-processes.js' %}"></script>
+<style>
+    .selected {
+        filter: brightness(0.75);
+    }
+</style>
 
 <!-- If the user accessing is the organization who created the opportunity, the create session modal is included so that if it is ongoing they can create a session -->
 {% if is_opportunity_owner %}
@@ -50,7 +55,7 @@
                 <p><strong>Languages Required:</strong> {{ opportunity.languages|join:", " }}</p>
                 <p><strong>Group Applications:</strong> {% if opportunity.can_apply_as_group %}Allowed{% else %}Not Allowed{% endif %}</p>
                 {% if opportunity.ongoing %}
-                    <p><strong>Days Available:</strong> {{ opportunity.days_of_week|join:", " }}</p>
+                    <p><strong>Days Available:</strong> {{ opportunity.days_of_week|join:", "|title }}</p>
                 {% else %}
                     <p><strong>Date:</strong> {{ opportunity.opportunity_date }}</p>
                     <p><strong>Time:</strong> {{ opportunity.opportunity_time_from }} - {{ opportunity.opportunity_time_to }}</p>
@@ -83,12 +88,17 @@
             <h2 class="text-xl font-semibold mt-6">Sessions</h2>
 
             {% if is_opportunity_owner %}
-            <div class="flex space-x-4 mt-2">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded-md" onclick="filterSessions('upcoming')">Upcoming</button>
-                <button class="bg-gray-500 text-white px-4 py-2 rounded-md" onclick="filterSessions('completed')">Completed</button>
-                <button class="bg-red-500 text-white px-4 py-2 rounded-md" onclick="filterSessions('cancelled')">Cancelled</button>
-                <button class="bg-gray-700 text-white px-4 py-2 rounded-md" onclick="filterSessions('all')">All</button>
-            </div>
+                <div class="flex space-x-4 mt-2">
+                    <button class="upcoming-sessions-btn bg-blue-500 text-white px-4 py-2 rounded-md font-bold" onclick="filterSessions('upcoming')">Upcoming</button>
+                    <button class="completed-sessions-btn bg-gray-500 text-white px-4 py-2 rounded-md font-bold" onclick="filterSessions('completed')">Completed</button>
+                    <button class="cancelled-sessions-btn bg-red-500 text-white px-4 py-2 rounded-md font-bold" onclick="filterSessions('cancelled')">Cancelled</button>
+                    <button class="all-sessions-btn bg-gray-700 text-white px-4 py-2 rounded-md font-bold" onclick="filterSessions('all')">All</button>
+                </div>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        filterSessions('upcoming');
+                    });
+                </script>
             {% endif %}
 
             <div id="sessions-container" class="grid grid-cols-2 gap-4 mt-4">
@@ -146,7 +156,7 @@
                         {% endif %}
                     </div>
                 {% empty %}
-                    <p class="text-gray-500">No sessions available.</p>
+                    <p class="text-gray-500">No sessions currently available.</p>
                 {% endfor %}
             </div>
         {% endif %}
@@ -160,23 +170,39 @@
             {% if is_opportunity_owner %}
                 <h2 class="text-xl font-semibold mb-2">Manage Opportunity</h2>
                 <div class="flex flex-col space-y-2">
-                    <button onclick="openCompleteOpportunityModal('{{ opportunity.volunteer_opportunity_id }}')"
-                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
+                    {% if opportunity.status == "upcoming" %}
+                        <button onclick="openCompleteOpportunityModal('{{ opportunity.volunteer_opportunity_id }}')"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                <span class="font-bold">Complete Opportunity</span>
+                        </button>
+                        <button onclick="cancelOpportunity('{{ opportunity.volunteer_opportunity_id }}')"
+                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                <span class="font-bold">Cancel Opportunity</span>
+                        </button>
+                    {% elif opportunity.status == "completed" %}
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
-                            <span class="font-bold">Complete Opportunity</span>
-                    </button>
-                    <button onclick="cancelOpportunity('{{ opportunity.volunteer_opportunity_id }}')"
-                        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}">
+                            <span class="font-bold">Completed</span>
+                        </button>
+                    {% elif opportunity.status == "cancelled" %}
+                        <button class="bg-gray-400 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
-                            <span class="font-bold">Cancel Opportunity</span>
-                    </button>
+                            <span class="font-bold">Cancelled</span>
+                        </button>
+                    {% endif %}
                     {% if opportunity.ongoing and opportunity.status == "upcoming" %}
-                        <button onclick="document.getElementById('create-session-modal').classList.remove('hidden')"
-                            class="bg-blue-600 text-white px-4 py-2 mx-4 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                        <button onclick="document.getElementById('create-session-modal').classList.remove('hidden'); document.getElementById('create-session-modal').classList.add('flex')"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                 </svg>
@@ -202,7 +228,7 @@
                             </svg>
                             <span class="font-bold">Rejected</span>
                         </button>
-                    {% elif has_applied and not is_engaged %}
+                    {% elif has_applied and not is_engaged and not is_cancelled and not is_completed %}
                         <button class="bg-gray-400 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282m0 0h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904m10.598-9.75H14.25M5.904 18.5c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 0 1-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h1.053c.472 0 .745.556.5.96a8.958 8.958 0 0 0-1.302 4.665c0 1.194.232 2.333.654 3.375Z" />

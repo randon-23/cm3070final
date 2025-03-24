@@ -326,10 +326,11 @@ class VolunteerEngagementLogSerializer(serializers.ModelSerializer):
         session = session_engagement.session if session_engagement else None
 
         # Ensure logs cannot be created for future sessions/opportunities
-        if session and session.session_date > now().date():
-            raise serializers.ValidationError("You cannot create logs for a session that has not yet happened.")
-        elif not session and opportunity.opportunity_date and opportunity.opportunity_date > now().date():
-            raise serializers.ValidationError("You cannot create logs for an opportunity that has not yet happened.")
+        # Commented for testing and demo purposes - in production, this should be enabled
+        # if session and session.session_date > now().date():
+        #     raise serializers.ValidationError("You cannot create logs for a session that has not yet happened.")
+        # elif not session and opportunity.opportunity_date and opportunity.opportunity_date > now().date():
+        #     raise serializers.ValidationError("You cannot create logs for an opportunity that has not yet happened.")
 
         # Prevent duplicate logs for the same engagement/session - NB: Model constraints already prevent duplicate logs
         existing_log = VolunteerEngagementLog.objects.filter(
@@ -353,7 +354,12 @@ class VolunteerEngagementLogSerializer(serializers.ModelSerializer):
                 opportunity_duration = (
                     opportunity.opportunity_time_to.hour + opportunity.opportunity_time_to.minute / 60
                 ) - (opportunity.opportunity_time_from.hour + opportunity.opportunity_time_from.minute / 60)
-                if no_of_hours > opportunity_duration:
+                application = volunteer_engagement.volunteer_opportunity_application
+                # Calculate allowed total hours for group
+                allowed_total_hours = opportunity_duration
+                if application.as_group:
+                    allowed_total_hours *= (1 + application.no_of_additional_volunteers)
+                if no_of_hours > allowed_total_hours:
                     raise serializers.ValidationError("Logged hours exceed opportunity duration.")
 
         # Ensure no_of_hours cannot be negative

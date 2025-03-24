@@ -1,16 +1,24 @@
 // FILTERS & TOGGLES
-// Toggles the visibility of the opportunity type fields based on the selected radio button
+// Toggles the visibility of the opportunity type fields based on the selected radio button - WORKS
 function toggleOpportunityType() {
     let isOngoing = document.querySelector('input[name="ongoing"]:checked').value === "true";
     document.getElementById("one-time-fields").classList.toggle("hidden", isOngoing);
     document.getElementById("ongoing-fields").classList.toggle("hidden", !isOngoing);
+    // prevent submission
+    document.querySelectorAll("#one-time-fields input").forEach(input => {
+        input.disabled = isOngoing;
+    });
+    document.querySelectorAll("#ongoing-fields input, #ongoing-fields select").forEach(input => {
+        input.disabled = !isOngoing;
+    });
+
     document.getElementById("duration-select").disabled = !isOngoing;
     if(!isOngoing) {
         document.getElementById("duration-select").value = "short-term";
     }
 }
 
-// Toggles the visibility of the engagement type fields based on the selected radio button
+// Toggles the visibility of the engagement type fields based on the selected radio button - WORKS
 function toggleGroupApplication() {
     let checkbox = document.getElementById('as_group');
     let groupSizeContainer = document.getElementById('group-size-container');
@@ -22,7 +30,7 @@ function toggleGroupApplication() {
     }
 }
 
-// Toggles the visibility of the engagement type fields based on the selected radio button
+// Toggles the visibility of the engagement type fields based on the selected radio button - WORKS
 function filterOpportunities(status) {
     let hasOpportunities = false;
 
@@ -60,7 +68,7 @@ function filterOpportunities(status) {
         activeTab.classList.add('border-blue-600');
     }
 }
-// Apply default filter on page load (show only upcoming opportunities)
+// Apply default filter on page load (show only upcoming opportunities) - WORKS
 document.addEventListener("DOMContentLoaded", function () {
     if(document.getElementById("opportunities-container")){
         filterOpportunities("upcoming");   
@@ -70,6 +78,15 @@ document.addEventListener("DOMContentLoaded", function () {
 // Toggles the visibility of the session type fields based on the selected radio button
 function filterSessions(status) {
     let isOwner = document.body.dataset.isOpportunityOwner === "true"; // Passed from Django template
+    
+    document.querySelectorAll('[class*="-sessions-btn"]').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    const selectedButton = document.querySelector(`.${status}-sessions-btn`);
+    if (selectedButton) {
+        selectedButton.classList.add("selected");
+    }
+
     document.querySelectorAll('.session-card').forEach(card => {
         if (!isOwner && card.getAttribute('data-status') !== "upcoming") {
             card.style.display = 'none'; // Volunteers only see upcoming
@@ -84,12 +101,16 @@ function filterSessions(status) {
     let visibleSessions = document.querySelectorAll(`.session-card[data-status="${status}"]`);
     let sessionContainer = document.getElementById('sessions-container');
 
-    if (visibleSessions.length === 0 && status !== "all") {
-        sessionContainer.innerHTML = `<p class="text-center text-gray-500 mt-4">No ${status} sessions available.</p>`;
+    if (visibleSessions.length === 0) {
+        if(status !== "all"){
+            sessionContainer.innerHTML = `<p class="text-center text-gray-500 mt-4">No ${status} sessions available.</p>`;
+        } else {
+            sessionContainer.innerHTML = `<p class="text-center text-gray-500 mt-4">No sessions created yet.</p>`;
+        }
     }
 }
 
-// Toggles the filter for engagements, applications and log requests
+// Toggles the filter for engagements, applications and log requests - WORKS
 function filterEngagementsApplicationsLogRequests(type, status) {
     // Remove highlight from buttons
     document.querySelectorAll(`.${type}-filters button`).forEach(btn => {
@@ -127,7 +148,7 @@ function filterEngagementsApplicationsLogRequests(type, status) {
     }
 }
 
-// Toggle the filter of applications and log requests
+// Toggle the filter of applications and log requests - WORKS
 function filterApplicationsLogRequests(filter, btnElement = null) {
     document.getElementById("pending-applications").classList.add("hidden");
     document.getElementById("pending-log-requests").classList.add("hidden");
@@ -143,7 +164,7 @@ function filterApplicationsLogRequests(filter, btnElement = null) {
 }
 
 // HELPER FUNCTION FOR SEQUENTIAL API CALLS
-// Asynchronous function to execute a series of actions in sequence
+// Asynchronous function to execute a series of actions in sequence - WORKS
 async function executeChainedActions(actions, prevData = {}) {
     const modalContent = document.getElementById("loading-modal-content");
     modalContent.innerHTML = "<p>Processing...</p>";
@@ -211,7 +232,7 @@ async function executeChainedActions(actions, prevData = {}) {
 }
 
 // SEQUENTIAL API CALL FUNCTIONS
-// no form
+// no form - WORKS
 async function cancelOpportunity(volunteerOpportunityId) {
     await executeChainedActions([
         { url: `/opportunities-engagements/api/opportunities/cancel_opportunity/${volunteerOpportunityId}/`, method: "PATCH"},
@@ -219,7 +240,7 @@ async function cancelOpportunity(volunteerOpportunityId) {
     ]);
 }
 
-// no form - called from modal which displays current engagees so org can remove any
+// no form - called from modal which displays current engagees so org can remove any - WORKS
 async function completeOpportunity(volunteerOpportunityId, isOngoing) {
     let actions = [
         { url: `/opportunities-engagements/api/opportunities/complete_opportunity/${volunteerOpportunityId}/`, method: "PATCH" },
@@ -235,7 +256,7 @@ async function completeOpportunity(volunteerOpportunityId, isOngoing) {
     await executeChainedActions(actions);
 }
 
-// no form
+// no form - WORKS
 async function acceptApplication(applicationId, accountUuid, opportunityId, isOngoing) {
     let actions = [
         { url: `/opportunities-engagements/api/opportunities/applications/accept/${applicationId}/`, method: "PATCH" },
@@ -301,7 +322,7 @@ function setCantGo(sessionEngagementId) {
         .then(() => document.getElementById(sessionEngagementId).remove());
 }
 
-// Open modal to confirm opportunity completion with option to cancel listed engagements
+// Open modal to confirm opportunity completion with option to cancel listed engagements - WORKS
 function openCompleteOpportunityModal(volunteerOpportunityId) {
     let modal = document.getElementById("complete-opportunity-modal");
     let listContainer = document.getElementById("opportunity-engagement-list");
@@ -378,9 +399,10 @@ function openCompleteSessionModal(sessionId) {
 
     // Show modal
     modal.classList.remove("hidden");
+    modal.classList.add("flex");
 }
 
-// Called when opening attendance modals on an opportunity or its sessions
+// Called when opening attendance modals on an opportunity or its sessions - WORKS
 function updateEngagementsModal(event){
     let response = event.detail.xhr.responseText;
     try {

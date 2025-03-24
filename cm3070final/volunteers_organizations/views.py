@@ -82,9 +82,14 @@ def profile_view(request, account_uuid):
                 context['engagement_logs'] = logs_data
                 context['total_hours'] = sum(log.get("no_of_hours", 0) for log in logs_data)
                 context["unique_organizations"] = len(set(
-                    log["volunteer_engagement"]["organization"].get("organization_name", "Unknown")
-                    for log in logs_data if log["volunteer_engagement"]["organization"]
-                ))
+                        log["volunteer_engagement"]
+                        .get("volunteer_opportunity_application", {})
+                        .get("volunteer_opportunity", {})
+                        .get("organization", {})
+                        .get("organization", {})
+                        .get("organization_name", "Unknown")
+                        for log in logs_data
+                    ))
         elif user_profile["account"]["user_type"] == "organization":
             upcoming_opportunities = get_upcoming_opportunities(request, account_uuid)
             if upcoming_opportunities.status_code==404:
@@ -109,9 +114,14 @@ def profile_view(request, account_uuid):
                 context['engagement_logs'] = logs_data
                 context['total_hours'] = sum(log.get("no_of_hours", 0) for log in logs_data)
                 context["unique_organizations"] = len(set(
-                    log["volunteer_engagement"]["organization"].get("organization_name", "Unknown")
-                    for log in logs_data if log["volunteer_engagement"]["organization"]
-                ))
+                        log["volunteer_engagement"]
+                        .get("volunteer_opportunity_application", {})
+                        .get("volunteer_opportunity", {})
+                        .get("organization", {})
+                        .get("organization", {})
+                        .get("organization_name", "Unknown")
+                        for log in logs_data
+                    ))
         elif request.user.is_organization():
             upcoming_opportunities = get_upcoming_opportunities(request, account_uuid)
             if upcoming_opportunities.status_code==404:

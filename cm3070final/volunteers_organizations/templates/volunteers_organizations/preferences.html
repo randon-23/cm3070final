@@ -10,7 +10,7 @@
 <script src="{% static 'js_frontend-scripts/profile-processes.js' %}"></script> <!--Importing to use updateContent()-->
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
 
-<div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-md relative mt-4">
+<div class="mx-auto bg-white p-6 rounded-lg shadow-md relative mt-4">
     <!-- Title & Back Button -->
     <div class="flex items-center justify-between mb-4">
         <a href="{{ request.META.HTTP_REFERER|default:'#' }}" class="absolute left-5 top-5 px-2 py-2 bg-gray-700 text-white rounded-md shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-600 flex items-center">

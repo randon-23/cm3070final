@@ -1972,6 +1972,27 @@ class VolunteerEngagementLogAPITest(APITestCase):
         response = self.client.post(create_logs_url)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["message"], "Engagement logs created successfully.")
+    
+    def test_create_opportunity_engagement_logs_as_group(self):
+        # Set the application to group with 3 additional volunteers
+        self.application_one_time.as_group = True
+        self.application_one_time.no_of_additional_volunteers = 3
+        self.application_one_time.save()
+
+        self.client.force_authenticate(user=self.organization_account)
+        url = reverse("opportunities_engagements:create_opportunity_engagement_logs", args=[self.opportunity.volunteer_opportunity_id])
+
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["message"], "Engagement logs created successfully.")
+        self.assertEqual(len(response.data["data"]), 1)
+
+        log_data = response.data["data"][0]
+        expected_hours = self.opportunity.opportunity_time_to.hour - self.opportunity.opportunity_time_from.hour
+        expected_total_hours = expected_hours * (1 + self.application_one_time.no_of_additional_volunteers)
+
+        self.assertEqual(log_data["no_of_hours"], expected_total_hours)
+        self.assertIn("as a group of 4 total volunteers", log_data["log_notes"])
 
     def test_create_opportunity_engagement_logs_unauthorized(self):
         create_logs_url = reverse("opportunities_engagements:create_opportunity_engagement_logs", args=[self.opportunity.volunteer_opportunity_id])

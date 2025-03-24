@@ -204,6 +204,7 @@ def create_opportunity(request):
             opportunity = serializer.save()
             return Response({"message": "Successfully created opportunity", "data": serializer.data}, status=status.HTTP_201_CREATED)
         else:
+            print(serializer.errors)
             return Response({"message": "An error occurred when creating the opportunity", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -301,6 +302,13 @@ def complete_opportunity(request, volunteer_opportunity_id):
                 {"error": "Cannot complete opportunity while there are upcoming sessions. Complete or cancel sessions first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+    # else:
+    #     # For one-time opportunities, ensure the event has already happened
+    #     if opportunity.opportunity_date and opportunity.opportunity_date > timezone.now().date():
+    #         return Response(
+    #             {"error": "You cannot complete this opportunity as it has not yet occurred."},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
 
     opportunity.status = "completed"
     opportunity.save()
@@ -919,16 +927,31 @@ def create_opportunity_engagement_logs(request, opportunity_id):
 
         created_logs = []
         for engagement in engagements:
+            application = engagement.volunteer_opportunity_application
+            base_hours = opportunity.opportunity_time_to.hour - opportunity.opportunity_time_from.hour
+
+            # Adjust if it was a group application
+            additional_vols = application.no_of_additional_volunteers if application.as_group else 0
+            total_hours = base_hours * (1 + additional_vols)
+
+            log_note = f"Contributed to {opportunity.organization.organization_name} at {opportunity.title}"
+            if application.as_group:
+                log_note += f" as a group of {1 + additional_vols} total volunteers"
+
             data = {
                 "volunteer_engagement_id": engagement.pk,
-                "no_of_hours": (opportunity.opportunity_time_to.hour - opportunity.opportunity_time_from.hour),
+                "no_of_hours": total_hours,
                 "status": "approved",
-                "log_notes": f"Contributed to {opportunity.organization.organization_name} at {opportunity.title}"
+                "log_notes": log_note
             }
+
             serializer = VolunteerEngagementLogSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
                 created_logs.append(serializer.data)
+            else:
+                print(f"Failed data: {data}")
+                print(f"Errors: {serializer.errors}")
 
         return Response({"message": "Engagement logs created successfully.", "data": created_logs}, status=status.HTTP_201_CREATED)
     else:
