@@ -19,10 +19,17 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpRequest
+
+def root_redirect_view(request: HttpRequest):
+    if request.user.is_authenticated:
+        print(request.user)
+        return redirect(f'/volunteers-organizations/profile/{request.user.account_uuid}')
+    return redirect('/accounts/auth/?type=login')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('base.urls')),
+    path('', root_redirect_view),
     path('home/', lambda request: redirect('/')), # Redirect to home
     path('accounts/', include('accounts_notifs.urls')),
     path('volunteers-organizations/', include('volunteers_organizations.urls')),
