@@ -1,4 +1,22 @@
 document.addEventListener("DOMContentLoaded", function() {
+
+    document.getElementById("filter-form").addEventListener("submit", function(event) {
+        const enableLocation = document.getElementById("enable-location");
+        const locationInput = document.getElementById("location-input");
+        const hiddenLocation = document.getElementById("location-hidden");
+        const proximity = document.getElementById("proximity");
+    
+        if (!enableLocation.checked) {
+            locationInput.removeAttribute("name");
+            hiddenLocation.removeAttribute("name");
+            proximity.removeAttribute("name");
+        } else {
+            locationInput.setAttribute("name", "location_input");
+            hiddenLocation.setAttribute("name", "location");
+            proximity.setAttribute("name", "proximity");
+        }
+    });
+
     // Enable/Disable Location Search
     document.getElementById("enable-location").addEventListener("change", function () {
         let locationInput = document.getElementById("location-input");
@@ -107,56 +125,92 @@ function updateSelectedItems(menu, selectedContainer, toggle) {
     });
 }
 
-document.getElementById("filter-form").addEventListener("submit", function(event) {
-    const enableLocation = document.getElementById("enable-location");
-    const locationInput = document.getElementById("location-input");
-    const hiddenLocation = document.getElementById("location-hidden");
-    const proximity = document.getElementById("proximity");
+function renderOpportunities(opportunities) {
+    const container = document.getElementById("opportunity-results");
+    const noResultsPlaceholder = document.getElementById("no-results-placeholder");
+    container.innerHTML = "";
 
-    if (!enableLocation.checked) {
-        locationInput.removeAttribute("name");
-        hiddenLocation.removeAttribute("name");
-        proximity.removeAttribute("name");
+    if (opportunities.length === 0) {
+        noResultsPlaceholder.classList.remove("hidden");
+        return;
     } else {
-        locationInput.setAttribute("name", "location_input");
-        hiddenLocation.setAttribute("name", "location");
-        proximity.setAttribute("name", "proximity");
+        noResultsPlaceholder.classList.add("hidden");
+        opportunities.forEach(opportunity => {
+            const isOngoing = opportunity.ongoing;
+            const date = opportunity.opportunity_date || "N/A";
+            const timeFrom = opportunity.opportunity_time_from || "N/A";
+            const timeTo = opportunity.opportunity_time_to || "N/A";
+            const location = opportunity.required_location?.formatted_address || "N/A";
+            const daysOfWeek = (opportunity.days_of_week || []).map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(", ");
+            const skills = (opportunity.requirements || []).join(", ");
+            const org = opportunity.organization?.organization;
+            const orgName = org?.organization_name || "Unknown Org";
+            const orgProfileUrl = org?.profile_url || "#";
+            const workBasis = opportunity.work_basis?.charAt(0).toUpperCase() + opportunity.work_basis?.slice(1);
+            const duration = opportunity.duration?.charAt(0).toUpperCase() + opportunity.duration?.slice(1);
+            const areaOfWork = opportunity.area_of_work?.charAt(0).toUpperCase() + opportunity.area_of_work?.slice(1);
+            const applyAsGroup = opportunity.can_apply_as_group
+                ? `Yes${opportunity.slots ? ` (${opportunity.slots} slots available)` : ""}`
+                : "No";
+    
+            container.innerHTML += `
+                <div class="bg-gray-50 p-4 rounded-lg shadow-md mt-2 flex items-center justify-between transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-100 cursor-pointer"
+                     data-url="/opportunities-engagements/opportunity/${opportunity.volunteer_opportunity_id}/"
+                     onclick="window.location.href=this.getAttribute('data-url')">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h3 class="font-bold text-lg">${opportunity.title}</h3>
+                            <p class="text-sm text-gray-700 mb-2">${opportunity.description}</p>
+    
+                            <p class="text-sm"><strong>Opportunity Type:</strong> ${isOngoing ? "Ongoing" : "One-Time"}</p>
+                            ${!isOngoing ? `
+                                <p class="text-sm"><strong>Date:</strong> ${date}</p>
+                                <p class="text-sm"><strong>From:</strong> ${timeFrom} <strong>To:</strong> ${timeTo}</p>
+                            ` : ""}
+                            <p class="text-sm"><strong>Location:</strong> ${location}</p>
+                        </div>
+                        <div class="flex flex-col justify-center">
+                            <p class="text-sm"><strong>Work Basis:</strong> ${workBasis}</p>
+                            <p class="text-sm"><strong>Duration:</strong> ${duration}</p>
+                            <p class="text-sm"><strong>Area of Work:</strong> ${areaOfWork}</p>
+                            <p class="text-sm"><strong>Skills Required:</strong> ${skills}</p>
+                            ${!isOngoing
+                                ? `<p class="text-sm"><strong>Apply as Group:</strong> ${applyAsGroup}</p>`
+                                : `<p class="text-sm"><strong>Days of Week:</strong> ${daysOfWeek}</p>`
+                            }
+                        </div>
+                        <div class="col-span-2 text-center">
+                            <p class="text-sm">
+                              <strong>Organization:</strong>
+                              <a href="${orgProfileUrl}" class="text-blue-600 hover:underline">
+                                ${orgName}
+                              </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+}
+
+// 1. Prevent HTMX from injecting raw JSON into the target div
+document.body.addEventListener("htmx:beforeSwap", function (event) {
+    if (event.detail.target.id === "opportunity-results" && event.detail.xhr.getResponseHeader("content-type")?.includes("application/json")) {
+        event.detail.shouldSwap = false; // Cancel default HTML swap
     }
 });
 
-document.addEventListener("htmx:afterRequest", function(event) {
+// 2. After response is loaded, process the JSON manually
+document.body.addEventListener("htmx:afterOnLoad", function (event) {
     if (event.detail.target.id === "opportunity-results") {
-        let responseData = event.detail.xhr.responseText;
         try {
-            let opportunities = JSON.parse(responseData);
-            let resultsContainer = document.getElementById("opportunity-results");
-            resultsContainer.innerHTML = ""; // Clear previous results
-            
-            if (opportunities.length === 0) {
-                resultsContainer.innerHTML = `<p class="text-gray-500 text-center">No opportunities found.</p>`;
-                return;
-            }
+            const data = JSON.parse(event.detail.xhr.responseText);
+            document.getElementById("search-placeholder")?.classList.add("hidden"); // hide intro
 
-            opportunities.forEach(opportunity => {
-                let opportunityHTML = `
-                    <div class="bg-white p-4 shadow rounded-lg mb-4 hover:scale-105 transition transform duration-200 ease-in-out">
-                        <h3 class="font-bold">
-                            <a href="/opportunity/${opportunity.volunteer_opportunity_id}/"
-                               class="text-blue-600 hover:underline">
-                                ${opportunity.title}
-                            </a>
-                        </h3>
-                        <p class="text-sm text-gray-700">${opportunity.description}</p>
-                        <span class="text-xs text-gray-500">
-                            ${opportunity.ongoing ? "Ongoing" : `One-Time - ${opportunity.opportunity_date || "N/A"}`}
-                        </span>
-                    </div>
-                `;
-                resultsContainer.innerHTML += opportunityHTML;
-            });
-        } catch (error) {
-            console.error("Error parsing opportunities:", error);
-            document.getElementById("opportunity-results").innerHTML = `<p class="text-red-500 text-center">Failed to load results.</p>`;
+            renderOpportunities(data);
+        } catch (err) {
+            console.error("Failed to parse HTMX JSON response", err);
         }
     }
 });
