@@ -75,9 +75,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
-// Toggles the visibility of the session type fields based on the selected radio button
+// Toggles the visibility of the session type fields based on the selected radio button - WORKS
 function filterSessions(status) {
-    let isOwner = document.body.dataset.isOpportunityOwner === "true"; // Passed from Django template
+    let isOwner = window.isOpportunityOwner // Passed from Django template
     
     document.querySelectorAll('[class*="-sessions-btn"]').forEach(btn => {
         btn.classList.remove('selected');
@@ -87,26 +87,36 @@ function filterSessions(status) {
         selectedButton.classList.add("selected");
     }
 
+    let hasVisible = false;
+
     document.querySelectorAll('.session-card').forEach(card => {
-        if (!isOwner && card.getAttribute('data-status') !== "upcoming") {
-            card.style.display = 'none'; // Volunteers only see upcoming
-        } else if (status === "all" || card.getAttribute('data-status') === status) {
+        const cardStatus = card.getAttribute('data-status');
+
+        if (!isOwner && cardStatus !== "upcoming") {
+            card.style.display = 'none';
+        } else if (status === "all" || cardStatus === status) {
             card.style.display = 'block';
+            hasVisible = true;
         } else {
             card.style.display = 'none';
         }
     });
 
     // If no sessions match the selected filter, show a message
-    let visibleSessions = document.querySelectorAll(`.session-card[data-status="${status}"]`);
-    let sessionContainer = document.getElementById('sessions-container');
+    let message = document.getElementById('no-sessions-message');
 
-    if (visibleSessions.length === 0) {
-        if(status !== "all"){
-            sessionContainer.innerHTML = `<p class="text-center text-gray-500 mt-4">No ${status} sessions available.</p>`;
-        } else {
-            sessionContainer.innerHTML = `<p class="text-center text-gray-500 mt-4">No sessions created yet.</p>`;
+    if (!hasVisible) {
+        if (!message) {
+            message = document.createElement('p');
+            message.id = 'no-sessions-message';
+            message.className = "text-center text-gray-500 mt-4";
+            document.getElementById('sessions-container').appendChild(message);
         }
+        message.innerText = status !== "all"
+            ? `No ${status} sessions available.`
+            : "No sessions created yet.";
+    } else if (message) {
+        message.remove();
     }
 }
 
@@ -287,6 +297,7 @@ async function createSession(opportunityId, data) {
     ]);
 }
 
+// removes slots from form submission for unlimited slots - WORKS
 document.addEventListener("DOMContentLoaded", () => {
     let createSessionForm = document.getElementById("create-session-form");
     if (createSessionForm) {
@@ -312,14 +323,26 @@ async function completeSession(sessionId) {
 }
 
 // FETCH REQUESTS AND CORRESPONDING REMOVAL ON MODAL OPEN FUNCTIONS
+// Used in opportunity modal to remove volunteer engagement - WORKS
 function removeEngagement(engagementId) {
-    fetch(`/opportunities-engagements/api/engagements/cancel_engagement_volunteer/${engagementId}/`, { method: "PATCH" })
-        .then(() => document.getElementById(engagementId).remove());
+    fetch(`/opportunities-engagements/api/engagements/cancel_engagement_volunteer/${engagementId}/`, {
+        method: "PATCH",
+        headers: {
+            "X-CSRFToken": csrftoken,
+            "Content-Type": "application/json"
+        }
+    }).then(() => document.getElementById(engagementId).remove());
 }
 
+// Used in attendance modal to remove session engagement - WORKS
 function setCantGo(sessionEngagementId) {
-    fetch(`/opportunities-engagements/api/session_engagements/cancel_attendance/${sessionEngagementId}/`, { method: "PATCH" })
-        .then(() => document.getElementById(sessionEngagementId).remove());
+    fetch(`/opportunities-engagements/api/session_engagements/cancel_attendance/${sessionEngagementId}/`, {
+        method: "PATCH",
+        headers: {
+            "X-CSRFToken": csrftoken,
+            "Content-Type": "application/json"
+        }
+    }).then(() => document.getElementById(sessionEngagementId).remove());
 }
 
 // Open modal to confirm opportunity completion with option to cancel listed engagements - WORKS
@@ -371,10 +394,24 @@ function openCompleteOpportunityModal(volunteerOpportunityId) {
     modal.classList.add("flex");
 }
 
-// Open modal to confirm session completion with option to cancel listed session engagements
+// Open modal to confirm session completion with option to cancel listed session engagements - WORKS
 function openCompleteSessionModal(sessionId) {
     let modal = document.getElementById("complete-session-modal");
     let listContainer = document.getElementById("session-attendee-list");
+    const confirmBtn = document.getElementById("confirm-complete-session");
+
+    confirmBtn.onclick = null;
+
+    // Add new click handler with correct sessionId
+    confirmBtn.onclick = function () {
+        completeSession(sessionId);
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    };
+
+    confirmBtn.disabled = true;
+    confirmBtn.classList.add("cursor-not-allowed", "opacity-50");
+    confirmBtn.classList.remove("hover:bg-green-700");
 
     // Fetch session attendees
     fetch(`/opportunities-engagements/api/session_engagements/get_session_engagements/${sessionId}/`)
@@ -382,19 +419,40 @@ function openCompleteSessionModal(sessionId) {
         .then(data => {
             if (data.length === 0) {
                 listContainer.innerHTML = `<p class="text-gray-500 text-center">No attendees found.</p>`;
-                document.getElementById("confirm-complete-session").add("disabled");
                 return;
             }
+            
+            const filtered = data.filter(attendee => attendee.status === "can_go");
 
-            listContainer.innerHTML = data.map(attendee => `
-                <div id="${attendee.session_engagement_id}" class="flex justify-between bg-gray-100 p-4 rounded-md">
-                    <span>${attendee.volunteer.account.email_address}</span>
-                    <button onclick="setCantGo('${attendee.session_engagement_id}')"
-                            class="bg-red-500 text-white px-4 py-1 rounded-md hover:bg-red-700">
-                        Mark as 'Can't Go'
-                    </button>
-                </div>
-            `).join('');
+            confirmBtn.disabled = false;
+            confirmBtn.classList.remove("opacity-50", "cursor-not-allowed");
+            confirmBtn.classList.add("hover:bg-green-700");
+            
+            listContainer.innerHTML = filtered.map(attendee => {
+                const volData = attendee.volunteer_engagement.volunteer_opportunity_application.volunteer;
+                const profile = volData.volunteer;
+                const fullName = `${profile.first_name} ${profile.last_name}`;
+                const profileImg = profile.profile_img || "/static/images/default_volunteer.svg";
+            
+                return `
+                    <div id="${attendee.session_engagement_id}" class="flex items-center justify-between bg-gray-100 p-4 rounded-md">
+                        <div class="flex items-center space-x-4">
+                            <img src="${profileImg}" alt="Profile" class="w-10 h-10 rounded-full object-cover border border-gray-300">
+                            <div>
+                                <p class="font-semibold">${fullName}</p>
+                                <p class="text-sm text-gray-700">${volData.email_address}</p>
+                            </div>
+                        </div>
+                        <button onclick="setCantGo('${attendee.session_engagement_id}')"
+                                class="bg-red-500 text-white px-4 py-1 rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                <span class="font-bold">Mark as 'Can't Go'</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
         });
 
     // Show modal
@@ -409,19 +467,21 @@ function updateEngagementsModal(event){
         let data = JSON.parse(response);
         let url = event.detail.xhr.responseURL;
 
-        let modalContent, modalId, filteredData;
+        let modalContent, modalId, filteredData, isOpportunity;
 
         // Determine if it's an Opportunity Engagement (Engagees) or Session Engagement (Attendees)
         if (url.includes('/engagements/get_opportunity_engagements/')) {
             modalContent = document.getElementById("engagees-modal-content");
             modalId = "engagees-modal";
             filteredData = data; // Show all engagees
+            isOpportunity = true;
         } 
         else if (url.includes('/session_engagements/get_session_engagements/')) {
             modalContent = document.getElementById("attendees-modal-content");
             modalId = "attendees-modal";
             // Filter only attendees with status "can_go"
-            filteredData = data.filter(attendee => attendee.status === "can_go");
+            filteredData = data.filter(entry => entry.status === "can_go");
+            isOpportunity = false;
         } 
         else {
             console.error("Unknown URL for engagements:", url);
@@ -431,26 +491,39 @@ function updateEngagementsModal(event){
         // Clear previous content
         modalContent.innerHTML = "";
 
-        if (filteredData.length === 0) {
-            modalContent.innerHTML = `<p class="text-gray-500">No ${modalId.includes("engagees") ? "engaged volunteers" : "attendees"} found.</p>`;
+        if (!filteredData || filteredData.length === 0) {
+            modalContent.innerHTML = `<p class="text-gray-500">No ${isOpportunity ? "engaged volunteers" : "attendees"} found.</p>`;
         } else {
             filteredData.forEach(entry => {
-                const volData = entry.volunteer_opportunity_application.volunteer;
-                const profile = volData.volunteer;
-                const profileImg = profile.profile_img || "/static/images/default_volunteer.svg";
-                const additionalVols = entry.volunteer_opportunity_application.no_of_additional_volunteers;
+                let volData, profile, profileImg, profileUrl, email, fullName, additionalVols;
+
+                if (isOpportunity) {
+                    volData = entry.volunteer_opportunity_application.volunteer;
+                    profile = volData.volunteer;
+                    additionalVols = entry.volunteer_opportunity_application.no_of_additional_volunteers;
+                } else {
+                    volData = entry.volunteer_engagement.volunteer_opportunity_application.volunteer;
+                    profile = volData.volunteer;
+                    additionalVols = entry.volunteer_engagement.volunteer_opportunity_application.no_of_additional_volunteers;
+                }
+
+                profileImg = profile?.profile_img || "/static/images/default_volunteer.svg";
+                profileUrl = profile?.profile_url || "#";
+                email = volData.email_address || "No email";
+                fullName = `${profile?.first_name || "Unknown"} ${profile?.last_name || ""}`;
 
                 let card = `
                     <div class="bg-gray-100 rounded-lg shadow-md mt-2 p-4 flex items-center space-x-4 hover:bg-gray-200 cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
-                         onclick="window.location.href='${profile.profile_url}'">
+                         onclick="window.location.href='${profileUrl}'">
                         <img src="${profileImg}" alt="Profile Image" class="w-12 h-12 rounded-full object-cover border border-gray-300" />
                         <div>
-                            <p class="font-semibold">${profile.first_name} ${profile.last_name}</p>
-                            <p class="text-sm text-gray-700">${volData.email_address}</p>
+                            <p class="font-semibold">${fullName}</p>
+                            <p class="text-sm text-gray-700">${email}</p>
                             ${additionalVols > 0 ? `<p class="text-sm text-gray-500">${additionalVols} additional volunteer${additionalVols > 1 ? 's' : ''}</p>` : ""}
                         </div>
                     </div>
                 `;
+
                 modalContent.innerHTML += card;
             });
         }

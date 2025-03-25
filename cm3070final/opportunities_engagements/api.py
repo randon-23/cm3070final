@@ -988,7 +988,7 @@ def create_session_engagement_logs(request, session_id):
                 "session_id": session_engagement.pk,
                 "no_of_hours": (session.session_end_time.hour - session.session_start_time.hour),
                 "status": "approved",
-                "log_notes": f"Contributed to {session.opportunity.organization.organization_name} at {session.title}"
+                "log_notes": f"Contributed to {session.opportunity.organization.organization_name} at {session.title} - {session.description}"
             }
             serializer = VolunteerEngagementLogSerializer(data=data)
             if serializer.is_valid():

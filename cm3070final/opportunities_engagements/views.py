@@ -162,7 +162,7 @@ def opportunity_view(request, opportunity_id):
                     for eng in session_engagements:
                         if eng["session"]["session_id"] == session["session_id"]:
                             session["session_engagement_id"] = eng["session_engagement_id"]
-                            session["status"] = eng["status"]  # Store engagement status for UI
+                            session["engagement_status"] = eng["status"]  # Store engagement status for UI
                             break
             
             # If user is not the owner, only show confirmed sessions

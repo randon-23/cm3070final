@@ -21,8 +21,8 @@ urlpatterns = [
     path('api/opportunities/get_upcoming_opportunities/<uuid:account_uuid>', get_upcoming_opportunities, name='get_upcoming_opportunities'), # done - doesnt need event listener - used in profile page
     path('api/opportunities/create_opportunity/', create_opportunity, name='create_opportunity'), # done - needs event listener - DONE
     path('api/opportunities/get_organization_opportunities/', get_organization_opportunities, name='get_organization_opportunities'), # done - doesnt need event listener
-    path('api/opportunities/cancel_opportunity/<uuid:volunteer_opportunity_id>/', cancel_opportunity, name='cancel_opportunity'), # needs event listener
-    path('api/opportunities/complete_opportunity/<uuid:volunteer_opportunity_id>/', complete_opportunity, name='complete_opportunity'), #needs event listener
+    path('api/opportunities/cancel_opportunity/<uuid:volunteer_opportunity_id>/', cancel_opportunity, name='cancel_opportunity'), # needs event listener - executeChainedActions - done
+    path('api/opportunities/complete_opportunity/<uuid:volunteer_opportunity_id>/', complete_opportunity, name='complete_opportunity'), #needs event listener - executeChainedActions - done
 
     ### Applications ###
     path('api/opportunities/applications/create/<uuid:volunteer_opportunity_id>/', create_application, name='create_application'), # done - needs event listener - DONE
@@ -55,12 +55,12 @@ urlpatterns = [
     path('api/session_engagements/get_volunteer_session_engagements/<uuid:account_uuid>/', get_volunteer_session_engagements, name='get_volunteer_session_engagements'), # done - doesnt need event listener (called in opportunity page to match a users session engagements with the sessions found)
 
     ### Engagement Logs
-    path('api/engagement_logs/create_opportunity_engagement_logs/<uuid:opportunity_id>/', create_opportunity_engagement_logs, name='create_opportunity_engagement_logs'), # needs event listener - to call together with complete_opportunity
-    path('api/engagement_logs/create_session_engagement_logs/<uuid:session_id>/', create_session_engagement_logs, name='create_session_engagement_logs'), # needs event listener - to call together with complete_session
+    path('api/engagement_logs/create_opportunity_engagement_logs/<uuid:opportunity_id>/', create_opportunity_engagement_logs, name='create_opportunity_engagement_logs'), # executeChainedActions needs event listener - to call together with complete_opportunity - done
+    path('api/engagement_logs/create_session_engagement_logs/<uuid:session_id>/', create_session_engagement_logs, name='create_session_engagement_logs'), # executeChainedActions needs event listener - to call together with complete_session - done
     path('api/engagement_logs/create_engagement_log_volunteer/<uuid:opportunity_id>/', create_engagement_log_volunteer, name='create_engagement_log_volunteer'), # done - needs event listener - DONE
     path('api/engagement_logs/approve_engagement_log/<uuid:volunteer_engagement_log_id>/', approve_engagement_log, name='approve_engagement_log'), # done - needs event listener - DONE
     path('api/engagement_logs/reject_engagement_log/<uuid:volunteer_engagement_log_id>/', reject_engagement_log, name='reject_engagement_log'), # done - needs event listener - DONE
     path('api/engagement_logs/get_organization_log_requests/<uuid:account_uuid>/', get_organization_log_requests, name='get_organization_log_requests'), # done - used in applications_log_requests - doesnt need event listener
-    path('api/engagement_logs/get_engagement_logs/<uuid:account_uuid>/', get_engagement_logs, name='get_engagement_logs'), # used in profile page - doesnt need event listener
+    path('api/engagement_logs/get_engagement_logs/<uuid:account_uuid>/', get_engagement_logs, name='get_engagement_logs'), # used in profile page - doesnt need event listener - done
     path('api/engagement_logs/get_volunteer_log_requests/<uuid:account_uuid>/', get_volunteer_log_requests, name='get_volunteer_log_requests'), # done - used in engagements_applications_log_requests page - doesnt need event listener
 ]

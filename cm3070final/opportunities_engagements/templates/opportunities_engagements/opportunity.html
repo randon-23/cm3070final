@@ -33,7 +33,7 @@
     {% include 'opportunities_engagements/partials/apply_opportunity_modal.html' %}
 {% endif %}
 <script>
-    window.isOpportunityOwner = "{{ is_opportunity_owner|yesno:'true,false' }}" === "true";
+    window.isOpportunityOwner = "{{ is_opportunity_owner|yesno:'true,false' }}";
 </script>
 
 <div class="mx-auto bg-white p-6 rounded-lg shadow-lg mt-6 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6">
@@ -59,6 +59,7 @@
                 {% else %}
                     <p><strong>Date:</strong> {{ opportunity.opportunity_date }}</p>
                     <p><strong>Time:</strong> {{ opportunity.opportunity_time_from }} - {{ opportunity.opportunity_time_to }}</p>
+                    <p><strong>Apply by:</strong> {{ opportunity.application_deadline }}</p>
                     {% if opportunity.slots %}
                         <p><strong>Slots:</strong> {{ opportunity.slots }}</p>
                     {% endif %}
@@ -85,7 +86,7 @@
 
         <!-- Sessions Section (Only for ongoing opportunities) -->
         {% if opportunity.ongoing %}
-            <h2 class="text-xl font-semibold mt-6">Sessions</h2>
+            <h2 class="text-xl font-semibold mt-6">{% if is_opportunity_owner %}Sessions{% else %}Upcoming Sessions{% endif %}</h2>
 
             {% if is_opportunity_owner %}
                 <div class="flex space-x-4 mt-2">
@@ -103,54 +104,72 @@
 
             <div id="sessions-container" class="grid grid-cols-2 gap-4 mt-4">
                 {% for session in sessions %}
-                    <div class="session-card bg-gray-100 p-4 rounded-lg" data-status="{{ session.status }}">
+                    <div class="session-card bg-gray-100 p-2 rounded-lg shadow-md" data-status="{{ session.status }}">
                         <h3 class="font-bold">{{ session.title }}</h3>
                         <p class="text-sm text-gray-700">{{ session.description }}</p>
                         <p><strong>Date:</strong> {{ session.session_date }}</p>
                         <p><strong>Time:</strong> {{ session.session_start_time }} - {{ session.session_end_time }}</p>
                         <p><strong>Status:</strong> {{ session.status|title }}</p>
+                        <p><strong>Slots Available:</strong>{% if session.slots %} {{ session.slots }} {% else %} Unlimited {% endif %}</p>
 
                         {% if is_opportunity_owner %}
-                            <button 
-                            hx-patch="{% url 'opportunities_engagements:cancel_session' session.session_id %}"
-                            hx-trigger="click"
-                            hx-target="#loading-modal-content"
-                            hx-swap="innerHTML"
-                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 mt-2">
-                                Cancel Session
-                            </button>
-                            <button onclick="openCompleteSessionModal('{{ session.session_id }}')"
-                                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 mt-2">
-                                Complete Session
-                            </button>
-                            <button 
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-                                hx-get="{% url 'opportunities_engagements:get_session_engagements' session.session_id %}"
+                            <div class="flex flex-wrap gap-2 justify-center">
+                                <button onclick="openCompleteSessionModal('{{ session.session_id }}')"
+                                    class="bg-green-600 text-white py-2 px-2 rounded-md hover:bg-green-700 mt-2 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg {% if session.status != 'upcoming' %} cursor-not-allowed opacity-50 pointer-events-none {% endif %}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    <span class="font-bold text-sm">Complete Session</span>
+                                </button>
+                                <button 
+                                hx-patch="{% url 'opportunities_engagements:cancel_session' session.session_id %}"
                                 hx-trigger="click"
-                                hx-target="#attendees-modal-content">
-                                View Attendees
-                            </button>
+                                hx-target="#loading-modal-content"
+                                hx-swap="innerHTML"
+                                class="bg-red-600 text-white py-2 px-2 rounded-md hover:bg-red-700 mt-2 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg {% if session.status != 'upcoming' %} cursor-not-allowed opacity-50 pointer-events-none {% endif %}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    <span class="font-bold text-sm">Cancel Session</span>
+                                </button>
+                                <button 
+                                    class="bg-blue-600 text-white py-2 px-2 rounded-md hover:bg-blue-700 mt-2 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
+                                    hx-get="{% url 'opportunities_engagements:get_session_engagements' session.session_id %}"
+                                    hx-trigger="click"
+                                    hx-target="#attendees-modal-content">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                    </svg>
+                                    <span class="font-bold text-sm">View Attendees</span>
+                                </button>
+                            </div>
                         {% endif %}
 
                         {% if is_engaged %}
-                            <div class="mt-2">
+                            <div class="flex flex-wrap gap-2 justify-center">
                                 <button 
                                     hx-patch="{% url 'opportunities_engagements:confirm_attendance' session.session_engagement_id %}" 
                                     hx-trigger="click"
                                     hx-target="#loading-modal-content"
                                     hx-swap="innerHTML"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}
-                                    {% if session.status == 'can_go' %} opacity-50 cursor-not-allowed disabled {% endif %}">
-                                    Can Go
+                                    class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 mt-2 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}
+                                    {% if session.engagement_status == 'can_go' %} opacity-50 cursor-not-allowed disabled {% endif %}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    <span class="font-bold text-sm">Can Go</span>
                                 </button>
                                 <button 
                                     hx-patch="{% url 'opportunities_engagements:cancel_attendance' session.session_engagement_id %}" 
                                     hx-trigger="click"
                                     hx-target="#loading-modal-content"
                                     hx-swap="innerHTML"
-                                    class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-700 {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}
-                                    {% if session.status == 'cant_go' %} opacity-50 cursor-not-allowed disabled {% endif %}">
-                                    Can't Go
+                                    class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-700 mt-2 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg {% if opportunity.status != 'upcoming' %} disabled:opacity-50 cursor-not-allowed {% endif %}
+                                    {% if session.engagement_status == 'cant_go' %} opacity-50 cursor-not-allowed disabled {% endif %}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    <span class="font-bold text-sm">Can't Go</span>
                                 </button>
                             </div>
                         {% endif %}
@@ -236,14 +255,14 @@
                             <span class="font-bold">Applied</span>
                         </button>
                     {% elif is_engaged %}
-                        <button class="bg-green-600 text-white px-4 py-2 mx-4 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-md flex items-center justify-center space-x-2 cursor-not-allowed">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                 </svg> 
                                 <span class="font-bold">Engaged</span>
                         </button>
                         {% if opportunity.ongoing and opportunity.status == "upcoming" %}
-                            <button onclick="document.getElementById('create-engagement-log-modal').classList.remove('hidden')"
+                            <button onclick="document.getElementById('create-engagement-log-modal').classList.remove('hidden'); document.getElementById('create-engagement-log-modal').classList.add('flex')"
                                 class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -273,7 +292,7 @@
         <!-- Organization Details Sidebar -->
         <div class="bg-gray-100 p-4 rounded-lg shadow-md">
             <img src="{{ organization.organization.organization_profile_img }}" alt="Organization Logo" class="w-full h-40 object-cover rounded-lg mb-4">
-            <h2 class="text-xl font-bold">{{ organization.organization.organization_name }}</h2>
+            <a href="{{ organization.organization.profile_url }}"><h2 class="text-xl font-bold hover:text-blue-600">{{ organization.organization.organization_name }}</h2></a>
             <p class="text-gray-700 mt-2">{{ organization.organization.organization_description }}</p>
             <p class="text-gray-600"><strong>Location:</strong> {{ organization.organization.organization_address.raw }}</p>
             {% if not is_opportunity_owner %}

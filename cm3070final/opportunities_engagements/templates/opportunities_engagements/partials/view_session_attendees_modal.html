@@ -1,15 +1,17 @@
-<div id="attendees-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center hidden">
+<div id="attendees-modal" class="fixed inset-0 bg-gray-900 z-50 bg-opacity-50 items-center justify-center hidden">
     <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
         <h2 class="text-xl font-bold mb-2">Session Attendees</h2>
         <div id="attendees-modal-content">
             <p class="text-gray-500">Loading...</p>
         </div>
-        <button onclick="document.getElementById('attendees-modal').classList.add('hidden'); document.getElementById('attendees-modal').classList.remnove('flex')" 
-            class="bg-red-500 text-white px-4 py-2 rounded-md mt-4 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-red-700">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-            <span class="font-bold">Close</span>
-        </button>
+        <div class="flex justify-center items-center mt-4">
+            <button onclick="document.getElementById('attendees-modal').classList.add('hidden'); document.getElementById('attendees-modal').classList.remnove('flex')" 
+                class="bg-red-500 text-white px-4 py-2 rounded-md mt-4 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+                <span class="font-bold">Close</span>
+            </button>
+        </div>
     </div>
 </div>
