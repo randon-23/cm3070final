@@ -10,6 +10,8 @@ import pycountry
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
 from accounts_notifs.helpers import has_unread_notifications
+from django.utils.dateparse import parse_datetime, parse_date
+
     
 def signup_final(request):
     account_data=request.session.get('account_data')
@@ -79,6 +81,9 @@ def profile_view(request, account_uuid):
                 context['message'] = 'Engagement logs not found'
             else:
                 logs_data = engagement_logs.data
+                for log in logs_data:
+                    if isinstance(log.get("created_at"), str):
+                        log["created_at"] = parse_datetime(log["created_at"])
                 context['engagement_logs'] = logs_data
                 context['total_hours'] = sum(log.get("no_of_hours", 0) for log in logs_data)
                 context["unique_organizations"] = len(set(
@@ -96,6 +101,9 @@ def profile_view(request, account_uuid):
                 context['message'] = 'Upcoming opportunities not found'
             else:
                 upcoming_opportunities = upcoming_opportunities.data
+                for opportunity in upcoming_opportunities:
+                    if isinstance(opportunity["opportunity_date"], str):
+                        opportunity["opportunity_date"] = parse_date(opportunity["opportunity_date"])
                 context['upcoming_opportunities'] = upcoming_opportunities
 
     else:
@@ -111,6 +119,9 @@ def profile_view(request, account_uuid):
                 context['message'] = 'Engagement logs not found'
             else:
                 logs_data = engagement_logs.data
+                for log in logs_data:
+                    if isinstance(log.get("created_at"), str):
+                        log["created_at"] = parse_datetime(log["created_at"])
                 context['engagement_logs'] = logs_data
                 context['total_hours'] = sum(log.get("no_of_hours", 0) for log in logs_data)
                 context["unique_organizations"] = len(set(
@@ -128,6 +139,9 @@ def profile_view(request, account_uuid):
                 context['message'] = 'Upcoming opportunities not found'
             else:
                 upcoming_opportunities = upcoming_opportunities.data
+                for opportunity in upcoming_opportunities:
+                    if isinstance(opportunity["opportunity_date"], str):
+                        opportunity["opportunity_date"] = parse_date(opportunity["opportunity_date"])
                 context['upcoming_opportunities'] = upcoming_opportunities
         
         # If the user is viewing their own profile, check if they are a volunteer and have not set their matching preferences, or if they are an organization and have not set their preferences

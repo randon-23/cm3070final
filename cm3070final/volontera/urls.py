@@ -23,7 +23,6 @@ from django.http import HttpRequest
 
 def root_redirect_view(request: HttpRequest):
     if request.user.is_authenticated:
-        print(request.user)
         return redirect(f'/volunteers-organizations/profile/{request.user.account_uuid}')
     return redirect('/accounts/auth/?type=login')
 
