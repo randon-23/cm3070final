@@ -65,6 +65,11 @@ def authentication_view(request):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     login(request, user)
+                    remember = request.POST.get("remember-me") == "on"
+                    if remember:
+                        request.session.set_expiry(1209600)  # 2 weeks
+                    else:
+                        request.session.set_expiry(0)  # expires on browser close
                     return redirect('volunteers_organizations:profile', account_uuid=user.account_uuid)
                 else:
                     form.add_error(None, 'Invalid email address or password')

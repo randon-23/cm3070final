@@ -1,5 +1,13 @@
-function togglePasswordVisibility() {
-    const passwordField = document.getElementById("id_password");
+function togglePasswordVisibility(fieldId) {
+    let passwordField
+    if(fieldId === "password") {
+        passwordField = document.getElementById("id_password");
+    } else if(fieldId === "password_1") {
+        passwordField = document.getElementById("id_password_1");
+    } else if(fieldId === "password_2") {
+        passwordField = document.getElementById("id_password_2");
+    }
+
     const type = passwordField.getAttribute("type") === "password" ? "text" : "password";
     passwordField.setAttribute("type", type);
 }
