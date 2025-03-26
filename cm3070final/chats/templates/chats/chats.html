@@ -7,6 +7,7 @@
 {% block auth_content %}
 <script>
     const CURRENT_USER_UUID = "{{ request.user.account_uuid }}";
+    var csrftoken = '{{ csrf_token }}';
 </script>
 <script src="{% static 'js_frontend-scripts/ws-chat-processes.js' %}"></script>
 

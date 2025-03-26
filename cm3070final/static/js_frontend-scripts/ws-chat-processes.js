@@ -76,6 +76,12 @@ function selectChat(chatId, chatTitle, profileImgUrl) {
     document.getElementById("chat-title-img").classList.remove("hidden");
 
     const msgContainer = document.getElementById('chat-messages');
+    fetch(`/chats/api/chats/mark_messages_read/${chatId}/`, {
+        method: 'PATCH',
+        headers: {
+            'X-CSRFToken': csrftoken
+        }
+    });
     setTimeout(() => {
         msgContainer.scrollTop = msgContainer.scrollHeight;
     }, 50);
