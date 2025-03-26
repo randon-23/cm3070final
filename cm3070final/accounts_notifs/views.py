@@ -98,7 +98,7 @@ def notifications_view(request):
     notifications_response = get_notifications(request, account.account_uuid)
 
     if notifications_response.status_code != 200:
-        return render(request, 'base/base_error.html', {
+        return render(request, 'base/base_error_authenticated.html', {
             "status_code": notifications_response.status_code
         }, status=notifications_response.status_code)
 

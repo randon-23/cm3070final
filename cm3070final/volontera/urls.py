@@ -20,6 +20,13 @@ from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpRequest
+from base import views as base_views
+
+# Custom error handlers
+handler404 = base_views.custom_404
+handler403 = base_views.custom_403
+handler500 = base_views.custom_500
+handler400 = base_views.custom_400
 
 def root_redirect_view(request: HttpRequest):
     if request.user.is_authenticated:

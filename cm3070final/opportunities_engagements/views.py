@@ -46,7 +46,7 @@ def opportunities_search_view(request):
         return render(request, 'opportunities_engagements/opportunities_search.html', context)
 
     # If user is an organization, return unauthorized page
-    return render(request, 'base/base_error.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
+    return render(request, 'base/base_error_authenticated.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
 
 @login_required
 def opportunities_organization_view(request):
@@ -89,7 +89,7 @@ def opportunities_organization_view(request):
 
         return render(request, 'opportunities_engagements/opportunities_organization.html', context)
 
-    return render(request, 'base/base_error.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
+    return render(request, 'base/base_error_authenticated.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
 
 @login_required
 def opportunity_view(request, opportunity_id):
@@ -103,7 +103,7 @@ def opportunity_view(request, opportunity_id):
     opportunity_response = get_opportunity(request, opportunity_id)
 
     if opportunity_response.status_code != 200:
-        return render(request, 'base/base_error.html', {"status_code": status.HTTP_404_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
+        return render(request, 'base/base_error_authenticated.html', {"status_code": status.HTTP_404_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
     
     opportunity = opportunity_response.data
     context["opportunity"] = opportunity
@@ -113,7 +113,7 @@ def opportunity_view(request, opportunity_id):
     context["is_opportunity_owner"] = is_owner
 
     if account.is_organization() and not is_owner:
-        return render(request, 'base/base_error.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
+        return render(request, 'base/base_error_authenticated.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
         
     if account.is_volunteer():
         context["is_opportunity_owner"] = False
@@ -238,7 +238,7 @@ def engagements_applications_log_requests_view(request):
         
         return render(request, 'opportunities_engagements/engagements_applications_log_requests.html', context)
     
-    return render(request, 'base/base_error.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
+    return render(request, 'base/base_error_authenticated.html', {"status_code": status.HTTP_403_FORBIDDEN}, status=status.HTTP_403_FORBIDDEN)
 
 @login_required
 def applications_log_requests_view(request):
@@ -280,7 +280,7 @@ def applications_log_requests_view(request):
 
         return render(request, 'opportunities_engagements/applications_log_requests.html', context)
 
-    return render(request, 'base/base_error.html', {
+    return render(request, 'base/base_error_authenticated.html', {
         "status_code": status.HTTP_403_FORBIDDEN
     }, status=status.HTTP_403_FORBIDDEN)
 
