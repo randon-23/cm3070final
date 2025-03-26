@@ -9,8 +9,8 @@ from .models import Message
 def notify_recipient_on_new_message(sender, instance, created, **kwargs):
     if created:
         chat = instance.chat
-        recipient = chat.participant_1 if instance.sender == chat.participant_2 else chat.participant_2
-
+        recipient = chat.participant_1 if instance.sender == chat.participant_2 else chat.participant_2        
+        
         channel_layer = get_channel_layer()
         group_name = f"message_notifications_{recipient.account_uuid}"
         async_to_sync(channel_layer.group_send)(

@@ -17,6 +17,8 @@ messageNotificationSocket.onmessage = function (event) {
         if (messageNotificationIndicator) {
             messageNotificationIndicator.classList.remove('hidden');
         }
+    } else {
+        console.log('User is in the chat page. No notification popup will be shown.');
     }
 }
 
@@ -32,7 +34,7 @@ function showMessageNotificationPopup(title, message) {
     const notificationContainer = document.createElement('div');
     notificationContainer.className = "notification-popup bg-blue-500 text-white p-4 rounded-lg shadow-lg transition-opacity duration-1000 opacity-100";
     notificationContainer.style.position = "fixed";
-    notificationContainer.style.bottom = "20px";
+    notificationContainer.style.top = "20px";
     notificationContainer.style.right = "20px";
     notificationContainer.style.zIndex = "9999";
 

@@ -185,7 +185,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
         },
     },
@@ -194,12 +194,13 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
+        },
+        'chats': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
         }
     },
-    '__main__': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    }
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

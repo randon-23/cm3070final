@@ -52,7 +52,7 @@ function connectToChat(chatId) {
 }
 
 // Switch active chat
-function selectChat(chatId, chatTitle) {
+function selectChat(chatId, chatTitle, profileImgUrl) {
     activeChatId = chatId;
 
     // Update chat header with selected chat participant's name
@@ -61,22 +61,73 @@ function selectChat(chatId, chatTitle) {
     // Hide default message and show messages
     document.getElementById("default-message").classList.add("hidden");
     document.querySelectorAll(".chat-messages").forEach(el => el.classList.add("hidden"));
+    document.querySelectorAll(".chat-messages").forEach(el => el.classList.remove("flex"));
     document.getElementById(`messages-${chatId}`).classList.remove("hidden");
+    document.getElementById(`messages-${chatId}`).classList.add("flex");
 
     // Show chat input field
     document.getElementById("chat-input-container").classList.remove("hidden");
 
     // Hide "New Message" alert
     document.getElementById(`new-message-${chatId}`)?.classList.add("hidden");
+
+    // Show profile image on title bar    
+    document.getElementById("chat-title-img").src = profileImgUrl;
+    document.getElementById("chat-title-img").classList.remove("hidden");
+
+    const msgContainer = document.getElementById('chat-messages');
+    setTimeout(() => {
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }, 50);
 }
 
 // Display incoming message in chat window
 function displayMessage(chatId, data) {
-    const messageElement = document.createElement("div");
-    messageElement.className = `p-2 rounded my-1 ${data.sender === activeChatId ? "bg-blue-500 text-white text-right" : "bg-gray-200 text-left"}`;
-    messageElement.innerHTML = `<strong>${data.sender}:</strong> ${data.message}`;
-    
-    document.getElementById(`messages-${chatId}`).appendChild(messageElement);
+    const messageWrapper = document.createElement("div");
+
+    const isCurrentUser = data.sender === CURRENT_USER_UUID;
+    messageWrapper.className = `flex mx-2 my-2 ${isCurrentUser ? "justify-end" : "justify-start"}`;
+
+    const profileImg = document.createElement("img");
+    profileImg.src = data.sender_profile_img || (data.is_volunteer
+        ? "/static/images/default_volunteer.svg"
+        : "/static/images/default_organization.svg");
+    profileImg.alt = "Profile";
+    profileImg.className = "w-8 h-8 rounded-full object-cover " + (isCurrentUser ? "ml-2" : "mr-2");
+
+    const bubble = document.createElement("div");
+    bubble.className = (isCurrentUser
+        ? "bg-blue-500 text-white"
+        : "bg-gray-200 text-gray-900") + " px-4 py-2 rounded-lg max-w-[70%] break-words relative";
+
+    const messageContent = document.createElement("p");
+    messageContent.textContent = data.message;
+
+    const timestamp = document.createElement("p");
+    const date = new Date(data.timestamp);
+    const formattedTime = date.toLocaleString("en-GB", {
+        month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit"
+    });
+    timestamp.textContent = formattedTime;
+    timestamp.className = (isCurrentUser ? "text-xs mt-1 opacity-70 text-right" : "text-xs mt-1 opacity-70 text-left");
+
+    bubble.appendChild(messageContent);
+    bubble.appendChild(timestamp);
+
+    if (!isCurrentUser) {
+        messageWrapper.appendChild(profileImg);
+        messageWrapper.appendChild(bubble);
+    } else {
+        messageWrapper.appendChild(bubble);
+        messageWrapper.appendChild(profileImg);
+    }
+
+    const container = document.getElementById(`messages-${chatId}`);
+    container.appendChild(messageWrapper);
+    const parentContainer = document.getElementById('chat-messages')
+    setTimeout(() => {
+        parentContainer.scrollTop = parentContainer.scrollHeight;
+    }, 50);
 }
 
 // Send a message

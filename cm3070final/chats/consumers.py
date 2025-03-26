@@ -66,13 +66,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Save message to DB
         message = await database_sync_to_async(self.create_message)(message_content)
-
+        if message:
+            sender_name = await database_sync_to_async(self.get_sender_name)()
+            sender_profile_img = await database_sync_to_async(self.get_sender_profile_img)()
         # Send message to WebSocket group
         await self.channel_layer.group_send(
             self.chat_group_name,
             {
                 "type": "chat.message",
                 "sender": str(self.user.account_uuid),
+                "sender_name": sender_name,
+                "sender_profile_img": sender_profile_img,
                 "message": message_content,
                 "timestamp": message.timestamp.isoformat(),
             }
@@ -82,6 +86,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
             "sender": event["sender"],
+            "sender_name": event["sender_name"],
+            "sender_profile_img": event["sender_profile_img"],
             "message": event["message"],
             "timestamp": event["timestamp"],
         }))
@@ -102,3 +108,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if chat:
             return Message.objects.create(chat=chat, sender=self.user, content=content)
         return None
+    
+    def get_sender_name(self):
+        if hasattr(self.user, "volunteer") and self.user.volunteer:
+            return f"{self.user.volunteer.first_name} {self.user.volunteer.last_name}"
+        elif hasattr(self.user, "organization") and self.user.organization:
+            return self.user.organization.organization_name
+        return "Unknown"
+
+    def get_sender_profile_img(self):
+        if hasattr(self.user, "volunteer") and self.user.volunteer and self.user.volunteer.profile_img:
+            return self.user.volunteer.profile_img.url
+        elif hasattr(self.user, "organization") and self.user.organization and self.user.organization.organization_profile_img:
+            return self.user.organization.organization_profile_img.url
+        return ""

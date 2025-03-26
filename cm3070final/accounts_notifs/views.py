@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 from datetime import datetime
 from django.utils.dateparse import parse_datetime
 from .helpers import has_unread_notifications
+from chats.helpers import has_unread_messages
 
 def authentication_view(request):
     country_prefixes = [
@@ -88,6 +89,7 @@ def password_reset_view(request):
 def notifications_view(request):
     account = request.user
     has_unread = has_unread_notifications(account)
+    has_unread_msg = has_unread_messages(account)
     notifications_response = get_notifications(request, account.account_uuid)
 
     if notifications_response.status_code != 200:
@@ -110,4 +112,5 @@ def notifications_view(request):
     return render(request, 'accounts_notifs/notifications.html', {
         "notifications": paginated_notifications,
         "has_unread_notifications": has_unread,
+        "has_unread_messages": has_unread_msg
     })

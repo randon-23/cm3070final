@@ -11,13 +11,16 @@ import pycountry
 from .models import *
 from .api import *
 from accounts_notifs.helpers import has_unread_notifications
+from chats.helpers import has_unread_messages
 
 @login_required
 def opportunities_search_view(request):
     account = request.user
     context = {}
     has_unread = has_unread_notifications(account)
+    has_unread_msg = has_unread_messages(account)
     context["has_unread_notifications"] = has_unread
+    context["has_unread_messages"] = has_unread_msg
 
     if account.is_volunteer():
         context["days_of_week"] = [choice[0] for choice in VolunteerOpportunity.DAYS_OF_WEEK_CHOICES]
@@ -50,7 +53,9 @@ def opportunities_organization_view(request):
     account = request.user
     context = {}
     has_unread = has_unread_notifications(account)
+    has_unread_msg = has_unread_messages(account)
     context["has_unread_notifications"] = has_unread
+    context["has_unread_messages"] = has_unread_msg
 
     if account.is_organization():
         # Fetch the organization's opportunities
@@ -91,7 +96,9 @@ def opportunity_view(request, opportunity_id):
     account = request.user
     context = {}
     has_unread = has_unread_notifications(account)
+    has_unread_msg = has_unread_messages(account)
     context["has_unread_notifications"] = has_unread
+    context["has_unread_messages"] = has_unread_msg
 
     opportunity_response = get_opportunity(request, opportunity_id)
 
@@ -180,7 +187,9 @@ def engagements_applications_log_requests_view(request):
     account = request.user
     context = {}
     has_unread = has_unread_notifications(account)
+    has_unread_msg = has_unread_messages(account)
     context["has_unread_notifications"] = has_unread
+    context["has_unread_messages"] = has_unread_msg
 
     if account.is_volunteer():
         engagements_response = get_engagements(request, account.account_uuid)
@@ -236,7 +245,9 @@ def applications_log_requests_view(request):
     account = request.user
     context = {}
     has_unread = has_unread_notifications(account)
+    has_unread_msg = has_unread_messages(account)
     context["has_unread_notifications"] = has_unread
+    context["has_unread_messages"] = has_unread_msg
 
     if account.is_organization():
         # Get applications

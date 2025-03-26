@@ -56,3 +56,10 @@ function hideNotificationBlip() {
         notificationIndicator.classList.add('hidden');
     }
 }
+
+function hideMessageNotificationBlip() {
+    const messageNotificationIndicator = document.getElementById('message-notification-blip');
+    if (messageNotificationIndicator) {
+        messageNotificationIndicator.classList.add('hidden');
+    }
+}

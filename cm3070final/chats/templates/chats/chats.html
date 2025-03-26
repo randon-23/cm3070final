@@ -5,12 +5,16 @@
 {% block title %}Messages{% endblock %}
 
 {% block auth_content %}
+<script>
+    const CURRENT_USER_UUID = "{{ request.user.account_uuid }}";
+</script>
 <script src="{% static 'js_frontend-scripts/ws-chat-processes.js' %}"></script>
 
 <!-- Full Page Flex Container -->
 <div class="flex justify-center items-center bg-gray-100">
     <div class="w-11/12 h-[90vh] bg-white rounded-lg shadow-lg flex overflow-hidden">
-        <!-- Left Sidebar (Fixed Size, Scrollable if needed) -->
+
+        <!-- Left Sidebar -->
         <div class="w-1/3 flex flex-col bg-white rounded-l-lg border-r border-gray-300">
             <div id="chat-list-container" class="flex flex-col h-full">
                 <div id="chat-list-header" class="p-4 bg-white border-b">
@@ -20,33 +24,24 @@
                 <ul id="chat-list" class="space-y-2">
                     {% for chat in chats %}
                         <li id="chat-{{ chat.chat_id }}" 
-                            class="p-3 bg-white shadow-md rounded-md cursor-pointer hover:bg-gray-200 flex justify-between items-center"
+                            class="p-3 bg-white shadow-md rounded-md cursor-pointer hover:bg-gray-200 flex items-center space-x-4"
                             onclick="selectChat('{{ chat.chat_id }}', 
-                                            '{% if chat.participant_1.account_uuid != request.user.account_uuid %}{{ chat.participant_1.volunteer.first_name|default:chat.participant_1.organization.organization_name }}{% else %}{{ chat.participant_2.volunteer.first_name|default:chat.participant_2.organization.organization_name }}{% endif %}')">
-                            <!--onclick above passes name of volunteer or organization who is the other participant in the chat-->
-                            <div>
-                                {% if chat.participant_1.account_uuid != request.user.account_uuid %}
-                                    <span class="font-semibold">
-                                        {% if chat.participant_1.volunteer %}
-                                            {{ chat.participant_1.volunteer.first_name }} {{ chat.participant_1.volunteer.last_name }}
-                                        {% else %}
-                                            {{ chat.participant_1.organization.organization_name }}
-                                        {% endif %}
-                                    </span>
-                                {% else %}
-                                    <span class="font-semibold">
-                                        {% if chat.participant_2.volunteer %}
-                                            {{ chat.participant_2.volunteer.first_name }} {{ chat.participant_2.volunteer.last_name }}
-                                        {% else %}
-                                            {{ chat.participant_2.organization.organization_name }}
-                                        {% endif %}
-                                    </span>
-                                {% endif %}
-                                <p class="text-gray-500 text-sm">
+                                                '{% if chat.other_participant.volunteer %}{{ chat.other_participant.volunteer.first_name }}{% else %}{{ chat.other_participant.organization.organization_name }}{% endif %}',
+                                                '{{ chat.other_participant.profile_img }}')">
+                            <img src="{{ chat.other_participant.profile_img }}"  alt="Profile" 
+                                class="w-10 h-10 rounded-full object-cover">
+                            <div class="flex flex-col justify-center">
+                                <span class="font-semibold text-left">
+                                    {% if chat.other_participant.volunteer %}
+                                        {{ chat.other_participant.volunteer.first_name }} {{ chat.other_participant.volunteer.last_name }}
+                                    {% else %}
+                                        {{ chat.other_participant.organization.organization_name }}
+                                    {% endif %}
+                                </span>
+                                <p class="text-gray-500 text-sm text-left">
                                     {{ chat.last_message|truncatechars:50 }}
                                 </p>
                             </div>
-
                             <span class="text-red-500 text-sm font-bold hidden" id="new-message-{{ chat.chat_id }}">●</span>
                         </li>
                     {% empty %}
@@ -56,37 +51,61 @@
             </div>
         </div>
 
-        <!-- Right Sidebar (Chat Window, Full Height) -->
+        <!-- Right Chat Window -->
         <div class="w-2/3 flex flex-col bg-white rounded-r-lg">
             <div id="chat-window" class="flex flex-col h-full">
                 
                 <!-- Chat Header -->
-                <div id="chat-header" class="p-4 border-b bg-white shadow-md">
+                <div id="chat-header" class="flex justify-start items-center p-4 border-b bg-white shadow-md">
+                    <img id="chat-title-img" src="" alt="Profile" class="w-10 h-10 rounded-full hidden">
                     <h2 class="text-lg font-bold" id="chat-title">Select a chat to start messaging</h2>
                 </div>
 
-                <!-- Messages Container (Initially Empty) -->
-                <div id="chat-messages" class="flex-1 overflow-y-auto bg-gray-50">
+                <!-- Messages Container -->
+                <div id="chat-messages" class="flex-1 overflow-y-auto bg-gray-50 relative scrollbar-thumb-gray-400 scrollbar-track-gray-200">
                     <p id="default-message" class="text-gray-500 text-center mt-10">
-                        No chat selected. Click a chat on the left to start messaging.
+                        No chat selected. Click a chat on the left to continue messaging.
                     </p>
 
                     {% for chat in chats %}
-                        <div class="chat-messages hidden" id="messages-{{ chat.chat_id }}">
+                        <div class="chat-messages hidden flex-col justify-end min-h-full" id="messages-{{ chat.chat_id }}">
                             {% for message in messages|get_item:chat.chat_id %}
-                                <div class="p-2 rounded my-1 {% if message.sender == request.user.account_uuid %}bg-blue-500 text-white text-right{% else %}bg-gray-200 text-left{% endif %}">
-                                    <strong>{{ message.sender }}</strong>: {{ message.content }}
+                                <div class="flex mx-2 my-2 {% if message.sender == request.user.account_uuid %}justify-end{% else %}justify-start{% endif %}">
+                                    {% if message.sender != request.user.account_uuid %}
+                                    <img src="{% if message.sender_profile_img %}{{ message.sender_profile_img }}{% elif message.sender.volunteer %}{% static 'images/default_volunteer.svg' %}{% else %}{% static 'images/default_organization.svg' %}{% endif %}" alt="Profile"
+                                        class="w-8 h-8 rounded-full object-cover mr-2">
+                                    {% endif %}
+                            
+                                    <!-- Chat bubble -->
+                                    <div class="{% if message.sender == request.user.account_uuid %}bg-blue-500 text-white{% else %}bg-gray-200 text-gray-900{% endif %} px-4 py-2 rounded-lg max-w-[70%] break-words relative">
+                                        <p>{{ message.content }}</p>
+                                        <p class="text-xs {% if message.sender != request.user.account_uuid %}text-left {% else %}text-right {% endif %} mt-1 opacity-70">{{ message.timestamp|date:"M d, H:i" }}</p>
+                                    </div>
+                            
+                                    {% if message.sender == request.user.account_uuid %}
+                                    <img src="{% if message.sender_profile_img %}{{ message.sender_profile_img }}{% elif message.sender.volunteer %}{% static 'images/default_volunteer.svg' %}{% else %}{% static 'images/default_organization.svg' %}{% endif %}" alt="Profile"
+                                        class="w-8 h-8 rounded-full object-cover ml-2">
+                                    {% endif %}
                                 </div>
                             {% endfor %}
                         </div>
                     {% endfor %}
                 </div>
 
-                <!-- Chat Input (Hidden Initially) -->
+                <!-- Chat Input -->
                 <div id="chat-input-container" class="p-4 border-t bg-white hidden">
-                    <input type="text" id="message-input" placeholder="Type a message..." 
-                        class="w-full p-2 border rounded-lg">
-                    <button onclick="sendMessage()" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded">Send</button>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="message-input" placeholder="Type a message..." 
+                               class="flex-grow p-3 border border-gray-300 bg-gray-100 rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                               transition-all duration-200" required>
+                        <button onclick="sendMessage()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                            </svg>                                             
+                            <span class="font-bold">Send</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

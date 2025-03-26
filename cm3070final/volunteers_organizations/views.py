@@ -10,6 +10,7 @@ import pycountry
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
 from accounts_notifs.helpers import has_unread_notifications
+from chats.helpers import has_unread_messages
 from django.utils.dateparse import parse_datetime, parse_date
 
     
@@ -50,7 +51,9 @@ def profile_view(request, account_uuid):
     is_own_profile = request.user.account_uuid == account_uuid
     context ={'is_own_profile': is_own_profile}
     has_unread = has_unread_notifications(request.user)
+    has_unread_msg = has_unread_messages(request.user)
     context["has_unread_notifications"] = has_unread
+    context["has_unread_messages"] = has_unread_msg
 
     if not is_own_profile:
         # Get user profile data
@@ -182,6 +185,7 @@ def profile_view(request, account_uuid):
 def search_profiles_view(request):
     account = request.user
     has_unread = has_unread_notifications(account)
+    has_unread_msg = has_unread_messages(account)
     search_response = get_search_profiles(request)
 
     if search_response.status_code != 200:
@@ -196,13 +200,15 @@ def search_profiles_view(request):
     return render(request, 'volunteers_organizations/search_profiles.html', {
         'results': paginated_results,
         'query': request.GET.get('q'),
-        'has_unread_notifications': has_unread
+        'has_unread_notifications': has_unread,
+        'has_unread_messages': has_unread_msg
     })
 
 @login_required
 def update_profile_view(request):
     account = request.user
     has_unread = has_unread_notifications(account)
+    has_unread_msg = has_unread_messages(account)
 
     if account.is_volunteer():
         instance = get_object_or_404(Volunteer, account=account)
@@ -224,7 +230,8 @@ def update_profile_view(request):
     return render(request, "volunteers_organizations/update_profile.html", {
         "form": form,
         "user_type": account.user_type,
-        "has_unread_notifications": has_unread
+        "has_unread_notifications": has_unread,
+        "has_unread_messages": has_unread_msg
     })
 
 @login_required
@@ -232,7 +239,9 @@ def preferences_view(request):
     account = request.user
     context = {}
     has_unread = has_unread_notifications(account)
+    has_unread_msg = has_unread_messages(account)
     context["has_unread_notifications"] = has_unread
+    context["has_unread_messages"] = has_unread_msg
 
     if account.is_volunteer():
         # Dynamically pass the choices to preferences template
