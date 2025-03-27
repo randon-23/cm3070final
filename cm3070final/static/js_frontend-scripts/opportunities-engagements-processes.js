@@ -297,6 +297,14 @@ async function createSession(opportunityId, data) {
     ]);
 }
 
+// no form - called from modal which displays current session engagees so org can remove any
+async function completeSession(sessionId) {
+    await executeChainedActions([
+        { url: `/opportunities-engagements/api/sessions/complete_session/${sessionId}/`, method: "PATCH"},
+        { url: `/opportunities-engagements/api/engagement_logs/create_session_engagement_logs/${sessionId}/`, method: "POST"}
+    ]);
+}
+
 // removes slots from form submission for unlimited slots - WORKS
 document.addEventListener("DOMContentLoaded", () => {
     let createSessionForm = document.getElementById("create-session-form");
@@ -313,14 +321,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
-
-// no form - called from modal which displays current session engagees so org can remove any
-async function completeSession(sessionId) {
-    await executeChainedActions([
-        { url: `/opportunities-engagements/api/sessions/complete_session/${sessionId}/`, method: "PATCH"},
-        { url: `/opportunities-engagements/api/engagement_logs/create_session_engagement_logs/${sessionId}/`, method: "POST"}
-    ]);
-}
 
 // FETCH REQUESTS AND CORRESPONDING REMOVAL ON MODAL OPEN FUNCTIONS
 // Used in opportunity modal to remove volunteer engagement - WORKS
@@ -346,6 +346,8 @@ function setCantGo(sessionEngagementId) {
 }
 
 // Open modal to confirm opportunity completion with option to cancel listed engagements - WORKS
+// Generates a list of engaged volunteers for the opportunity
+// and allows the organization to remove any of them before marking the opportunity as complete
 function openCompleteOpportunityModal(volunteerOpportunityId) {
     let modal = document.getElementById("complete-opportunity-modal");
     let listContainer = document.getElementById("opportunity-engagement-list");
@@ -395,6 +397,8 @@ function openCompleteOpportunityModal(volunteerOpportunityId) {
 }
 
 // Open modal to confirm session completion with option to cancel listed session engagements - WORKS
+// Generates a list of engaged attendees for the session
+// and allows the organization to remove any of them before marking the session as complete
 function openCompleteSessionModal(sessionId) {
     let modal = document.getElementById("complete-session-modal");
     let listContainer = document.getElementById("session-attendee-list");
@@ -460,7 +464,7 @@ function openCompleteSessionModal(sessionId) {
     modal.classList.add("flex");
 }
 
-// Called when opening attendance modals on an opportunity or its sessions - WORKS
+// Called when opening View Engagees or View Attendees button modals on an opportunity or its sessions - WORKS
 function updateEngagementsModal(event){
     let response = event.detail.xhr.responseText;
     try {
