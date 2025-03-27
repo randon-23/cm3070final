@@ -3,7 +3,16 @@
 {% block content %}
     <script src="{% static 'js_frontend-scripts/authentication.js' %}"></script>
     <script src="{% static 'js_frontend-scripts/logout-processes.js' %}"></script>
-    <script src ="{% static 'js_frontend-scripts/misc.js' %}"></script>
+    <script src="{% static 'js_frontend-scripts/misc.js' %}"></script>
+    <script src="{% static 'js_frontend-scripts/event-listeners.js' %}"></script>
+    <script src="{% static 'js_frontend-scripts/ws-notification-processes.js' %}"></script>
+    <script src="{% static 'js_frontend-scripts/ws-message-notification-processes.js' %}"></script>
+    # Add CSRF Token to all HTMX requests
+    <script>
+        document.body.addEventListener('htmx:configRequest', function(event) {
+            event.detail.headers['X-CSRFToken'] = "{{ csrf_token }}";
+        });
+    </script>
     {% if user.is_authenticated %}
         <div class="flex min-h-screen font-[sans-serif] bg-gray-100">
             <!-- Sidebar -->
@@ -13,22 +22,23 @@
                         {% if user.volunteer.profile_img %}
                             <img class="w-32 h-32 rounded-full object-cover" src="{{ user.volunteer.profile_img.url }}" alt="Profile Picture">
                         {% else %}
-                            <img class="w-32 h-32 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
+                            <img class="w-32 h-32 rounded-full object-cover bg-white" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
                         {% endif %}
                     {% elif user.organization %}
                         {% if user.organization.organization_profile_img %}
                             <img class="w-32 h-32 rounded-full object-cover" src="{{ user.organization.organization_profile_img.url }}" alt="Profile Picture">
                         {% else %}
-                            <img class="w-32 h-32 rounded-full object-cover" src="{% static 'images/default_volunteer.svg' %}" alt="Profile Picture">
+                            <img class="w-32 h-32 rounded-full object-contain bg-white p-2" src="{% static 'images/default_organization.svg' %}" alt="Profile Picture">
                         {% endif %}
                     {% endif %}
                     <h2 class="text-white mt-4 font-semibold">{% if user.volunteer %}{{ user.volunteer.first_name }} {{ user.volunteer.last_name }}{% else %}{{ user.organization.organization_name }}{% endif %}</h2>
                     <h3 class="text-white text-sm">{% if user.user_type == 'volunteer' %}Volunteer{% else%}Organization{% endif %}</h3>
+                    <h3 class="text-white text-sm">Volontera Points: {% if user.volunteer %} {{ user.volunteer.volontera_points }} {% elif user.organization %} {{ user.organization.volontera_points }} {% endif %} </h3>
                 </div>
                 <nav class="mt-6">
                     <ul class="space-y-3">
                         <li class="w-full">
-                            <a href="#" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold">
+                            <a href="{% url 'volunteers_organizations:profile' account_uuid=user.account_uuid %}" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                                   </svg>                                  
@@ -36,44 +46,108 @@
                             </a>
                         </li>
                         <li class="w-full">
-                            <a href="#" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-                                </svg>                                  
-                                Opportunities
-                            </a>
+                            {% if user.volunteer and user.volunteer.volunteermatchingpreferences %}
+                                <a href="{% url 'opportunities_engagements:opportunities_search' %}" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                                    </svg>                                  
+                                    Find Opportunities
+                                </a>
+                            {% elif user.organization and user.organization.organizationpreferences %}
+                                <a href="{% url 'opportunities_engagements:opportunities_organization' %}" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                                    </svg>                                  
+                                    My Opportunities
+                                </a>
+                            {% else %}
+                                <a href="{% url 'volunteers_organizations:profile' account_uuid=user.account_uuid %}" 
+                                    onclick="redirectToProfileForPreferences(event, this.href)"
+                                    class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                                    </svg>  
+                                    {% if user.volunteer %}
+                                        Find Opportunities
+                                    {% else %}
+                                        Your Opportunities
+                                    {% endif %}
+                                </a>
+                            {% endif %}
                         </li>
                         <li class="w-full">
-                            <a href="#" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z" />
-                                </svg>                                  
-                                Engagements
-                            </a>
+                            {% if user.volunteer and user.volunteer.volunteermatchingpreferences %}
+                                <a href="{% url 'opportunities_engagements:engagements_applications_log_requests' %}" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z" />
+                                    </svg>                                  
+                                    Engagements & Applications
+                                </a>
+                            {% elif user.organization and user.organization.organizationpreferences %}
+                                <a href="{% url 'opportunities_engagements:applications_log_requests' %}" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z" />
+                                    </svg>                                  
+                                    Applications & Log Requests
+                                </a>
+                            {% else %}
+                                <a href="{% url 'volunteers_organizations:profile' account_uuid=user.account_uuid %}" 
+                                    onclick="redirectToProfileForPreferences(event, this.href)"
+                                    class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                                    </svg>  
+                                    {% if user.volunteer %}
+                                        Engagements & Applications
+                                    {% else %}
+                                        Applications & Log Requests
+                                    {% endif %}
+                                </a>
+                            {% endif %}
                         </li>
-                        <li class="w-full">
-                            <a href="#" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold">
+                        <li class="w-full relative">
+                            <a href="{% url 'accounts_notifs:notifications' %}" onclick="hideNotificationBlip()" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
                                 </svg>                                  
                                 Notifications
+                                <span id="notification-blip" class="absolute top-4 right-4 w-4 h-4 bg-red-500 rounded-full {% if not has_unread_notifications %}hidden{% endif %}"></span>
                             </a>
                         </li>
-                        <li class="w-full">
-                            <a href="#" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold">
+                        <li class="w-full relative">
+                            <a href="{% url 'chats:chats_page' %}" onclick="hideMessageNotificationBlip()" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z" />
                                 </svg> 
                                 Messages
+                                <span id="message-notification-blip" class="absolute top-4 right-4 w-4 h-4 bg-red-500 rounded-full {% if not has_unread_messages %}hidden{% endif %}"></span>
                             </a>
                         </li>
                         <li class="w-full">
-                            <a href="#" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
-                                </svg>                                  
-                                Preferences
-                            </a>
+                            {% if user.volunteer and user.volunteer.volunteermatchingpreferences %}
+                                <a href="{% url 'volunteers_organizations:preferences' %}" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                                    </svg>  
+                                    Preferences
+                                </a>
+                            {% elif user.organization and user.organization.organizationpreferences %}
+                                <a href="{% url 'volunteers_organizations:preferences' %}" class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                                    </svg>  
+                                    Preferences
+                                </a>
+                            {% else %}
+                                <a href="{% url 'volunteers_organizations:profile' account_uuid=user.account_uuid %}" 
+                                    onclick="redirectToProfileForPreferences(event, this.href)"
+                                    class="px-4 py-3 w-full flex items-center text-white border border-transparent hover:bg-transparent hover:border-blue-500 hover:text-blue-500 rounded-md font-bold transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                                    </svg>  
+                                    Preferences
+                                </a>
+                            {% endif %}
                         </li>
                     </ul>
                 </nav>
@@ -82,8 +156,7 @@
                     hx-trigger="click"
                     hx-target="#logout-modal-content"
                     hx-swap="innerHTML"
-                    hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }'
-                    class="w-full px-4 py-2 my-4 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center space-x-2">
+                    class="w-full px-4 py-2 my-4 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
                     </svg>                                                           
@@ -92,18 +165,56 @@
             </aside>
 
             <!-- Main Content for Authenticated Users -->
-            <main class="flex-1 p-6 md:ml-96">
+            <main class="flex-1 p-6 mx-auto max-w-[135rem] md:pl-[26rem]">
+                <!-- Search Bar Container -->
+                <div class="relative w-full max-w-2xl mx-auto mb-6">
+                    <form method="GET" action="{% url 'volunteers_organizations:search_profiles' %}">
+                        <div class="flex relative">
+                            <!-- Search Input -->
+                            <input type="text"
+                                id="search-input"
+                                placeholder="Search for volunteers and organizations..."
+                                class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm"
+                                hx-get="{% url 'volunteers_organizations:get_search_profiles' %}"
+                                hx-trigger="keyup changed delay:300ms"
+                                hx-target="#search-results-container"
+                                hx-indicator=".htmx-indicator"
+                                hx-params="q"
+                                name="q">
+                
+                            <!-- Search Icon -->
+                            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path>
+                            </svg>
+                
+                            <!-- Search Button -->
+                            <button type="submit" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-full shadow-sm flex items-center space-x-2 hover:bg-blue-700 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                                </svg>  
+                                <span class="font-bold">Search</span>
+                            </button>
+                        </div>
+                    </form>
+                
+                    <!-- Search Results Container (Positioned Below Input) -->
+                    <div id="search-results-container" class="absolute w-full left-0 mt-2 bg-white border rounded-lg shadow-md hidden z-50 max-h-80 overflow-y-auto">
+                        <!-- Results will be dynamically inserted here -->
+                    </div>
+                
+                    <!-- Loading Indicator -->
+                    <div class="htmx-indicator absolute right-4 top-1/2 transform -translate-y-1/2 hidden">
+                        <span class="text-gray-400">Loading...</span>
+                    </div>
+                </div>
                 {% block auth_content %}
                 {% endblock %}
             </main>
-            <script>
-                document.addEventListener("htmx:afterRequest", function(event) {
-                    console.log("HTMX request fired!", event);
-                    showLogoutMessage(event);
-                });
-            </script>
         </div>
     {% endif %}
     <!-- Log out Modal -->
     {% include 'base/partials/logging-out-modal.html' %}
+
+    <!-- Loading Modal -->
+    {% include 'base/partials/loading_modal.html' %}
 {% endblock %}

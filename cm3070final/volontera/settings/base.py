@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'address',
     'phonenumber_field',
+    'django_celery_beat',
     # Default apps
     'django.contrib.admin',
     'django.contrib.auth',
@@ -64,6 +65,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'volunteers_organizations.context_processors.google_places_api_key'
             ],
         },
     },
@@ -71,6 +73,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'volontera.wsgi.application'
 ASGI_APPLICATION = 'volontera.asgi.application'
+
+# Channels Layer Configuration
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"  # Default for local testing
+    }
+}
+
+# Celery Configuration
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default="redis://127.0.0.1:6379/0")  # Default to Redis (override for prod)
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default="redis://127.0.0.1:6379/1")  # Default to Redis (override for prod)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -124,10 +140,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
-# Redirect after login/logout
-LOGIN_REDIRECT_URL = '/profile/' # Redirect to profile page after login
-LOGOUT_REDIRECT_URL = 'home' # Redirect to home page after logout
-
 # Google Social Account configurations - removed ['APP'] key from the dictionary as was defined in Django admin
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -141,6 +153,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 SOCIALACCOUNT_ADAPTER = 'accounts_notifs.adapters.GoogleSocialAccountAdapter'
+# Redirect after login/logout
+LOGIN_REDIRECT_URL = 'volunteers_organizations:profile'
+LOGOUT_REDIRECT_URL = 'home' # Redirect to home page after logout
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
@@ -150,6 +166,10 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')
 ]
 
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
@@ -157,6 +177,7 @@ USE_I18N = True
 USE_TZ = True
 
 GOOGLE_API_KEY=env('GOOGLE_API_KEY')
+GOOGLE_PLACES_API_KEY=env('GOOGLE_PLACES_API_KEY')
 
 # Logging - Console logging for development and production environment
 LOGGING = {
@@ -164,7 +185,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
         },
     },
@@ -173,12 +194,13 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
+        },
+        'chats': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
         }
     },
-    '__main__': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    }
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

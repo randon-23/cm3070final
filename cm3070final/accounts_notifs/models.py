@@ -83,38 +83,29 @@ class Account(AbstractUser):
         elif self.user_type == 'admin':
             admins = Group.objects.get(name='Admin')
             self.groups.add(admins)
-        
-class AccountPreferences(models.Model):
-    account = models.OneToOneField(Account, on_delete=models.CASCADE, primary_key=True)
-    dark_mode = models.BooleanField(default=False)
-    smart_matching_enabled = models.BooleanField(default=True, null=True, blank=True)
-    enable_volontera_point_opportunities = models.BooleanField(null=True, blank=True)
-    volontera_points_rate = models.FloatField(null=True, blank=True, default=1.0)
-
-    def save(self, *args, **kwargs):
-        # Ensure volunteer accounts do not have point opportunities or point rates enabled these are for organizations only
-        if self.account.user_type == 'volunteer':
-            self.enable_volontera_point_opportunities = None
-            self.volontera_points_rate = None
-        # Ensure organization accounts do not have smart matching enabled as this is for volunteers only
-        if self.account.user_type == 'organization':
-            self.smart_matching_enabled = None
-            self.enable_volontera_point_opportunities = True
-        super().save(*args, **kwargs)
 
 class Notification(models.Model):
     NOTIFICATION_TYPE_CHOICES = (
-        ('application', 'Application'),
-        ('engagement', 'Engagement'),
-        ('follow', 'Follow'),
-        ('message', 'Message'),
-        ('other', 'Other'),
+        ('new_follower', 'New Follower'),
+        ('new_endorsement', 'New Endorsement'),
+        ('new_status_post', 'New Status Post'),
+        ('application_submitted', 'Application Submitted'),
+        ('application_accepted', 'Application Accepted'),
+        ('application_rejected', 'Application Rejected'),
+        ('log_request_submitted', 'New Log Request'),
+        ('opportunity_completed', 'Opportunity Completed'),
+        ('opportunity_cancelled', 'Opportunity Cancelled'),
+        ('new_opportunity_session', 'New Opportunity Session'),
+        ('new_message', 'New Message'),
+        ('opportunity_match', 'Opportunity Match'),
+        ('new_volontera_points', 'New Volontera Points'),
+        ('other', 'Other'), 
     )
 
-    notification_id = models.AutoField(primary_key=True)
+    notification_uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     recipient = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='notifications')
     # sender in case of message notification
-    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPE_CHOICES)
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPE_CHOICES)
     notification_message = models.TextField(max_length=500)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

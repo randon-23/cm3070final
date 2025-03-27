@@ -1,0 +1,57 @@
+{% load static %}
+<div id="create-engagement-log-modal" class="fixed inset-0 items-center justify-center bg-black z-50 bg-opacity-50 hidden">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-4/5 max-w-4xl max-h-[80vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="flex justify-center relative mb-4">
+            <h2 class="text-2xl font-bold mx-auto">Create Engagement Log</h2>
+            <button onclick="document.getElementById('create-engagement-log-modal').classList.add('hidden')" 
+                class="absolute right-0 text-gray-500 hover:text-gray-700">✕
+            </button>
+        </div>
+
+        <form id="create-engagement-log-form" 
+              method="post"
+              hx-post="{% url 'opportunities_engagements:create_engagement_log_volunteer' opportunity.volunteer_opportunity_id %}"
+              hx-trigger="submit"
+              hx-target="#loading-modal-content"
+              hx-swap="innerHTML"
+              class="space-y-6">
+            
+            <!-- Number of Hours -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label class="block text-gray-700 font-semibold mb-2">Number of Hours</label>
+                <input type="number" name="no_of_hours" required step="0.5" min="0.5" max="12"
+                       placeholder="Enter the number of hours worked"
+                       class="w-full text-sm text-gray-800 bg-white focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
+            </div>
+
+            <!-- Log Notes -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label class="block text-gray-700 font-semibold mb-2">Log Notes</label>
+                <textarea name="log_notes" rows="4" required placeholder="Describe your engagement activity (Upon acceptance this will be listed along your contributions on your profile page)"
+                          class="w-full text-sm text-gray-800 bg-white focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600"></textarea>
+            </div>
+
+            <!-- Hidden Fields -->
+            <input type="hidden" name="status" value="pending">
+            <input type="hidden" name="is_volunteer_request" value="true">
+            
+            <!-- Submit & Cancel Buttons -->
+            <div class="flex justify-between mt-6">
+                <button type="button" onclick="document.getElementById('create-engagement-log-modal').classList.add('hidden')" 
+                        class="bg-gray-600 text-white px-6 py-2 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                          </svg>
+                    <span class="font-bold">Cancel</span>                           
+                </button>
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                      </svg>                      
+                    <span class="font-bold">Submit Log</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

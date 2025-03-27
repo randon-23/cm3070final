@@ -1,0 +1,27 @@
+{% load static %}
+<div id="complete-session-modal" class="fixed inset-0 items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-4/5 max-w-4xl max-h-[80vh] overflow-y-auto">
+        <h2 class="text-2xl font-bold text-center mb-4">Review Session Attendees</h2>
+        <p class="text-gray-700 text-center mb-4">Mark any attendees who did not show up as "Can't Go" before completing the session.</p>
+
+        <div id="session-attendee-list" class="space-y-4">
+            <p class="text-gray-500 text-center">Loading...</p>
+        </div>
+
+        <div class="flex justify-between mt-6">
+            <button onclick="document.getElementById('complete-session-modal').classList.add('hidden'); document.getElementById('complete-session-modal').classList.remove('flex')"
+                    class="bg-gray-600 text-white px-6 py-2 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    <span class="font-bold">Cancel</span>
+            </button>
+            <button id="confirm-complete-session" class="bg-green-600 text-white px-6 py-2 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-green-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg> 
+                <span class="font-bold">Confirm Completion</span>
+            </button>
+        </div>
+    </div>
+</div>

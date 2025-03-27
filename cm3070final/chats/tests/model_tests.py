@@ -10,12 +10,14 @@ def create_common_objects():
     participant_1 = Account.objects.create(
         email_address="user1@test.com",
         password="password",
-        user_type="volunteer"
+        user_type="volunteer",
+        contact_number="+35612345678"
     )
     participant_2 = Account.objects.create(
         email_address="user2@test.com",
         password="password",
-        user_type="volunteer"
+        user_type="volunteer",
+        contact_number="+35612345679"
     )
     return participant_1, participant_2
 

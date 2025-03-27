@@ -1,0 +1,19 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="w-full flex flex-col items-center mt-10">
+    <div class="text-center bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold">Oops!</h1>
+        <p class="font-bold">An error occurred navigating to Volontera. Ensure you are logged in and the page you navigated to is valid.</p>
+        <p class="text-red-600 font-bold">Error: {{ status_code }}</p>
+
+        <div class="flex justify-center mt-4">
+            <a href="{% url 'accounts_notifs:authentication' %}"
+               class="w-fit shadow-xl flex items-center justify-center space-x-2 py-3 px-4 text-sm tracking-wide rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
+                Go to Login
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

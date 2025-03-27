@@ -29,7 +29,6 @@ class VolunteerForm(forms.ModelForm):
                 'class': 'w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600',
                 'placeholder': field.label + ' (Required)' if field.required else field.label
             })
-            field.label = ''
         
     def save(self, account=None, commit=True):
         volunteer = super().save(commit=False)
@@ -57,12 +56,21 @@ class OrganizationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(OrganizationForm, self).__init__(*args, **kwargs)
+
+        # Prepopulate address fields if editing
+        if self.instance and self.instance.organization_address:
+            self.initial['street_number'] = self.instance.organization_address.get('street_number', '')
+            self.initial['route'] = self.instance.organization_address.get('route', '')
+            self.initial['locality'] = self.instance.organization_address.get('locality', '')
+            self.initial['postal_code'] = self.instance.organization_address.get('postal_code', '')
+            self.initial['state'] = self.instance.organization_address.get('state', '')
+            self.initial['country'] = self.instance.organization_address.get('country', '')
+
         for fieldname, field in self.fields.items():
             field.widget.attrs.update({
                 'class': 'w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600',
                 'placeholder': field.label + ' (Required)' if field.required else field.label
             })
-            field.label = ''
     
     def clean(self):
         super().clean()

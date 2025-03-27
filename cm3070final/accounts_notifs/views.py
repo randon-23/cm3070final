@@ -3,6 +3,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from .forms import AccountSignupForm, LoginForm, AccountSignupFormSSO
 from phonenumbers.data import _COUNTRY_CODE_TO_REGION_CODE
+from django.contrib.auth.decorators import login_required
+from .api import get_notifications
+from django.core.paginator import Paginator
+from datetime import datetime
+from django.utils.dateparse import parse_datetime
+from .helpers import has_unread_notifications
+from chats.helpers import has_unread_messages
 
 def authentication_view(request):
     country_prefixes = [
@@ -26,9 +33,8 @@ def authentication_view(request):
                     cleaned_data.pop('password_2')
                     cleaned_data['password'] = password
                     request.session['account_data'] = cleaned_data
-                    print(request.session['account_data'])
 
-                    return redirect('signup_final')
+                    return redirect('volunteers_organizations:signup_final')
                 else:
                     return render(request, 'accounts_notifs/authentication.html', {
                         'form': form,
@@ -44,7 +50,7 @@ def authentication_view(request):
 
                     request.session['account_data'] = cleaned_data
 
-                    return redirect('signup_final')
+                    return redirect('volunteers_organizations:signup_final')
                 else:
                     return render(request, 'accounts_notifs/authentication.html', {
                         'form': form,
@@ -59,7 +65,12 @@ def authentication_view(request):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     login(request, user)
-                    return redirect('profile', account_uuid=user.account.uuid)
+                    remember = request.POST.get("remember-me") == "on"
+                    if remember:
+                        request.session.set_expiry(1209600)  # 2 weeks
+                    else:
+                        request.session.set_expiry(0)  # expires on browser close
+                    return redirect('volunteers_organizations:profile', account_uuid=user.account_uuid)
                 else:
                     form.add_error(None, 'Invalid email address or password')
             else:
@@ -78,3 +89,33 @@ def authentication_view(request):
 def password_reset_view(request):
     reset_stage = request.GET.get('reset_stage', 'request')
     return render(request, 'accounts_notifs/password_reset.html', {'reset_stage': reset_stage})
+
+@login_required
+def notifications_view(request):
+    account = request.user
+    has_unread = has_unread_notifications(account)
+    has_unread_msg = has_unread_messages(account)
+    notifications_response = get_notifications(request, account.account_uuid)
+
+    if notifications_response.status_code != 200:
+        return render(request, 'base/base_error_authenticated.html', {
+            "status_code": notifications_response.status_code
+        }, status=notifications_response.status_code)
+
+    notifications = notifications_response.data
+
+    # Convert created_at to datetime
+    for notif in notifications:
+        if isinstance(notif["created_at"], str):
+            notif["created_at"] = parse_datetime(notif["created_at"])
+
+    # Paginate notifications (20 per page)
+    page = request.GET.get("page", 1)
+    paginator = Paginator(notifications, 20)
+    paginated_notifications = paginator.get_page(page)
+
+    return render(request, 'accounts_notifs/notifications.html', {
+        "notifications": paginated_notifications,
+        "has_unread_notifications": has_unread,
+        "has_unread_messages": has_unread_msg
+    })

@@ -1,7 +1,8 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
@@ -10,6 +11,8 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from .models import Notification
+from .serializers import NotificationSerializer
 
 Account = get_user_model()
 
@@ -84,3 +87,36 @@ class PasswordResetConfirmEndpoint(APIView):
         account.save()
 
         return Response({'message': 'Password reset successful'}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_notifications(request, account_uuid):
+    if request.method == 'GET':
+        if request.user.account_uuid != account_uuid:
+            return Response({'error': 'Unauthorized request'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        notifications = Notification.objects.filter(recipient=request.user, is_read=False).order_by('-created_at')
+        serializer = NotificationSerializer(notifications, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def mark_read(request, notification_uuid):
+    if request.method == 'PATCH':
+        try:
+            notification = Notification.objects.get(notification_uuid=notification_uuid)
+        except Notification.DoesNotExist:
+            return Response({'error': 'Notification not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if notification.recipient != request.user:
+            return Response({'error': 'Unauthorized request'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        notification.is_read = True
+        notification.save()
+        return Response({'message': 'Notification marked as read'}, status=status.HTTP_200_OK)
+    else:
+        return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        

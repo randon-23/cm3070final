@@ -1,0 +1,82 @@
+{% extends 'base/base_authenticated.html' %}
+{% load static %}
+{% block title %}Opportunities{% endblock %}
+{% block auth_content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
+<script src="{% static 'js_frontend-scripts/profile-processes.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/preferences-processes.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/opportunities-engagements-processes.js' %}"></script>
+
+<div class="mx-auto justify-start bg-gray-100 px-4 min-h-[90vh] flex flex-col items-center">
+    <div class="w-full bg-white p-6 rounded-lg shadow-lg flex-grow">
+        <!-- Page Header -->
+        <div class="flex justify-between items-center mt-6 mb-4 border-b pb-4">
+            <h1 class="text-3xl font-bold text-gray-800">My Opportunities</h1>
+            <button onclick="document.getElementById('create-opportunity-modal').classList.remove('hidden'); document.getElementById('create-opportunity-modal').classList.add('flex')" 
+                    class="bg-blue-600 font-bold text-white px-4 py-2 rounded-md shadow-md hover:bg-blue-700 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg">
+                + Create Opportunity
+            </button>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="flex space-x-4 border-b">
+            <button class="tab-btn py-2 px-4 text-gray-800 border-b-2 border-transparent hover:border-blue-600 focus:border-blue-600" 
+                    onclick="filterOpportunities('upcoming')">
+                    <span class="font-bold">Upcoming</span>
+            </button>
+            <button class="tab-btn py-2 px-4 text-gray-800 border-b-2 border-transparent hover:border-blue-600 focus:border-blue-600"
+                    onclick="filterOpportunities('completed')">
+                <span class="font-bold">Completed</span>
+            </button>
+            <button class="tab-btn py-2 px-4 text-gray-800 border-b-2 border-transparent hover:border-blue-600 focus:border-blue-600"
+                    onclick="filterOpportunities('cancelled')">
+                <span class="font-bold">Cancelled</span>
+            </button>
+        </div>
+
+        <!-- Opportunity Cards -->
+        <div id="opportunities-container" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
+            {% for opportunity in all_opportunities %}
+                <div class="opportunity-card bg-white p-6 rounded-lg shadow-md border border-gray-200 cursor-pointer transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-50"
+                    data-status="{{ opportunity.status }}"
+                    data-url="{% url 'opportunities_engagements:opportunity' opportunity_id=opportunity.volunteer_opportunity_id %}"
+                    onclick="window.location.href=this.getAttribute('data-url')">
+                    <h2 class="text-xl font-semibold text-gray-900">{{ opportunity.title }}</h2>
+                    <p class="text-gray-700 mt-1">{{ opportunity.description }}</p>
+
+                    <!-- Details -->
+                    <div class="mt-2 text-gray-600 text-sm">
+                        <p><strong>Opportunity Type:</strong>{% if opportunity.ongoing %} Ongoing{% else %} One-Time{% endif%}</p>
+                        <p><strong>Work Type:</strong> {{ opportunity.work_basis|title }}</p>
+                        <p><strong>Duration:</strong> {{ opportunity.duration|title }}</p>
+                        {% if opportunity.ongoing %}
+                            <p><strong>Days Available:</strong> {{ opportunity.days_of_week|join:", "|title }}</p>
+                        {% else %}
+                            <p><strong>Opportunity Date:</strong> {{ opportunity.opportunity_date }}</p>
+                            <p><strong>From:</strong> {{ opportunity.opportunity_time_from }}</p>
+                            <p><strong>To:</strong> {{ opportunity.opportunity_time_to }}</p>
+                            {% endif %}
+                        <p><strong>Location:</strong> {{ opportunity.required_location.formatted_address }}</p>
+                        <p><strong>Area of Work:</strong> {{ opportunity.area_of_work|title }}</p>
+                        <p><strong>Skills Required:</strong> {{ opportunity.requirements|join:", "|title }}</p>
+                        <p><strong>Languages:</strong> {{ opportunity.languages|join:", " }}</p>
+                        {% if opportunity.application_deadline %}
+                            <p><strong>Application Deadline:</strong> {{ opportunity.application_deadline }}</p>
+                        {% endif %}
+                        {% if opportunity.slots %}
+                            <p><strong>Slots Available:</strong> {{ opportunity.slots }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-center text-gray-500 mt-4">No opportunities available.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!--Include this modal so that the organization can create a new opportunity-->
+{% include 'opportunities_engagements/partials/create_opportunity_modal.html' %}
+{% endblock %}

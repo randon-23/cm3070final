@@ -1,0 +1,176 @@
+{% extends 'base/base_authenticated.html' %}
+{% load static %}
+{% block title %}Preferences{% endblock %}
+{% block auth_content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
+<!-- Event listener included here and not in event-listeners.js because event-listeners is loaded on every page, whislt this evetn listener is exclusively for profile.html page-->
+<script src="{% static 'js_frontend-scripts/preferences-processes.js' %}"></script>
+<script src="{% static 'js_frontend-scripts/profile-processes.js' %}"></script> <!--Importing to use updateContent()-->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
+
+<div class="mx-auto bg-white p-6 rounded-lg shadow-md relative mt-4">
+    <!-- Title & Back Button -->
+    <div class="flex items-center justify-between mb-4">
+        <a href="{{ request.META.HTTP_REFERER|default:'#' }}" class="absolute left-5 top-5 px-2 py-2 bg-gray-700 text-white rounded-md shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-600 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75 14.25 12m0 0 2.25 2.25M14.25 12l2.25-2.25M14.25 12 12 14.25m-2.58 4.92-6.374-6.375a1.125 1.125 0 0 1 0-1.59L9.42 4.83c.21-.211.497-.33.795-.33H19.5a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25h-9.284c-.298 0-.585-.119-.795-.33Z" />
+            </svg>
+        </a>
+        <h2 class="text-2xl font-bold text-center flex-1">Update Preferences</h2>
+    </div>
+
+    {% if user.volunteer %}
+        <form id="preferences-form" 
+            method="patch"
+            hx-patch="{% url 'volunteers_organizations:update_volunteer_preferences' %}"
+            hx-trigger="submit"
+            hx-target="#loading-modal-content"
+            hx-swap="innerHTML"
+            data-redirect-url="{% url 'volunteers_organizations:profile' account_uuid=user.account_uuid %}"
+            class="space-y-6">
+
+            <!-- Location -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label for="location-input" class="block text-gray-700 font-semibold mb-2">Preferred Location</label>
+                <input id="location-input" required="true" name="location_input" type="text" 
+                    placeholder="Enter your preferred location"
+                    value="{{ preferences.location.formatted_address|default:'' }}"
+                    class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
+                
+                <!-- Hidden input to store full JSON -->
+                <input type="hidden" id="location-hidden" name="location" 
+                    value="{{ preferences.location }}">
+            </div>
+
+            <!-- Languages -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label for="language-select" class="block text-gray-700 font-semibold mb-2">Languages</label>
+                <select id="language-select" name="languages" multiple
+                        class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 rounded-md outline-blue-600">
+                    {% for code, lang in languages %}
+                        <option value="{{ lang }}" {% if lang in preferences.languages %}selected{% endif %}>{{ lang }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Availability -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label class="block text-gray-700 font-semibold mb-4">Availability (Days of the Week)</label>
+                <div class="grid grid-cols-4 gap-4">
+                    {% for day in days_of_week %}
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="availability" value="{{ day }}"
+                                {% if day in preferences.availability %}checked{% endif %}
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500">
+                            <span class="text-gray-800">{{ day|title }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Preferred Work Type -->
+            <div class="bg-gray-100 p-4 rounded-lg">                       
+                <label class="block text-gray-700 font-semibold mb-2">Preferred Work Type</label>
+                <select name="preferred_work_types"
+                        class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                    {% for type in work_types %}
+                        <option value="{{ type }}" {% if type == preferences.preferred_work_types %}selected{% endif %}>
+                            {{ type|title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Preferred Duration -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label class="block text-gray-700 font-semibold mb-4">Preferred Duration</label>
+                <div class="grid grid-cols-3 gap-4 mt-2">
+                    {% for duration in durations %}
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="preferred_duration" value="{{ duration }}"
+                                {% if duration in preferences.preferred_duration %}checked{% endif %}
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500">
+                            <span class="text-gray-800">{{ duration|title }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Fields of Interest -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label class="block text-gray-700 font-semibold mb-4">Fields of Interest (Max 5)</label>
+                <div class="grid grid-cols-3 gap-4">
+                    {% for field in fields_of_interest %}
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="fields_of_interest" value="{{ field }}"
+                                {% if field in preferences.fields_of_interest %}checked{% endif %}
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500">
+                            <span class="text-gray-800">{{ field|title }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Skills -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label class="block text-gray-700 font-semibold mb-4">Skills (Max 10)</label>
+                <div class="grid grid-cols-4 gap-4">
+                    {% for skill in skills %}
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="skills" value="{{ skill }}"
+                                {% if skill in preferences.skills %}checked{% endif %}
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500">
+                            <span class="text-gray-800">{{ skill|title }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex justify-center mt-10">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                    </svg>
+                    <span class="font-bold">Update Preferences</span>
+                </button>
+            </div>
+        </form>
+    {% elif user.organization %}
+        <form id="preferences-form"
+            method="patch"
+            hx-patch="{% url 'volunteers_organizations:update_organization_preferences' %}"
+            hx-trigger="submit"
+            hx-target="#loading-modal-content"
+            hx-swap="innerHTML"
+            data-redirect-url="{% url 'volunteers_organizations:profile' account_uuid=user.account_uuid %}"
+            class="space-y-6">
+
+            <!-- Location -->
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <label for="location-input" class="block text-gray-700 font-semibold mb-2">Main Location</label>
+                <input id="location-input" required="true" name="location_input" type="text" 
+                    placeholder="Enter your preferred location"
+                    value="{{ preferences.location.formatted_address|default:'' }}"
+                    class="w-full text-sm text-gray-800 bg-gray-100 focus:bg-transparent pl-4 pr-10 py-3.5 rounded-md outline-blue-600">
+
+                <!-- Hidden input to store full JSON -->
+                <input type="hidden" id="location-hidden" name="location" 
+                    value='{{ preferences.location|default:"{}" }}'>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex justify-center mt-10">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg hover:bg-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                    </svg>
+                    <span class="font-bold">Update Preferences</span>
+                </button>
+            </div>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}

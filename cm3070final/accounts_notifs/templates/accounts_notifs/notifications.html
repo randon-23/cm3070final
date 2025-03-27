@@ -1,0 +1,59 @@
+{% extends 'base/base_authenticated.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}Notifications{% endblock %}
+{% block auth_content %}
+    <script src="{% static 'js_frontend-scripts/notifications-processes.js' %}"></script>
+
+    <div class="mx-auto bg-white shadow-md rounded-lg p-6 min-h-[90vh] flex flex-col">
+        <h2 class="text-2xl text-center font-bold mb-4">Notifications</h2>
+        <div class="w-3/4 h-[1px] bg-gray-300 mx-auto mb-6"></div>
+
+        <!-- Notifications Container -->
+        <div id="notifications-container">
+            {% if notifications %}
+                {% for notification in notifications %}
+                    <div id="notification-{{ notification.notification_uuid }}" 
+                         class="flex items-center justify-between bg-gray-100 p-4 mb-2 rounded-lg shadow-sm">
+                        <div>
+                            <p class="font-semibold">{{ notification.notification_type|pretty_title }}</p>
+                            <p class="text-gray-600">{{ notification.notification_message }}</p>
+                            <p class="text-sm text-gray-500">on {{ notification.created_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                        <button 
+                            hx-patch="{% url 'accounts_notifs:mark_read' notification_uuid=notification.notification_uuid %}" 
+                            hx-swap="none" 
+                            hx-trigger="click"
+                            data-notification-id="{{ notification.notification_uuid }}"
+                            class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded mark-as-read flex items-center justify-center space-x-2 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg"
+                        >   
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                            </svg>
+                            <span class="font-bold">Mark as Read</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-600 text-center">No new notifications.</p>
+            {% endif %}
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="mt-4 flex justify-center">
+            {% if notifications.has_previous %}
+                <a href="?page=1" class="mx-1 px-3 py-1 bg-gray-300 text-gray-700 rounded">First</a>
+                <a href="?page={{ notifications.previous_page_number }}" class="mx-1 px-3 py-1 bg-gray-300 text-gray-700 rounded">Previous</a>
+            {% endif %}
+
+            <span class="mx-2 px-3 py-1 bg-blue-600 text-white rounded">
+                Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}
+            </span>
+
+            {% if notifications.has_next %}
+                <a href="?page={{ notifications.next_page_number }}" class="mx-1 px-3 py-1 bg-gray-300 text-gray-700 rounded">Next</a>
+                <a href="?page={{ notifications.paginator.num_pages }}" class="mx-1 px-3 py-1 bg-gray-300 text-gray-700 rounded">Last</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

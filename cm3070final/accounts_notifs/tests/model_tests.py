@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group
-from ..models import Account, AccountPreferences, Notification
+from ..models import Account, Notification
 from uuid import UUID
 
 def create_common_objects():
@@ -17,13 +17,13 @@ def create_common_objects():
         email_address='test_email_org@tester.com',
         password='testerpassword',
         user_type='organization',
-        contact_number="+35612345678"
+        contact_number="+35612345679"
     )
     admin = Account.objects.create(
         email_address='test_email_org_admin@tester.com',
         password='testerpassword',
         user_type='admin',
-        contact_number="+35612345678"
+        contact_number="+35612345670"
     )
     return volunteer, organization, admin
 
@@ -72,29 +72,6 @@ class TestAccountModel(TestCase):
                     password='testerpassword',
                     user_type='volunteer'
                 )
-
-class TestAccountPreferencesModel(TestCase):
-    #Setting up groups and accounts
-    @classmethod
-    def setUpTestData(cls):
-        cls.volunteer_account, cls.organization_account, _ = create_common_objects()
-    
-    def test_volunteer_preferences(self):
-        preferences = AccountPreferences.objects.create(account=self.volunteer_account)
-        preferences.save()
-
-        self.assertIsNone(preferences.enable_volontera_point_opportunities)
-        self.assertIsNone(preferences.volontera_points_rate)
-        self.assertTrue(preferences.smart_matching_enabled)
-
-    def test_organization_preferences(self):
-        preferences = AccountPreferences.objects.create(account=self.organization_account)
-        preferences.save()
-
-        self.assertFalse(preferences.smart_matching_enabled)
-        self.assertIsNone(preferences.smart_matching_enabled)
-        self.assertEqual(preferences.volontera_points_rate, 1.0)
-
 
 class TestNotificationModel(TestCase):
     #Setting up groups and accounts

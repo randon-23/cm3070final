@@ -1,7 +1,8 @@
 from django.db import models
 from accounts_notifs.models import Account
-from datetime import datetime
+from django.utils.timezone import now
 from django.core.exceptions import ValidationError
+import uuid
 
 class Volunteer(models.Model):
     account = models.OneToOneField(Account, on_delete=models.CASCADE, primary_key=True)
@@ -9,10 +10,14 @@ class Volunteer(models.Model):
     last_name = models.CharField(max_length=50)
     dob = models.DateField()
     bio = models.CharField(max_length=500, default='', blank=True)
-    profile_img = models.ImageField(blank=True, null=True)
-    volontera_points = models.IntegerField(default=0)
+    profile_img = models.ImageField(upload_to='profile_pics/',blank=True, null=True)
+    volontera_points = models.FloatField(default=0)
     followers = models.IntegerField(default=0)
     
+    def clean(self):
+        if self.dob is not None and self.dob > now().date():
+            raise ValidationError("Date of birth cannot be in the future.")
+
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
@@ -35,6 +40,8 @@ class VolunteerMatchingPreferences(models.Model):
         ('public speaking', 'Public Speaking'),
         ('leadership', 'Leadership'),
         ('teamwork', 'Teamwork'),
+        ('physical fitness', 'Physical Fitness'),
+        ('able to work outdoors', 'Able to Work Outdoors'),
         ('time management', 'Time Management'),
         ('problem solving', 'Problem Solving'),
         ('organization', 'Organization'),
@@ -103,9 +110,15 @@ class VolunteerMatchingPreferences(models.Model):
     preferred_duration = models.JSONField(default=list, blank=True)
     fields_of_interest = models.JSONField(default=list, blank=True)
     skills = models.JSONField(default=list, blank=True)
+    languages = models.JSONField(default=list, blank=True)
+    location = models.JSONField(default=dict, blank=True)
 
     def clean(self):
         super().clean()
+
+        # Validate location
+        if not isinstance(self.location, dict):
+            raise ValidationError("Location must be a dictionary.")
 
         #Validate 'preferred_duration'
         if not isinstance(self.preferred_duration, list):
@@ -153,13 +166,26 @@ class Organization(models.Model):
     organization_description = models.CharField(max_length=500)
     organization_address = models.JSONField(default=dict)
     organization_website=models.URLField(blank=True, null=True)
-    organization_profile_img = models.ImageField(blank=True, null=True)
+    organization_profile_img = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    volontera_points = models.FloatField(default=0)
     followers = models.IntegerField(default=0)
 
     def clean(self):
         if self.followers < 0:
             raise ValidationError("Followers cannot be negative.")
             
+class OrganizationPreferences(models.Model):
+    organization_preference_id = models.AutoField(primary_key=True)
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE)
+    location = models.JSONField(default=dict, blank=True)
+
+    def clean(self):
+        # Validate location
+        if not isinstance(self.location, dict):
+            raise ValidationError("Location must be a dictionary.")
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
 class Following(models.Model):
     follower = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='account_following')
@@ -199,42 +225,44 @@ class Following(models.Model):
     def save(self, *args, **kwargs):
         # Enforce that organizations cannot follow anyone
         if self.follower.is_organization():
-            raise ValidationError("Organizations cannot follow anyone.")
+            if self.followed_organization is not None:
+                raise ValidationError("Organizations cannot follow anyone.")
         
         super().save(*args, **kwargs)
 
-class Membership(models.Model):
-    ROLE_TYPES = (
-        ('admin', 'Admin'),
-        ('opportunity leader', 'Opportunity Leader'),
-        ('member', 'Member'),
-    )
+class Endorsement(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    giver = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='endorsement_giver')
+    receiver = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='endorsement_receiver')
+    endorsement = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    membership_id = models.AutoField(primary_key=True)
-    volunteer = models.ForeignKey(Volunteer, on_delete=models.CASCADE)
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
-    role = models.CharField(max_length=20, choices=ROLE_TYPES, default='member')
-
-    class Meta:
-        constraints = [
-            # Ensure a volunteer can only belong to an organization once
-            models.UniqueConstraint(
-                fields=['volunteer', 'organization'],
-                name='unique_volunteer_per_organization'
-            ),
-            # Ensure that an organization can only have one admin
-            models.UniqueConstraint(
-                fields=['organization', 'role'],
-                condition=models.Q(role='admin'),
-                name='unique_admin_per_organization'
-            ),
-            # Ensure that role is one of the valid choices
-            models.CheckConstraint(
-                check=models.Q(role__in=['admin', 'opportunity leader', 'member']),
-                name='valid_role_check'
-            )
-        ]
+    def clean(self):
+        if self.giver.is_organization() and self.receiver.is_organization():
+            raise ValidationError("Organizations cannot endorse each other.")
+        if self.giver == self.receiver:
+            raise ValidationError("Cannot endorse oneself.")
     
     def save(self, *args, **kwargs):
-        self.full_clean()
+        self.clean()
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.giver.email_address} → {self.receiver.email_address}"
+        
+class StatusPost(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    author = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='status_post_author')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if not self.content.strip():
+            raise ValidationError("Status post content cannot be empty.")
+        
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Status by {self.author.email_address} at {self.created_at}"

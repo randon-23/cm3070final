@@ -1,0 +1,58 @@
+{% extends 'base/base_authenticated.html' %}
+{% load static %}
+{% block title %}Search Results{% endblock %}
+{% block auth_content %}
+<div class="mx-auto p-6 bg-white shadow-md rounded-lg">
+    <h2 class="text-2xl font-bold text-center mb-6">Search Results for "{{ query }}"</h2>
+
+    {% if results %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for profile in results %}
+                <a href="{{ profile.profile_url }}" class="block p-4 bg-gray-100 hover:bg-gray-200 transition duration-300 rounded-lg shadow-md ease-in-out hover:scale-[1.02] hover:shadow-lg">
+                    <div class="flex items-center space-x-4">
+                        <!-- Profile Image -->
+                        <img src="{% if profile.profile_img %}{{ profile.profile_img }}
+                            {% elif profile.first_name %}/static/images/default_volunteer.svg
+                            {% else %}/static/images/default_organization.svg
+                            {% endif %}"
+                        class="w-16 h-16 rounded-full object-cover"
+                        alt="Profile Image">
+                        
+                        <!-- Profile Info -->
+                        <div>
+                            <p class="text-lg font-semibold text-gray-800">
+                                {% if profile.first_name %}
+                                    {{ profile.first_name }} {{ profile.last_name }}
+                                {% else %}
+                                    {{ profile.organization_name }}
+                                {% endif %}
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                {% if profile.first_name %} Volunteer {% else %} Organization {% endif %}
+                            </p>
+                            <p class="text-xs text-gray-500">{{ profile.followers }} Followers</p>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="flex justify-center mt-6 space-x-2">
+            {% if results.has_previous %}
+                <a href="?q={{ query }}&page=1" class="px-3 py-1 border rounded-md">First</a>
+                <a href="?q={{ query }}&page={{ results.previous_page_number }}" class="px-3 py-1 border rounded-md">Previous</a>
+            {% endif %}
+            
+            <span class="px-3 py-1 bg-gray-200 rounded-md">Page {{ results.number }} of {{ results.paginator.num_pages }}</span>
+            
+            {% if results.has_next %}
+                <a href="?q={{ query }}&page={{ results.next_page_number }}" class="px-3 py-1 border rounded-md">Next</a>
+                <a href="?q={{ query }}&page={{ results.paginator.num_pages }}" class="px-3 py-1 border rounded-md">Last</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <p class="text-center text-gray-500">No results found.</p>
+    {% endif %}
+</div>
+{% endblock %}
