@@ -5,6 +5,7 @@ DEBUG = False
 ALLOWED_HOSTS = ['volontera.app.com', '35.228.239.164']
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+CSRF_TRUSTED_ORIGINS = ['http://35.228.239.164']
 
 DATABASES = {
     'default': {
