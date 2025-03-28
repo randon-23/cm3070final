@@ -2,8 +2,13 @@
 <div id="create-opportunity-modal" class="fixed inset-0 items-center justify-center bg-black bg-opacity-50 hidden">
     <div class="bg-white p-8 rounded-lg shadow-lg w-4/5 max-w-4xl max-h-[80vh] overflow-y-auto">
         <!-- Modal Header -->
-        <div class="flex justify-center relative mb-4">
-            <h2 class="text-2xl font-bold mx-auto">Create a New Opportunity</h2>
+        <div class="flex justify-between items-start relative mb-4">
+            <div class="flex flex-col">
+                <h2 class="text-2xl font-bold">Create a New Opportunity</h2>
+                <h3 class="text-xs text-gray-500 mt-1">
+                    Please fill in the details below (if Invalid JSON error pops up, try re-entering the location in the Location field)
+                </h3>
+            </div>
             <button onclick="document.getElementById('create-opportunity-modal').classList.add('hidden'); document.getElementById('create-opportunity-modal').classList.remove('flex'); document.getElementById('create-opportunity-form').reset()" 
                 class="absolute right-0 text-gray-500 hover:text-gray-700">✕
             </button>

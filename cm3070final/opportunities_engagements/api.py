@@ -10,6 +10,7 @@ import json
 from django.utils import timezone
 from django.http import QueryDict
 
+# Returns an opportunity and its details for the opportunity details page.(opportunity.html)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_opportunity(request, opportunity_id):
@@ -28,6 +29,7 @@ def get_opportunity(request, opportunity_id):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# Search endpoint run when filtering for opportunities on the opportunity search page
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_opportunities(request):
@@ -117,6 +119,7 @@ def get_opportunities(request):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# Returns the 5 closest opportunities to a volunteer's location based on their preferences, o opportunity search page.
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_nearby_opportunities(request):
@@ -154,6 +157,7 @@ def get_nearby_opportunities(request):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# Returns the latest 5 opportunities for the opportunity search page
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_latest_opportunities(request):
@@ -165,6 +169,7 @@ def get_latest_opportunities(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# Allows an organization to create a new opportunity.
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_opportunity(request):
@@ -226,7 +231,7 @@ def get_upcoming_opportunities(request, account_uuid):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-# Gets an organizations opportunities for their Opportunities page
+# Gets all an organizations opportunities for their Opportunities page
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_organization_opportunities(request):
@@ -245,6 +250,7 @@ def get_organization_opportunities(request):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# Allows an organization to cancel an opportunity.
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def cancel_opportunity(request, volunteer_opportunity_id):
@@ -278,6 +284,7 @@ def cancel_opportunity(request, volunteer_opportunity_id):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# Allows an organization to mark an opportunity as completed.
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def complete_opportunity(request, volunteer_opportunity_id):
@@ -462,7 +469,7 @@ def get_organization_applications(request, account_uuid):
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-# Triggered when an application is accepted.
+# Triggered when an application is accepted, creates a related engagement instance
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_engagement(request, application_id):
@@ -636,7 +643,8 @@ def cancel_engagements_organization(request, volunteer_opportunity_id):
         return Response({"message": "All engagements for this opportunity marked as cancelled."}, status=status.HTTP_200_OK)
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+
+# Creates a session for a given ongoing opportunity.
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_session(request, opportunity_id):
@@ -664,6 +672,7 @@ def create_session(request, opportunity_id):
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# Returns all sessions for a given opportunity.
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_sessions(request, opportunity_id):
@@ -680,6 +689,7 @@ def get_sessions(request, opportunity_id):
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# Allows an organization to set a session as completed.
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def complete_session(request, session_id):
@@ -706,6 +716,7 @@ def complete_session(request, session_id):
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# Allows an organization to cancel a session.
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def cancel_session(request, session_id):
