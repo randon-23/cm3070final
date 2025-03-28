@@ -163,7 +163,8 @@ def opportunity_view(request, opportunity_id):
                 session_engagements_response = get_volunteer_session_engagements(request, account.account_uuid)
                 session_engagements = session_engagements_response.data if session_engagements_response.status_code == 200 else []
 
-                # Attach session engagement ID to each session
+                # Attach session engagement ID to each session so that actions taken on a given session by the volunteer can be tracked and associated with the correct session
+                # This is done by manipulating the session_engagements data to match the session IDs with the session engagement IDs
                 for session in sessions:
                     session["session_engagement_id"] = None
                     for eng in session_engagements:
