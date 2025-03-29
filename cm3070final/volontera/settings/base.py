@@ -6,10 +6,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent # One level further up 
 # destructured settings.py is now a directory
 
 env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+#added for fly.io deployment
+if os.environ.get('FLY_MACHINE_ID') is None:
+    environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = env('DJANGO_SECRET_KEY')
-SITE_ID=2
+# SITE_ID=2
 #ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=["localhost"])
 
 INSTALLED_APPS = [
@@ -44,7 +46,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -156,14 +157,14 @@ SOCIALACCOUNT_PROVIDERS = {
 SOCIALACCOUNT_ADAPTER = 'accounts_notifs.adapters.GoogleSocialAccountAdapter'
 # Redirect after login/logout
 LOGIN_REDIRECT_URL = 'volunteers_organizations:profile'
-LOGOUT_REDIRECT_URL = 'home' # Redirect to home page after logout
+LOGOUT_REDIRECT_URL = '/admin/login' # Redirect to home page after logout
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

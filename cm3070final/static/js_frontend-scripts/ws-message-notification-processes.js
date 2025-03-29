@@ -1,4 +1,5 @@
-const messageNotificationSocket = new WebSocket('ws://'+window.location.host+'/ws/message_notifications/');
+let wsSchemeMessageNotifs = window.location.protocol === "https:" ? "wss" : "ws";
+const messageNotificationSocket = new WebSocket(`${wsSchemeMessageNotifs}://${window.location.host}/ws/message_notifications/`);
 
 messageNotificationSocket.onopen = function (event) {
     console.log('Message Notification WebSocket connected.');

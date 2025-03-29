@@ -1,4 +1,5 @@
-const notificationSocket = new WebSocket('ws://'+window.location.host+'/ws/notifications/');
+let wsSchemeNotifs = window.location.protocol === "https:" ? "wss" : "ws";
+const notificationSocket = new WebSocket(`${wsSchemeNotifs}://${window.location.host}/ws/notifications/`);
 
 notificationSocket.onopen = function (event) {
     console.log('Notification WebSocket connected.');
