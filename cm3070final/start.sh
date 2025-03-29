@@ -1,13 +1,13 @@
 #!/bin/bash
 
+# Start Daphne in background
+echo "Starting Daphne..."
+daphne -b 0.0.0.0 -p 8001 volontera.asgi:application &
+
+# Start Celery in background
 echo "Starting Celery..."
 celery -A volontera worker --loglevel=INFO &
 
-# Start Nginx (media server) in the background
-echo "Starting Nginx..."
-nginx
-
-
-# Start Daphne (application) in the foreground
-echo "Starting Daphne..."
-exec daphne -b 0.0.0.0 -p 8000 volontera.asgi:application
+# Start NGINX in foreground (takes over as PID 1)
+echo "Starting NGINX..."
+exec nginx -g "daemon off;"
