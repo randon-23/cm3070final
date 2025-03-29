@@ -7,7 +7,7 @@
     <script src="{% static 'js_frontend-scripts/event-listeners.js' %}"></script>
     <script src="{% static 'js_frontend-scripts/ws-notification-processes.js' %}"></script>
     <script src="{% static 'js_frontend-scripts/ws-message-notification-processes.js' %}"></script>
-    # Add CSRF Token to all HTMX requests
+    <!-- Add CSRF Token to all HTMX requests -->
     <script>
         document.body.addEventListener('htmx:configRequest', function(event) {
             event.detail.headers['X-CSRFToken'] = "{{ csrf_token }}";

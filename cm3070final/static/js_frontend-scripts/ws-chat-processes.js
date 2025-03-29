@@ -20,8 +20,8 @@ window.addEventListener("beforeunload", function () {
 // Connect to WebSocket for a specific chat
 function connectToChat(chatId) {
     if (chatSockets[chatId]) return;  // Avoid duplicate connections
-
-    const socket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatId}/`);
+    let wsSchemeChat = window.location.protocol === "https:" ? "wss" : "ws";
+    const socket = new WebSocket(`${wsSchemeChat}://${window.location.host}/ws/chat/${chatId}/`);
     chatSockets[chatId] = socket;
 
     socket.onopen = function () {
