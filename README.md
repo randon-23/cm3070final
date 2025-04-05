@@ -106,5 +106,5 @@ This will start a development server which serves the Django project along with 
 # Running celery app
 We also need to run the messaging/queueing service 'Celery'. This is done by activating Celery in a sperate terminal to handle background tasks via:
 ```bash
-celery --app=elearning.celery:app worker --loglevel=INFO --pool=solo
+celery --app=volontera.celery:app worker --loglevel=INFO --pool=solo
 ```
