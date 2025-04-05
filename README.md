@@ -26,6 +26,20 @@ All project dependencies will be installed from the requirements.txt file via
 ```bash
 pip install -r requirements.txt
 ```
+# Environment file (.env)
+Set up a .env file in the cloned project with the following environment variables:
+```env
+EMAIL_HOST_USER=volonteracm3070@gmail.com
+EMAIL_HOST_PASSWORD=ayps uewo gujl lnwi
+DJANGO_ENV=development
+DJANGO_SECRET_KEY="django-insecure-5bhh%kjha59o@vfj&26m8e&iv!4+nj_)x&oam^ty=45d47oihi"
+GOOGLE_API_KEY=AIzaSyA29sFn-7vH4j5JSlu89gQ86QUdvjHbCCA
+GOOGLE_PLACES_API_KEY=AIzaSyA29sFn-7vH4j5JSlu89gQ86QUdvjHbCCA
+# Placeholders when in development, will be overwritten in production .env
+REDIS_HOST=127.0.0.1
+CELERY_BROKER_URL=redis://127.0.0.1:6379/0
+CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/1
+```
 
 # Node.js setip
 Ensure Node.js and npm are installed. Once Node.js installed, run command
