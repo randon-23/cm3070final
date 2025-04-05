@@ -1,5 +1,6 @@
 # CM3070 Final Project
 Volontera - The Volunteering Social and Management Platform
+<br>
 Note: The *prod* branch was used for deployment whilst *dev* was used for local development. I recommend cloning the *dev* branch if you're planning to run the application locally.
 
 # Prerequisites:
