@@ -24,16 +24,9 @@ console_command = '/code/manage.py shell'
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ['app']
 
-  [[http_service.checks]]
-    interval = "15s"
-    timeout = "2s"
-    method = "GET"
-    path = "/"
-    protocol = "http"
-    
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'
