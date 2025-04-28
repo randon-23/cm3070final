@@ -1,5 +1,6 @@
 # CM3070 Final Project
-Volontera - The Volunteering Social and Management Platform
+*Volontera - The Volunteering Social and Management Platform*
+<br>
 <br>
 **NOTE:** JUST IN CASE, when accessing deployed site on *https://volontera.fly.dev/*, if you are initially met with a 502 Bad Gateway error emanating from NGINX, this is due to the machine having been in idle and is still booting up. Simply refresh once/twice and eventually the site will load. 
 <br>
